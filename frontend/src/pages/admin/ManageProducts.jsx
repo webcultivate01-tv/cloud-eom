@@ -28,8 +28,10 @@ export default function ManageProducts() {
   const CATEGORIES = categoryItems.map((c) => c.name);
 
   const EMPTY_FORM = {
-    name: "", description: "", price: "", category: CATEGORIES[0] || "",
-    stock: "100", allowCustomImage: false, requiresCustomImage: false, isAvailable: true,
+    name: "", description: "", price: "", originalPrice: "", brand: "", sku: "",
+    category: CATEGORIES[0] || "", stock: "100",
+    allowCustomImage: false, requiresCustomImage: false, isAvailable: true,
+    weight: "", returnPolicy: "",
   };
 
   const [showForm, setShowForm]             = useState(false);
@@ -38,23 +40,40 @@ export default function ManageProducts() {
   const [imageFiles, setImageFiles]         = useState([]);
   const [existingImages, setExistingImages] = useState([]);
 
+  // Highlights (bullet points)
+  const [highlights, setHighlights]   = useState([]);
+  const [hlInput, setHlInput]         = useState("");
+
+  // Specifications (key-value pairs)
+  const [specifications, setSpecifications] = useState([]);
+  const [specKey, setSpecKey]               = useState("");
+  const [specVal, setSpecVal]               = useState("");
+
   useEffect(() => {
     dispatch(fetchAllProductsAdmin());
     dispatch(fetchCategoriesAdmin());
   }, [dispatch]);
 
   const resetForm = () => {
-    setForm(EMPTY_FORM); setImageFiles([]); setExistingImages([]); setEditId(null); setShowForm(false);
+    setForm(EMPTY_FORM);
+    setImageFiles([]); setExistingImages([]); setEditId(null); setShowForm(false);
+    setHighlights([]); setHlInput("");
+    setSpecifications([]); setSpecKey(""); setSpecVal("");
   };
 
   const handleEdit = (p) => {
     setEditId(p._id);
     setForm({
-      name: p.name, description: p.description, price: p.price, category: p.category,
-      stock: p.stock, allowCustomImage: p.allowCustomImage,
+      name: p.name, description: p.description, price: p.price,
+      originalPrice: p.originalPrice || "", brand: p.brand || "", sku: p.sku || "",
+      category: p.category, stock: p.stock,
+      allowCustomImage: p.allowCustomImage,
       requiresCustomImage: p.requiresCustomImage || false, isAvailable: p.isAvailable,
+      weight: p.weight || "", returnPolicy: p.returnPolicy || "",
     });
     setExistingImages(p.images?.length ? p.images : p.image ? [p.image] : []);
+    setHighlights(p.highlights || []);
+    setSpecifications(p.specifications || []);
     setImageFiles([]);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -75,10 +94,24 @@ export default function ManageProducts() {
 
   const productType = form.requiresCustomImage ? "required" : form.allowCustomImage ? "optional" : "direct";
 
+  const addHighlight = () => {
+    if (!hlInput.trim()) return;
+    setHighlights((h) => [...h, hlInput.trim()]);
+    setHlInput("");
+  };
+
+  const addSpec = () => {
+    if (!specKey.trim() || !specVal.trim()) return;
+    setSpecifications((s) => [...s, { key: specKey.trim(), value: specVal.trim() }]);
+    setSpecKey(""); setSpecVal("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData();
     Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+    fd.append("highlights", JSON.stringify(highlights));
+    fd.append("specifications", JSON.stringify(specifications));
     imageFiles.forEach((f) => fd.append("images", f));
     const result = editId
       ? await dispatch(updateProduct({ id: editId, formData: fd }))
@@ -144,23 +177,97 @@ export default function ManageProducts() {
             )}
           </div>
 
-          {/* Fields */}
+          {/* Basic Info */}
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Basic Info</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-            <input className="admin-input" placeholder="Product Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            <input className="admin-input" placeholder="Price (₹)" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
+            <input className="admin-input" placeholder="Product Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            <input className="admin-input" placeholder="Brand (e.g. Nike)" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
+            <input className="admin-input" placeholder="SKU / Model No." value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
             <select className="admin-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <input className="admin-input" placeholder="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
           </div>
+
           <textarea
             className="admin-input h-20 resize-y mb-3"
-            placeholder="Description"
+            placeholder="Description *"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             required
           />
 
+          {/* Pricing & Stock */}
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 mt-2">Pricing & Stock</p>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
+            <input className="admin-input" placeholder="Selling Price ₹ *" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
+            <input className="admin-input" placeholder="Original Price ₹ (for discount)" type="number" value={form.originalPrice} onChange={(e) => setForm({ ...form, originalPrice: e.target.value })} />
+            <input className="admin-input" placeholder="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+            <input className="admin-input" placeholder="Weight (e.g. 500g)" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
+          </div>
+          {form.originalPrice && Number(form.originalPrice) > Number(form.price) && (
+            <div className="mb-3 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+              🏷️ Discount: {Math.round(((Number(form.originalPrice) - Number(form.price)) / Number(form.originalPrice)) * 100)}% off — customers will see ₹{Number(form.originalPrice).toLocaleString()} struck out
+            </div>
+          )}
+
+          {/* Highlights */}
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 mt-4">Key Highlights (bullet points)</p>
+          <div className="flex gap-2 mb-2">
+            <input
+              className="admin-input flex-1"
+              placeholder="e.g. Premium quality printing"
+              value={hlInput}
+              onChange={(e) => setHlInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addHighlight(); } }}
+            />
+            <button type="button" onClick={addHighlight} className="admin-btn admin-btn-primary !py-1.5 !px-4 !text-sm flex-shrink-0">+ Add</button>
+          </div>
+          {highlights.length > 0 && (
+            <ul className="mb-3 space-y-1">
+              {highlights.map((h, i) => (
+                <li key={i} className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-1.5 text-sm text-slate-700">
+                  <span className="text-emerald-500">✓</span>
+                  <span className="flex-1">{h}</span>
+                  <button type="button" onClick={() => setHighlights((hl) => hl.filter((_, j) => j !== i))}
+                    className="text-red-400 hover:text-red-600 text-xs font-bold">✕</button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Specifications */}
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 mt-4">Product Specifications</p>
+          <div className="flex gap-2 mb-2">
+            <input className="admin-input flex-1" placeholder="Property (e.g. Material)" value={specKey} onChange={(e) => setSpecKey(e.target.value)} />
+            <input className="admin-input flex-1" placeholder="Value (e.g. 100% Cotton)" value={specVal}
+              onChange={(e) => setSpecVal(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSpec(); } }}
+            />
+            <button type="button" onClick={addSpec} className="admin-btn admin-btn-primary !py-1.5 !px-4 !text-sm flex-shrink-0">+ Add</button>
+          </div>
+          {specifications.length > 0 && (
+            <div className="mb-3 border border-slate-200 rounded-xl overflow-hidden">
+              {specifications.map((sp, i) => (
+                <div key={i} className={`flex items-center gap-3 px-3 py-2 text-sm ${i % 2 === 0 ? "bg-slate-50" : "bg-white"}`}>
+                  <span className="font-semibold text-slate-600 w-36 flex-shrink-0">{sp.key}</span>
+                  <span className="text-slate-700 flex-1">{sp.value}</span>
+                  <button type="button" onClick={() => setSpecifications((s) => s.filter((_, j) => j !== i))}
+                    className="text-red-400 hover:text-red-600 text-xs font-bold">✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Return Policy */}
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 mt-4">Return Policy</p>
+          <textarea
+            className="admin-input h-14 resize-y mb-4"
+            placeholder="e.g. Custom printed products are non-returnable unless defective..."
+            value={form.returnPolicy}
+            onChange={(e) => setForm({ ...form, returnPolicy: e.target.value })}
+          />
+
+          {/* Availability */}
           <label className="flex items-center gap-2 text-sm text-slate-600 mb-5 cursor-pointer select-none w-fit">
             <input
               type="checkbox"
@@ -229,7 +336,7 @@ export default function ManageProducts() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {["Image", "Name", "Category", "Type", "Price", "Stock", "Status", "Actions"].map((h) => (
+                  {["Image", "Name", "Brand", "Category", "Type", "Price", "Stock", "Status", "Actions"].map((h) => (
                     <th key={h} className="th">{h}</th>
                   ))}
                 </tr>
@@ -238,6 +345,7 @@ export default function ManageProducts() {
                 {products.map((p) => {
                   const badge = typeBadge(p);
                   const imgs = p.images?.length ? p.images : p.image ? [p.image] : [];
+                  const hasDiscount = p.originalPrice > 0 && p.originalPrice > p.price;
                   return (
                     <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="td">
@@ -254,11 +362,19 @@ export default function ManageProducts() {
                         </div>
                       </td>
                       <td className="td font-semibold text-slate-800">{p.name}</td>
+                      <td className="td text-slate-500 text-xs">{p.brand || "—"}</td>
                       <td className="td text-slate-500">{p.category}</td>
                       <td className="td">
                         <span className={`status-badge ${badge.cls}`}>{badge.label}</span>
                       </td>
-                      <td className="td font-bold text-slate-800">₹{p.price}</td>
+                      <td className="td font-bold text-slate-800">
+                        ₹{p.price}
+                        {hasDiscount && (
+                          <span className="block text-xs text-emerald-600 font-normal">
+                            {Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}% off
+                          </span>
+                        )}
+                      </td>
                       <td className="td text-slate-600">{p.stock}</td>
                       <td className="td">
                         <span className={`flex items-center gap-1.5 text-xs font-semibold ${p.isAvailable ? "text-emerald-600" : "text-slate-400"}`}>

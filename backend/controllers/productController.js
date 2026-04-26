@@ -1,6 +1,10 @@
 const Product = require("../models/Product");
 const { cloudinary } = require("../config/cloudinary");
 
+const parseJSON = (val, fallback = []) => {
+  try { return val ? JSON.parse(val) : fallback; } catch { return fallback; }
+};
+
 // @desc    Get all available products
 // @route   GET /api/products
 // @access  Public
@@ -40,25 +44,41 @@ const getProductById = async (req, res) => {
 // @access  Admin
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, stock, allowCustomImage, requiresCustomImage } = req.body;
+    const {
+      name, description, price, originalPrice,
+      brand, sku, category, stock,
+      allowCustomImage, requiresCustomImage,
+      weight, returnPolicy,
+    } = req.body;
 
-    // Support multiple uploaded images (req.files array) or single (req.file)
     const uploadedImages = req.files?.length
       ? req.files.map((f) => f.path)
       : req.file
       ? [req.file.path]
       : [];
 
+    const highlights     = parseJSON(req.body.highlights, []);
+    const specifications = parseJSON(req.body.specifications, []);
+    const tags           = parseJSON(req.body.tags, []);
+
     const product = await Product.create({
       name,
       description,
       price,
+      originalPrice: Number(originalPrice) || 0,
+      brand: brand || "",
+      sku: sku || "",
       category,
       stock,
       allowCustomImage,
       requiresCustomImage,
       image: uploadedImages[0] || "",
       images: uploadedImages,
+      highlights,
+      specifications,
+      tags,
+      weight: weight || "",
+      returnPolicy: returnPolicy || "",
     });
 
     res.status(201).json(product);
@@ -77,9 +97,13 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    const { name, description, price, category, stock, isAvailable, allowCustomImage, requiresCustomImage } = req.body;
+    const {
+      name, description, price, originalPrice,
+      brand, sku, category, stock,
+      isAvailable, allowCustomImage, requiresCustomImage,
+      weight, returnPolicy,
+    } = req.body;
 
-    // Update images if new files were uploaded
     if (req.files?.length) {
       const newImages = req.files.map((f) => f.path);
       product.images = newImages;
@@ -89,14 +113,26 @@ const updateProduct = async (req, res) => {
       product.image = req.file.path;
     }
 
-    product.name = name ?? product.name;
-    product.description = description ?? product.description;
-    product.price = price ?? product.price;
-    product.category = category ?? product.category;
-    product.stock = stock ?? product.stock;
-    product.isAvailable = isAvailable ?? product.isAvailable;
-    product.allowCustomImage = allowCustomImage ?? product.allowCustomImage;
-    product.requiresCustomImage = requiresCustomImage ?? product.requiresCustomImage;
+    product.name               = name               ?? product.name;
+    product.description        = description        ?? product.description;
+    product.price              = price              ?? product.price;
+    product.originalPrice      = originalPrice !== undefined ? Number(originalPrice) : product.originalPrice;
+    product.brand              = brand              ?? product.brand;
+    product.sku                = sku                ?? product.sku;
+    product.category           = category           ?? product.category;
+    product.stock              = stock              ?? product.stock;
+    product.isAvailable        = isAvailable        ?? product.isAvailable;
+    product.allowCustomImage   = allowCustomImage   ?? product.allowCustomImage;
+    product.requiresCustomImage= requiresCustomImage?? product.requiresCustomImage;
+    product.weight             = weight             ?? product.weight;
+    product.returnPolicy       = returnPolicy       ?? product.returnPolicy;
+
+    if (req.body.highlights !== undefined)
+      product.highlights = parseJSON(req.body.highlights, product.highlights);
+    if (req.body.specifications !== undefined)
+      product.specifications = parseJSON(req.body.specifications, product.specifications);
+    if (req.body.tags !== undefined)
+      product.tags = parseJSON(req.body.tags, product.tags);
 
     const updated = await product.save();
     res.json(updated);

@@ -22,11 +22,15 @@ const orderSchema = new mongoose.Schema(
     items: [orderItemSchema],
 
     shippingAddress: {
-      fullName: { type: String, required: true },
-      phone: { type: String, required: true },
-      address: { type: String, required: true },
-      city: { type: String, required: true },
-      pincode: { type: String, required: true },
+      fullName:    { type: String, required: true },
+      phone:       { type: String, required: true },
+      address:     { type: String, required: true },
+      addressLine2:{ type: String, default: "" },
+      landmark:    { type: String, default: "" },
+      city:        { type: String, required: true },
+      state:       { type: String, default: "" },
+      pincode:     { type: String, required: true },
+      addressType: { type: String, enum: ["Home", "Work", "Other"], default: "Home" },
     },
 
     totalPrice: {
@@ -35,7 +39,6 @@ const orderSchema = new mongoose.Schema(
       min: 0,
     },
 
-    // Extended lifecycle — Printing added for printing businesses
     status: {
       type: String,
       enum: ["Pending", "Processing", "Printing", "Shipped", "Delivered", "Cancelled"],
@@ -70,10 +73,10 @@ const orderSchema = new mongoose.Schema(
     // Filled when admin ships via Shiprocket
     shipment: {
       shiprocketOrderId: { type: String, default: "" },
-      shipmentId: { type: String, default: "" },
-      trackingId: { type: String, default: "" },
+      shipmentId:  { type: String, default: "" },
+      trackingId:  { type: String, default: "" },
       courierName: { type: String, default: "" },
-      shippedAt: { type: Date, default: null },
+      shippedAt:   { type: Date, default: null },
     },
   },
   { timestamps: true }

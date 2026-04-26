@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const specSchema = new mongoose.Schema({ key: String, value: String }, { _id: false });
+
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -15,6 +17,20 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Price is required"],
       min: 0,
+    },
+    // Set > 0 to show a strikethrough original price and discount badge
+    originalPrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    brand: {
+      type: String,
+      default: "",
+    },
+    sku: {
+      type: String,
+      default: "",
     },
     category: {
       type: String,
@@ -47,10 +63,31 @@ const productSchema = new mongoose.Schema(
       default: false,
     },
     // true  → order CANNOT be placed without uploading a custom image
-    // Only relevant when allowCustomImage is true
     requiresCustomImage: {
       type: Boolean,
       default: false,
+    },
+    // Bullet-point feature highlights shown on product page
+    highlights: {
+      type: [String],
+      default: [],
+    },
+    // Key-value specification table (e.g. Material: Cotton, Size: A4)
+    specifications: {
+      type: [specSchema],
+      default: [],
+    },
+    weight: {
+      type: String,
+      default: "",
+    },
+    returnPolicy: {
+      type: String,
+      default: "",
+    },
+    tags: {
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true }

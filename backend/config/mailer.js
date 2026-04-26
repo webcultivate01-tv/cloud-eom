@@ -73,6 +73,14 @@ const sendOrderConfirmation = async ({ toEmail, toName, order }) => {
         ✅ Your order has been placed successfully! We'll start processing it right away.
       </p>
 
+      <div style="text-align:center;margin:20px 0;">
+        <div style="display:inline-block;background:#fff5f6;border:2px dashed #c41230;border-radius:10px;padding:14px 36px;">
+          <p style="color:#888;font-size:0.72rem;margin:0 0 4px;letter-spacing:1px;text-transform:uppercase;">Your Order ID</p>
+          <p style="color:#c41230;font-size:1.5rem;font-weight:900;letter-spacing:4px;margin:0;">#${shortId}</p>
+          <p style="color:#888;font-size:0.72rem;margin:4px 0 0;">Use this ID to track your order</p>
+        </div>
+      </div>
+
       <h3 style="color:#1a1a1a;font-size:0.9rem;margin:20px 0 8px;">📦 Order Details</h3>
       <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
         <thead>
@@ -93,9 +101,11 @@ const sendOrderConfirmation = async ({ toEmail, toName, order }) => {
 
       <h3 style="color:#1a1a1a;font-size:0.9rem;margin:16px 0 8px;">🚚 Shipping Address</h3>
       <p style="color:#555;font-size:0.85rem;line-height:1.7;margin:0;">
-        ${order.shippingAddress.fullName}<br/>
-        ${order.shippingAddress.phone}<br/>
-        ${order.shippingAddress.address}, ${order.shippingAddress.city} – ${order.shippingAddress.pincode}
+        <strong>${order.shippingAddress.fullName}</strong>${order.shippingAddress.addressType ? ` <span style="background:#f0f0f0;padding:1px 6px;border-radius:3px;font-size:0.72rem;">${order.shippingAddress.addressType}</span>` : ""}<br/>
+        📞 ${order.shippingAddress.phone}<br/>
+        ${order.shippingAddress.address}${order.shippingAddress.addressLine2 ? ", " + order.shippingAddress.addressLine2 : ""}<br/>
+        ${order.shippingAddress.landmark ? "Near: " + order.shippingAddress.landmark + "<br/>" : ""}
+        ${order.shippingAddress.city}${order.shippingAddress.state ? ", " + order.shippingAddress.state : ""} – ${order.shippingAddress.pincode}
       </p>
 
       <div style="margin-top:16px;padding:12px 16px;background:#f7f7f7;border-radius:8px;display:flex;justify-content:space-between;">
