@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import { clearCart, selectCartCount } from "../features/cart/cartSlice";
+import { selectFavoriteCount } from "../features/favorites/favoritesSlice";
 import { toast } from "react-toastify";
 
 const CATEGORIES = ["Sale", "New Arrivals", "Cup", "T-Shirt", "Diary", "Pen", "ID Card", "Frame", "Keychain"];
@@ -20,6 +21,7 @@ export default function Navbar() {
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
   const cartCount = useSelector(selectCartCount);
+  const favCount = useSelector(selectFavoriteCount);
 
   const [offerIndex, setOfferIndex] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -106,6 +108,15 @@ export default function Navbar() {
             </Link>
           )}
 
+          {/* Favourites icon */}
+          <Link to="/favorites" style={s.iconBtn}>
+            <div style={{ position: "relative" }}>
+              <span style={{ fontSize: "1.2rem", lineHeight: 1 }}>🤍</span>
+              {favCount > 0 && <span style={s.cartBadge}>{favCount}</span>}
+            </div>
+            <span style={s.iconLabel}>Saved</span>
+          </Link>
+
           <Link to="/cart" style={s.iconBtn}>
             <div style={{ position: "relative" }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -130,6 +141,12 @@ export default function Navbar() {
                       🛠️ Admin Panel
                     </Link>
                   )}
+                  <Link to="/profile" style={s.dropItem} onClick={() => setMenuOpen(false)}>
+                    👤 My Profile
+                  </Link>
+                  <Link to="/favorites" style={s.dropItem} onClick={() => setMenuOpen(false)}>
+                    ❤️ My Favourites
+                  </Link>
                   <Link to="/orders" style={s.dropItem} onClick={() => setMenuOpen(false)}>
                     📦 My Orders
                   </Link>

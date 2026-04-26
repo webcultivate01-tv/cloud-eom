@@ -36,6 +36,22 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async (profileData, { getState, rejectWithValue }) => {
+    try {
+      const { data } = await api.put("/auth/profile", profileData);
+      // Keep the existing token — it doesn't change when profile is updated
+      const token = getState().auth.user?.token;
+      const updated = { ...data, token };
+      localStorage.setItem("user", JSON.stringify(updated));
+      return updated;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Update failed");
+    }
+  }
+);
+
 // --- Slice ---
 
 const authSlice = createSlice({
@@ -80,6 +96,19 @@ const authSlice = createSlice({
         state.user = action.payload;
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update Profile
+      .addCase(updateProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

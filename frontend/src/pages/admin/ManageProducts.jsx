@@ -23,14 +23,15 @@ export default function ManageProducts() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ name: "", description: "", price: "", category: "", stock: "100", allowCustomImage: false, requiresCustomImage: false, isAvailable: true });
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
 
   useEffect(() => {
     dispatch(fetchAllProductsAdmin());
     dispatch(fetchCategoriesAdmin());
   }, [dispatch]);
 
-  const resetForm = () => { setForm(EMPTY_FORM); setImageFile(null); setEditId(null); setShowForm(false); };
+  const resetForm = () => { setForm(EMPTY_FORM); setImageFiles([]); setExistingImages([]); setEditId(null); setShowForm(false); };
 
   const handleEdit = (product) => {
     setEditId(product._id);
@@ -44,6 +45,9 @@ export default function ManageProducts() {
       requiresCustomImage: product.requiresCustomImage || false,
       isAvailable: product.isAvailable,
     });
+    // Show existing uploaded images as preview
+    setExistingImages(product.images?.length ? product.images : product.image ? [product.image] : []);
+    setImageFiles([]);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -75,7 +79,8 @@ export default function ManageProducts() {
     e.preventDefault();
     const formData = new FormData();
     Object.entries(form).forEach(([k, v]) => formData.append(k, v));
-    if (imageFile) formData.append("image", imageFile);
+    // Append each selected image under the "images" field
+    imageFiles.forEach((file) => formData.append("images", file));
 
     let result;
     if (editId) {
@@ -177,9 +182,53 @@ export default function ManageProducts() {
             </label>
           </div>
 
+          {/* Multi-image upload */}
           <div style={{ marginBottom: "16px" }}>
-            <label style={{ color: "#ccc", fontSize: "0.9rem" }}>Product Image:</label>
-            <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} style={{ color: "#ccc", display: "block", marginTop: "8px" }} />
+            <label style={{ color: "#ffd700", fontSize: "0.85rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Product Images (up to 10)
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                const files = Array.from(e.target.files);
+                setImageFiles(files);
+              }}
+              style={{ color: "#ccc", display: "block", marginTop: "8px" }}
+            />
+
+            {/* Preview new selections */}
+            {imageFiles.length > 0 && (
+              <div style={styles.imgPreviewRow}>
+                {imageFiles.map((file, i) => (
+                  <div key={i} style={styles.imgPreviewWrap}>
+                    <img src={URL.createObjectURL(file)} alt="" style={styles.imgPreviewThumb} />
+                    <button
+                      type="button"
+                      style={styles.imgRemoveBtn}
+                      onClick={() => setImageFiles((prev) => prev.filter((_, j) => j !== i))}
+                    >✕</button>
+                    {i === 0 && <span style={styles.imgMainTag}>Main</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Show existing images when editing (if no new selection) */}
+            {editId && imageFiles.length === 0 && existingImages.length > 0 && (
+              <div>
+                <p style={{ color: "#aaa", fontSize: "0.78rem", marginTop: "8px" }}>Current images (upload new files to replace):</p>
+                <div style={styles.imgPreviewRow}>
+                  {existingImages.map((url, i) => (
+                    <div key={i} style={styles.imgPreviewWrap}>
+                      <img src={url} alt="" style={styles.imgPreviewThumb} />
+                      {i === 0 && <span style={styles.imgMainTag}>Main</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <button type="submit" style={styles.submitBtn} disabled={loading}>
@@ -207,17 +256,15 @@ export default function ManageProducts() {
                 return (
                   <tr key={p._id} style={styles.tr}>
                     <td style={styles.td}>
-                      <div style={{ position: "relative", display: "inline-block" }}>
-                        <img src={p.image || "https://placehold.co/50x50/1a2a4a/aaa?text=No+Img"} alt={p.name} style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "6px" }} />
-                        {p.image && (
-                          <a
-                            href={p.image}
-                            download
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Download image"
-                            style={{ position: "absolute", bottom: "-4px", right: "-4px", background: "#e94560", borderRadius: "50%", width: "18px", height: "18px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", color: "#fff", textDecoration: "none" }}
-                          >⬇</a>
+                      <div style={{ position: "relative", display: "inline-flex", gap: "4px" }}>
+                        {(p.images?.length ? p.images : p.image ? [p.image] : []).slice(0, 3).map((img, i) => (
+                          <img key={i} src={img} alt={p.name} style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "4px", opacity: i === 0 ? 1 : 0.6 }} />
+                        ))}
+                        {!p.image && !p.images?.length && (
+                          <img src="https://placehold.co/50x50/1a2a4a/aaa?text=No+Img" alt="no" style={{ width: "40px", height: "40px", borderRadius: "4px" }} />
+                        )}
+                        {(p.images?.length > 1 || (p.images?.length === 0 && !p.image)) ? null : p.images?.length > 0 && (
+                          <span style={{ color: "#aaa", fontSize: "0.7rem", alignSelf: "center" }}>+{p.images.length - Math.min(p.images.length, 3)}</span>
                         )}
                       </div>
                     </td>
@@ -282,4 +329,9 @@ const styles = {
   td: { color: "#ccc", padding: "12px 16px", verticalAlign: "middle" },
   editBtn: { background: "#0077cc", border: "none", color: "#fff", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", marginRight: "8px" },
   delBtn: { background: "#e94560", border: "none", color: "#fff", padding: "6px 12px", borderRadius: "4px", cursor: "pointer" },
+  imgPreviewRow: { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px" },
+  imgPreviewWrap: { position: "relative", display: "inline-block" },
+  imgPreviewThumb: { width: "72px", height: "72px", objectFit: "cover", borderRadius: "6px", border: "2px solid #333" },
+  imgRemoveBtn: { position: "absolute", top: "-6px", right: "-6px", background: "#e94560", border: "none", color: "#fff", borderRadius: "50%", width: "20px", height: "20px", cursor: "pointer", fontSize: "0.65rem", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center" },
+  imgMainTag: { position: "absolute", bottom: "0", left: "0", right: "0", background: "rgba(30,136,229,0.85)", color: "#fff", fontSize: "0.62rem", textAlign: "center", borderRadius: "0 0 4px 4px", padding: "2px 0", fontWeight: "700" },
 };

@@ -17,6 +17,8 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderHistory from "./pages/OrderHistory";
+import Profile from "./pages/Profile";
+import Favorites from "./pages/Favorites";
 
 // ── Admin Pages ──────────────────────────────────────────────
 import Dashboard from "./pages/admin/Dashboard";
@@ -61,6 +63,8 @@ export default function App() {
                 <Route path="/cart"      element={<Cart />} />
                 <Route path="/checkout"  element={<PrivateRoute><Checkout /></PrivateRoute>} />
                 <Route path="/orders"    element={<PrivateRoute><OrderHistory /></PrivateRoute>} />
+                <Route path="/profile"   element={<PrivateRoute><Profile /></PrivateRoute>} />
+                <Route path="/favorites" element={<Favorites />} />
                 <Route path="*" element={
                   <div style={{ textAlign: "center", padding: "100px", color: "#fff", background: "#0f3460", minHeight: "80vh" }}>
                     <h1>404 — Page Not Found</h1>

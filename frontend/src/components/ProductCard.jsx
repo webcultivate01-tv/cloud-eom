@@ -1,18 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../features/cart/cartSlice";
+import { toggleFavorite, selectFavoriteIds } from "../features/favorites/favoritesSlice";
 import { toast } from "react-toastify";
 
 export default function ProductCard({ product, badge }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const favoriteIds = useSelector(selectFavoriteIds);
   const [hovered, setHovered] = useState(false);
+
+  const isFav = favoriteIds.has(product._id);
+  const cardImage = product.images?.[0] || product.image || null;
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
     dispatch(addToCart({ ...product, quantity: 1 }));
     toast.success(`${product.name} added to cart!`);
+  };
+
+  const handleFav = (e) => {
+    e.stopPropagation();
+    dispatch(toggleFavorite(product));
+    toast.success(isFav ? "Removed from favourites" : "Added to favourites ❤️");
   };
 
   return (
@@ -26,10 +37,15 @@ export default function ProductCard({ product, badge }) {
       {/* Image container */}
       <div style={s.imgWrap}>
         <img
-          src={product.image || "https://placehold.co/300x300/f5f5f5/999?text=No+Image"}
+          src={cardImage || "https://placehold.co/300x300/f5f5f5/999?text=No+Image"}
           alt={product.name}
           style={{ ...s.img, transform: hovered ? "scale(1.04)" : "scale(1)" }}
         />
+
+        {/* Favourite heart */}
+        <button style={s.favBtn} onClick={handleFav} title={isFav ? "Remove from favourites" : "Add to favourites"}>
+          {isFav ? "❤️" : "🤍"}
+        </button>
 
         {/* Badges */}
         <div style={s.badges}>
@@ -79,6 +95,7 @@ export default function ProductCard({ product, badge }) {
 const s = {
   card: { background: "#fff", borderRadius: "10px", overflow: "hidden", cursor: "pointer", border: "1px solid #f0f0f0", transition: "box-shadow 0.2s, transform 0.2s" },
   imgWrap: { position: "relative", overflow: "hidden", aspectRatio: "1 / 1", background: "#f7f7f7" },
+  favBtn: { position: "absolute", top: "8px", right: "8px", background: "rgba(255,255,255,0.88)", border: "none", borderRadius: "50%", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "0.9rem", zIndex: 5, boxShadow: "0 1px 4px rgba(0,0,0,0.15)" },
   img: { width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" },
   badges: { position: "absolute", top: "10px", left: "10px", display: "flex", flexDirection: "column", gap: "4px" },
   badge: { color: "#fff", padding: "3px 8px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: "700" },
