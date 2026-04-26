@@ -1,0 +1,58 @@
+/* ─── Campus-style Light Theme ───────────────────────────── */
+:root {
+  --primary:       #c41230;
+  --primary-dark:  #8b0a21;
+  --primary-light: #f5e6e9;
+  --bg:            #ffffff;
+  --bg-light:      #f7f7f7;
+  --bg-mid:        #f0f0f0;
+  --text:          #1a1a1a;
+  --text-muted:    #666666;
+  --text-light:    #999999;
+  --border:        #e0e0e0;
+  --shadow-sm:     0 1px 4px rgba(0,0,0,0.08);
+  --shadow-md:     0 4px 16px rgba(0,0,0,0.12);
+  --radius:        8px;
+  --transition:    0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+}
+
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* Links */
+a { text-decoration: none; color: inherit; }
+
+/* Inputs */
+input, textarea, select {
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* Buttons */
+button { cursor: pointer; font-family: inherit; }
+
+/* Utility */
+.text-primary { color: var(--primary); }
+.bg-primary { background: var(--primary); }
+
+/* Hover card effect */
+.product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.product-card { transition: transform var(--transition), box-shadow var(--transition); }
