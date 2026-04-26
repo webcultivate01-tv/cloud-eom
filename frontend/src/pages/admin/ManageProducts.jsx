@@ -9,21 +9,33 @@ import {
 import { fetchCategoriesAdmin } from "../../features/categories/categorySlice";
 import { toast } from "react-toastify";
 
+const TYPE_OPTIONS = [
+  { value: "direct",   icon: "🛍️", name: "Direct Sale",    desc: "Customer buys as-is, no custom image." },
+  { value: "optional", icon: "🎨", name: "Custom Optional", desc: "Customer can upload a design — not required." },
+  { value: "required", icon: "🖼️", name: "Custom Required", desc: "Order blocked until design is uploaded." },
+];
+
+const typeBadge = (p) => {
+  if (p.requiresCustomImage) return { label: "Custom Required", cls: "bg-violet-100 text-violet-700" };
+  if (p.allowCustomImage)    return { label: "Custom Optional",  cls: "bg-indigo-100 text-indigo-700" };
+  return { label: "Direct Sale", cls: "bg-emerald-100 text-emerald-700" };
+};
+
 export default function ManageProducts() {
   const dispatch = useDispatch();
   const { items: products, loading } = useSelector((state) => state.products);
-  const { items: categoryItems } = useSelector((state) => state.categories);
+  const { items: categoryItems }     = useSelector((state) => state.categories);
   const CATEGORIES = categoryItems.map((c) => c.name);
 
   const EMPTY_FORM = {
-    name: "", description: "", price: "", category: CATEGORIES[0] || "", stock: "100",
-    allowCustomImage: false, requiresCustomImage: false, isAvailable: true,
+    name: "", description: "", price: "", category: CATEGORIES[0] || "",
+    stock: "100", allowCustomImage: false, requiresCustomImage: false, isAvailable: true,
   };
 
-  const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "", price: "", category: "", stock: "100", allowCustomImage: false, requiresCustomImage: false, isAvailable: true });
-  const [imageFiles, setImageFiles] = useState([]);
+  const [showForm, setShowForm]             = useState(false);
+  const [editId, setEditId]                 = useState(null);
+  const [form, setForm]                     = useState(EMPTY_FORM);
+  const [imageFiles, setImageFiles]         = useState([]);
   const [existingImages, setExistingImages] = useState([]);
 
   useEffect(() => {
@@ -31,22 +43,18 @@ export default function ManageProducts() {
     dispatch(fetchCategoriesAdmin());
   }, [dispatch]);
 
-  const resetForm = () => { setForm(EMPTY_FORM); setImageFiles([]); setExistingImages([]); setEditId(null); setShowForm(false); };
+  const resetForm = () => {
+    setForm(EMPTY_FORM); setImageFiles([]); setExistingImages([]); setEditId(null); setShowForm(false);
+  };
 
-  const handleEdit = (product) => {
-    setEditId(product._id);
+  const handleEdit = (p) => {
+    setEditId(p._id);
     setForm({
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      category: product.category,
-      stock: product.stock,
-      allowCustomImage: product.allowCustomImage,
-      requiresCustomImage: product.requiresCustomImage || false,
-      isAvailable: product.isAvailable,
+      name: p.name, description: p.description, price: p.price, category: p.category,
+      stock: p.stock, allowCustomImage: p.allowCustomImage,
+      requiresCustomImage: p.requiresCustomImage || false, isAvailable: p.isAvailable,
     });
-    // Show existing uploaded images as preview
-    setExistingImages(product.images?.length ? product.images : product.image ? [product.image] : []);
+    setExistingImages(p.images?.length ? p.images : p.image ? [p.image] : []);
     setImageFiles([]);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -59,171 +67,141 @@ export default function ManageProducts() {
     else toast.error("Delete failed");
   };
 
-  const handleProductTypeChange = (type) => {
-    if (type === "direct") {
-      setForm({ ...form, allowCustomImage: false, requiresCustomImage: false });
-    } else if (type === "optional") {
-      setForm({ ...form, allowCustomImage: true, requiresCustomImage: false });
-    } else if (type === "required") {
-      setForm({ ...form, allowCustomImage: true, requiresCustomImage: true });
-    }
+  const setProductType = (type) => {
+    if (type === "direct")   setForm((f) => ({ ...f, allowCustomImage: false, requiresCustomImage: false }));
+    if (type === "optional") setForm((f) => ({ ...f, allowCustomImage: true,  requiresCustomImage: false }));
+    if (type === "required") setForm((f) => ({ ...f, allowCustomImage: true,  requiresCustomImage: true  }));
   };
 
-  const getProductType = () => {
-    if (form.requiresCustomImage) return "required";
-    if (form.allowCustomImage) return "optional";
-    return "direct";
-  };
+  const productType = form.requiresCustomImage ? "required" : form.allowCustomImage ? "optional" : "direct";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
-    Object.entries(form).forEach(([k, v]) => formData.append(k, v));
-    // Append each selected image under the "images" field
-    imageFiles.forEach((file) => formData.append("images", file));
-
-    let result;
-    if (editId) {
-      result = await dispatch(updateProduct({ id: editId, formData }));
-    } else {
-      result = await dispatch(createProduct(formData));
-    }
-
-    if (!result.error) {
-      toast.success(editId ? "Product updated!" : "Product created!");
-      resetForm();
-    } else {
-      toast.error(result.payload || "Operation failed");
-    }
-  };
-
-  const productTypeBadge = (p) => {
-    if (p.requiresCustomImage) return { label: "Custom Required", bg: "#7b1fa2", color: "#fff" };
-    if (p.allowCustomImage) return { label: "Custom Optional", bg: "#1565c0", color: "#fff" };
-    return { label: "Direct Sale", bg: "#2e7d32", color: "#fff" };
+    const fd = new FormData();
+    Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+    imageFiles.forEach((f) => fd.append("images", f));
+    const result = editId
+      ? await dispatch(updateProduct({ id: editId, formData: fd }))
+      : await dispatch(createProduct(fd));
+    if (!result.error) { toast.success(editId ? "Product updated!" : "Product created!"); resetForm(); }
+    else toast.error(result.payload || "Operation failed");
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Manage Products</h1>
-        <button style={styles.addBtn} onClick={() => { resetForm(); setShowForm((v) => !v); }}>
-          {showForm ? "Cancel" : "+ Add Product"}
+    <div className="animate-fade-in-up">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Manage Products</h1>
+          <p className="text-slate-400 text-sm mt-0.5">{products.length} products total</p>
+        </div>
+        <button
+          onClick={() => { resetForm(); setShowForm((v) => !v); }}
+          className={`admin-btn ${showForm ? "admin-btn-ghost" : "admin-btn-primary"}`}
+        >
+          {showForm ? "✕ Cancel" : "+ Add Product"}
         </button>
       </div>
 
-      {/* Product Form */}
+      {/* Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <h2 style={styles.formTitle}>{editId ? "Edit Product" : "Add New Product"}</h2>
+        <form onSubmit={handleSubmit} className="admin-card p-6 mb-6 animate-fade-in-up">
+          <h2 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <span className="text-xl">{editId ? "✏️" : "➕"}</span>
+            {editId ? "Edit Product" : "Add New Product"}
+          </h2>
 
-          {/* Product Type Selector */}
-          <div style={styles.typeSection}>
-            <p style={styles.typeLabel}>Product Type</p>
-            <div style={styles.typeOptions}>
-              <label style={{ ...styles.typeOption, ...(getProductType() === "direct" ? styles.typeOptionActive : {}) }}>
-                <input
-                  type="radio"
-                  name="productType"
-                  checked={getProductType() === "direct"}
-                  onChange={() => handleProductTypeChange("direct")}
-                  style={{ display: "none" }}
-                />
-                <span style={styles.typeIcon}>🛍️</span>
-                <span style={styles.typeName}>Direct Sale</span>
-                <span style={styles.typeDesc}>No custom image needed. Customer buys as-is.</span>
-              </label>
-
-              <label style={{ ...styles.typeOption, ...(getProductType() === "optional" ? styles.typeOptionActive : {}) }}>
-                <input
-                  type="radio"
-                  name="productType"
-                  checked={getProductType() === "optional"}
-                  onChange={() => handleProductTypeChange("optional")}
-                  style={{ display: "none" }}
-                />
-                <span style={styles.typeIcon}>🎨</span>
-                <span style={styles.typeName}>Custom Optional</span>
-                <span style={styles.typeDesc}>Customer can upload a design, but it's not required.</span>
-              </label>
-
-              <label style={{ ...styles.typeOption, ...(getProductType() === "required" ? styles.typeOptionRequiredActive : {}) }}>
-                <input
-                  type="radio"
-                  name="productType"
-                  checked={getProductType() === "required"}
-                  onChange={() => handleProductTypeChange("required")}
-                  style={{ display: "none" }}
-                />
-                <span style={styles.typeIcon}>🖼️</span>
-                <span style={styles.typeName}>Custom Required</span>
-                <span style={styles.typeDesc}>Order CANNOT be placed without uploading a custom design.</span>
-              </label>
+          {/* Product Type */}
+          <div className="mb-5">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Product Type</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {TYPE_OPTIONS.map(({ value, icon, name, desc }) => {
+                const active = productType === value;
+                return (
+                  <label
+                    key={value}
+                    className={`flex flex-col gap-1.5 p-4 rounded-2xl border-2 cursor-pointer transition-all select-none ${
+                      active
+                        ? value === "required"
+                          ? "border-red-400 bg-red-50 shadow-sm"
+                          : "border-indigo-400 bg-indigo-50 shadow-sm"
+                        : "border-slate-200 bg-slate-50/50 hover:border-slate-300"
+                    }`}
+                  >
+                    <input type="radio" name="productType" checked={active} onChange={() => setProductType(value)} className="hidden" />
+                    <span className="text-2xl">{icon}</span>
+                    <span className={`font-bold text-sm ${active ? (value === "required" ? "text-red-800" : "text-indigo-800") : "text-slate-700"}`}>{name}</span>
+                    <span className="text-xs text-slate-400 leading-snug">{desc}</span>
+                  </label>
+                );
+              })}
             </div>
-            {getProductType() === "required" && (
-              <p style={styles.typeWarning}>⚠️ Customers must upload their design image during checkout. Order will be blocked until they do.</p>
+            {productType === "required" && (
+              <div className="mt-3 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+                <span>⚠️</span>
+                <span>Customers must upload their design image during checkout. Order will be blocked until they do.</span>
+              </div>
             )}
           </div>
 
-          <div style={styles.formGrid}>
-            <input style={styles.input} placeholder="Product Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            <input style={styles.input} placeholder="Price (₹)" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
-            <select style={styles.input} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+          {/* Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+            <input className="admin-input" placeholder="Product Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            <input className="admin-input" placeholder="Price (₹)" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
+            <select className="admin-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <input style={styles.input} placeholder="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+            <input className="admin-input" placeholder="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
           </div>
-          <textarea style={{ ...styles.input, width: "100%", height: "80px", resize: "vertical" }} placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+          <textarea
+            className="admin-input h-20 resize-y mb-3"
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            required
+          />
 
-          <div style={styles.checkboxRow}>
-            <label style={{ color: "#ccc" }}>
-              <input type="checkbox" checked={form.isAvailable} onChange={(e) => setForm({ ...form, isAvailable: e.target.checked })} />{" "}
-              Is Available (visible to customers)
-            </label>
-          </div>
-
-          {/* Multi-image upload */}
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ color: "#ffd700", fontSize: "0.85rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Product Images (up to 10)
-            </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600 mb-5 cursor-pointer select-none w-fit">
             <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => {
-                const files = Array.from(e.target.files);
-                setImageFiles(files);
-              }}
-              style={{ color: "#ccc", display: "block", marginTop: "8px" }}
+              type="checkbox"
+              className="w-4 h-4 rounded accent-indigo-600"
+              checked={form.isAvailable}
+              onChange={(e) => setForm({ ...form, isAvailable: e.target.checked })}
             />
+            Available to customers
+          </label>
 
-            {/* Preview new selections */}
+          {/* Image Upload */}
+          <div className="mb-5">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Product Images (up to 10)</p>
+            <label className="flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer transition-all text-sm text-slate-500 hover:text-indigo-600 w-fit">
+              <span>📷</span> <span>Choose images</span>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => setImageFiles(Array.from(e.target.files))} />
+            </label>
+
             {imageFiles.length > 0 && (
-              <div style={styles.imgPreviewRow}>
+              <div className="flex flex-wrap gap-2 mt-3">
                 {imageFiles.map((file, i) => (
-                  <div key={i} style={styles.imgPreviewWrap}>
-                    <img src={URL.createObjectURL(file)} alt="" style={styles.imgPreviewThumb} />
+                  <div key={i} className="relative group">
+                    <img src={URL.createObjectURL(file)} alt="" className="w-20 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
                     <button
                       type="button"
-                      style={styles.imgRemoveBtn}
-                      onClick={() => setImageFiles((prev) => prev.filter((_, j) => j !== i))}
+                      onClick={() => setImageFiles((p) => p.filter((_, j) => j !== i))}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
                     >✕</button>
-                    {i === 0 && <span style={styles.imgMainTag}>Main</span>}
+                    {i === 0 && <span className="absolute bottom-0 inset-x-0 bg-indigo-600/85 text-white text-xs text-center py-0.5 rounded-b-xl font-medium">Main</span>}
                   </div>
                 ))}
               </div>
             )}
-
-            {/* Show existing images when editing (if no new selection) */}
             {editId && imageFiles.length === 0 && existingImages.length > 0 && (
-              <div>
-                <p style={{ color: "#aaa", fontSize: "0.78rem", marginTop: "8px" }}>Current images (upload new files to replace):</p>
-                <div style={styles.imgPreviewRow}>
+              <div className="mt-3">
+                <p className="text-xs text-slate-400 mb-2">Current images (upload new to replace):</p>
+                <div className="flex flex-wrap gap-2">
                   {existingImages.map((url, i) => (
-                    <div key={i} style={styles.imgPreviewWrap}>
-                      <img src={url} alt="" style={styles.imgPreviewThumb} />
-                      {i === 0 && <span style={styles.imgMainTag}>Main</span>}
+                    <div key={i} className="relative">
+                      <img src={url} alt="" className="w-20 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                      {i === 0 && <span className="absolute bottom-0 inset-x-0 bg-indigo-600/85 text-white text-xs text-center py-0.5 rounded-b-xl">Main</span>}
                     </div>
                   ))}
                 </div>
@@ -231,107 +209,89 @@ export default function ManageProducts() {
             )}
           </div>
 
-          <button type="submit" style={styles.submitBtn} disabled={loading}>
-            {loading ? "Saving..." : editId ? "Update Product" : "Create Product"}
+          <button type="submit" disabled={loading} className="admin-btn admin-btn-primary disabled:opacity-60">
+            {loading ? "Saving…" : editId ? "Update Product" : "Create Product"}
           </button>
         </form>
       )}
 
-      {/* Products Table */}
+      {/* Table */}
       {loading && !showForm ? (
-        <p style={{ color: "#aaa" }}>Loading...</p>
+        <div className="flex items-center justify-center py-24">
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+          </div>
+        </div>
       ) : (
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                {["Image", "Name", "Category", "Type", "Price", "Stock", "Status", "Actions"].map((h) => (
-                  <th key={h} style={styles.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => {
-                const badge = productTypeBadge(p);
-                return (
-                  <tr key={p._id} style={styles.tr}>
-                    <td style={styles.td}>
-                      <div style={{ position: "relative", display: "inline-flex", gap: "4px" }}>
-                        {(p.images?.length ? p.images : p.image ? [p.image] : []).slice(0, 3).map((img, i) => (
-                          <img key={i} src={img} alt={p.name} style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "4px", opacity: i === 0 ? 1 : 0.6 }} />
-                        ))}
-                        {!p.image && !p.images?.length && (
-                          <img src="https://placehold.co/50x50/1a2a4a/aaa?text=No+Img" alt="no" style={{ width: "40px", height: "40px", borderRadius: "4px" }} />
-                        )}
-                        {(p.images?.length > 1 || (p.images?.length === 0 && !p.image)) ? null : p.images?.length > 0 && (
-                          <span style={{ color: "#aaa", fontSize: "0.7rem", alignSelf: "center" }}>+{p.images.length - Math.min(p.images.length, 3)}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td style={styles.td}>{p.name}</td>
-                    <td style={styles.td}>{p.category}</td>
-                    <td style={styles.td}>
-                      <span style={{ background: badge.bg, color: badge.color, padding: "3px 8px", borderRadius: "4px", fontSize: "0.72rem", fontWeight: "700", whiteSpace: "nowrap" }}>
-                        {badge.label}
-                      </span>
-                    </td>
-                    <td style={styles.td}>₹{p.price}</td>
-                    <td style={styles.td}>{p.stock}</td>
-                    <td style={styles.td}>
-                      <span style={{ color: p.isAvailable ? "#a8d8a8" : "#e94560" }}>
-                        {p.isAvailable ? "Active" : "Hidden"}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
-                      <button style={styles.editBtn} onClick={() => handleEdit(p)}>Edit</button>
-                      <button style={styles.delBtn} onClick={() => handleDelete(p._id, p.name)}>Delete</button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="admin-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  {["Image", "Name", "Category", "Type", "Price", "Stock", "Status", "Actions"].map((h) => (
+                    <th key={h} className="th">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {products.map((p) => {
+                  const badge = typeBadge(p);
+                  const imgs = p.images?.length ? p.images : p.image ? [p.image] : [];
+                  return (
+                    <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="td">
+                        <div className="flex gap-1.5">
+                          {imgs.slice(0, 3).map((img, i) => (
+                            <img key={i} src={img} alt={p.name}
+                              className="w-10 h-10 object-cover rounded-lg shadow-sm"
+                              style={{ opacity: i === 0 ? 1 : 0.5 }}
+                            />
+                          ))}
+                          {imgs.length === 0 && (
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 text-xs">—</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="td font-semibold text-slate-800">{p.name}</td>
+                      <td className="td text-slate-500">{p.category}</td>
+                      <td className="td">
+                        <span className={`status-badge ${badge.cls}`}>{badge.label}</span>
+                      </td>
+                      <td className="td font-bold text-slate-800">₹{p.price}</td>
+                      <td className="td text-slate-600">{p.stock}</td>
+                      <td className="td">
+                        <span className={`flex items-center gap-1.5 text-xs font-semibold ${p.isAvailable ? "text-emerald-600" : "text-slate-400"}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${p.isAvailable ? "bg-emerald-500" : "bg-slate-300"}`} />
+                          {p.isAvailable ? "Active" : "Hidden"}
+                        </span>
+                      </td>
+                      <td className="td">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(p)}
+                            className="admin-btn bg-indigo-50 hover:bg-indigo-100 text-indigo-700 !py-1.5 !px-3 !text-xs"
+                          >Edit</button>
+                          <button
+                            onClick={() => handleDelete(p._id, p.name)}
+                            className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !py-1.5 !px-3 !text-xs"
+                          >Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {products.length === 0 && (
+              <div className="text-center py-16 text-slate-400 text-sm">
+                <p className="text-3xl mb-2">📦</p>
+                No products yet. Click "+ Add Product" to create one.
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
 }
-
-const styles = {
-  page: { background: "#0f3460", minHeight: "100vh", padding: "32px" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" },
-  title: { color: "#fff", fontSize: "1.8rem", margin: 0 },
-  addBtn: { background: "#e94560", border: "none", color: "#fff", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" },
-  form: { background: "#16213e", borderRadius: "12px", padding: "24px", marginBottom: "32px" },
-  formTitle: { color: "#ffd700", marginBottom: "20px" },
-  typeSection: { marginBottom: "20px" },
-  typeLabel: { color: "#ffd700", fontWeight: "700", fontSize: "0.85rem", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" },
-  typeOptions: { display: "flex", gap: "12px", flexWrap: "wrap" },
-  typeOption: {
-    flex: 1, minWidth: "160px", cursor: "pointer", border: "2px solid #333", borderRadius: "10px",
-    padding: "14px", display: "flex", flexDirection: "column", gap: "4px",
-    background: "#0f3460", transition: "border-color 0.2s",
-  },
-  typeOptionActive: { borderColor: "#1e88e5", background: "rgba(30,136,229,0.12)" },
-  typeOptionRequiredActive: { borderColor: "#e94560", background: "rgba(233,69,96,0.12)" },
-  typeIcon: { fontSize: "1.4rem" },
-  typeName: { color: "#fff", fontWeight: "700", fontSize: "0.9rem" },
-  typeDesc: { color: "#aaa", fontSize: "0.75rem", lineHeight: 1.4 },
-  typeWarning: { marginTop: "10px", color: "#ffd700", fontSize: "0.8rem", background: "rgba(233,69,96,0.1)", border: "1px solid #e94560", borderRadius: "6px", padding: "8px 12px" },
-  formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "12px", marginBottom: "12px" },
-  input: { padding: "10px 14px", borderRadius: "6px", border: "1px solid #333", background: "#0f3460", color: "#fff", fontSize: "0.95rem", boxSizing: "border-box" },
-  checkboxRow: { marginBottom: "16px" },
-  submitBtn: { padding: "12px 28px", background: "#e94560", border: "none", color: "#fff", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", fontSize: "1rem" },
-  tableWrap: { overflowX: "auto" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: { background: "#16213e", color: "#ffd700", padding: "12px 16px", textAlign: "left", fontSize: "0.9rem" },
-  tr: { borderBottom: "1px solid #1a2a4a" },
-  td: { color: "#ccc", padding: "12px 16px", verticalAlign: "middle" },
-  editBtn: { background: "#0077cc", border: "none", color: "#fff", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", marginRight: "8px" },
-  delBtn: { background: "#e94560", border: "none", color: "#fff", padding: "6px 12px", borderRadius: "4px", cursor: "pointer" },
-  imgPreviewRow: { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px" },
-  imgPreviewWrap: { position: "relative", display: "inline-block" },
-  imgPreviewThumb: { width: "72px", height: "72px", objectFit: "cover", borderRadius: "6px", border: "2px solid #333" },
-  imgRemoveBtn: { position: "absolute", top: "-6px", right: "-6px", background: "#e94560", border: "none", color: "#fff", borderRadius: "50%", width: "20px", height: "20px", cursor: "pointer", fontSize: "0.65rem", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center" },
-  imgMainTag: { position: "absolute", bottom: "0", left: "0", right: "0", background: "rgba(30,136,229,0.85)", color: "#fff", fontSize: "0.62rem", textAlign: "center", borderRadius: "0 0 4px 4px", padding: "2px 0", fontWeight: "700" },
-};

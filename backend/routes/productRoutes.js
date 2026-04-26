@@ -21,9 +21,9 @@ router.get("/admin/all", protect, adminOnly, getAllProductsAdmin);
 // Public route
 router.get("/:id", getProductById);
 
-// Admin routes (with optional image upload)
-router.post("/", protect, adminOnly, upload.single("image"), createProduct);
-router.put("/:id", protect, adminOnly, upload.single("image"), updateProduct);
+// Admin routes (with optional multi-image upload — up to 10 images per product)
+router.post("/", protect, adminOnly, upload.array("images", 10), createProduct);
+router.put("/:id", protect, adminOnly, upload.array("images", 10), updateProduct);
 router.delete("/:id", protect, adminOnly, deleteProduct);
 
 module.exports = router;

@@ -10,24 +10,37 @@ import { toast } from "react-toastify";
 
 const EMPTY_FORM = { name: "", email: "", password: "", phone: "", adminRole: "subAdmin" };
 
+const AVATAR_GRADIENTS = [
+  "from-indigo-500 to-blue-600",
+  "from-violet-500 to-purple-600",
+  "from-emerald-500 to-teal-600",
+  "from-amber-500 to-orange-500",
+  "from-rose-500 to-pink-600",
+  "from-cyan-500 to-sky-600",
+];
+const avatarGradient = (name) =>
+  AVATAR_GRADIENTS[(name?.charCodeAt(0) ?? 0) % AVATAR_GRADIENTS.length];
+
+const EyeIcon = () => (
+  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+
 export default function ManageAdmins() {
   const dispatch = useDispatch();
   const { admins, loading } = useSelector((state) => state.users);
   const { user: currentUser } = useSelector((state) => state.auth);
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm]         = useState(EMPTY_FORM);
+  const [showPass, setShowPass] = useState(false);
 
-  useEffect(() => {
-    dispatch(fetchAllAdmins());
-  }, [dispatch]);
+  useEffect(() => { dispatch(fetchAllAdmins()); }, [dispatch]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (form.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
+    if (form.password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     const result = await dispatch(createAdmin(form));
     if (!result.error) {
       toast.success(`Admin "${form.name}" created!`);
@@ -52,142 +65,195 @@ export default function ManageAdmins() {
   };
 
   return (
-    <div>
-      <div style={styles.header}>
-        <h1 style={styles.title}>🔐 Admin Management ({admins.length})</h1>
-        <button style={styles.addBtn} onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Cancel" : "+ Add Admin"}
+    <div className="animate-fade-in-up">
+
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Admin Management</h1>
+          <p className="text-slate-400 text-sm mt-0.5">{admins.length} admin accounts</p>
+        </div>
+        <button
+          onClick={() => { setForm(EMPTY_FORM); setShowForm((v) => !v); }}
+          className={`admin-btn ${showForm ? "admin-btn-ghost" : "admin-btn-primary"}`}
+        >
+          {showForm ? "✕ Cancel" : "+ Add Admin"}
         </button>
       </div>
 
-      {/* Add Admin Form */}
+      {/* Create Form */}
       {showForm && (
-        <form onSubmit={handleCreate} style={styles.form}>
-          <h2 style={styles.formTitle}>Create New Admin Account</h2>
-          <div style={styles.formGrid}>
-            <input style={styles.input} placeholder="Full Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            <input style={styles.input} type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-            <input style={styles.input} type="password" placeholder="Password (min 6)" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
-            <input style={styles.input} placeholder="Phone (optional)" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-          </div>
-          <div style={{ marginBottom: "16px" }}>
-            <label style={styles.label}>Admin Role:</label>
-            <div style={styles.radioGroup}>
-              {["subAdmin", "superAdmin"].map((role) => (
-                <label key={role} style={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    value={role}
-                    checked={form.adminRole === role}
-                    onChange={() => setForm({ ...form, adminRole: role })}
-                  />
-                  <span style={{ color: role === "superAdmin" ? "#ffd700" : "#87ceeb" }}>
-                    {role === "superAdmin" ? "⭐ Super Admin" : "👤 Sub Admin"}
-                  </span>
-                </label>
-              ))}
+        <div className="admin-card p-6 mb-6 animate-fade-in-up">
+          <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <span className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">🔐</span>
+            Create New Admin Account
+          </h2>
+          <form onSubmit={handleCreate}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              <input
+                className="admin-input" placeholder="Full Name"
+                value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
+              />
+              <input
+                className="admin-input" type="email" placeholder="Email Address"
+                value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required
+              />
+              <div className="relative">
+                <input
+                  className="admin-input !pr-10"
+                  type={showPass ? "text" : "password"}
+                  placeholder="Password (min 6)"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <EyeIcon />
+                </button>
+              </div>
+              <input
+                className="admin-input" placeholder="Phone (optional)"
+                value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
             </div>
-          </div>
-          <button type="submit" style={styles.submitBtn} disabled={loading}>
-            {loading ? "Creating..." : "Create Admin"}
-          </button>
-        </form>
+
+            {/* Role selector */}
+            <div className="mb-5">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Admin Role</p>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { value: "subAdmin",   icon: "👤", label: "Sub Admin",   desc: "Limited access — cannot manage other admins", cls: "border-indigo-400 bg-indigo-50" },
+                  { value: "superAdmin", icon: "⭐", label: "Super Admin", desc: "Full access — can manage all admins and settings", cls: "border-amber-400 bg-amber-50" },
+                ].map(({ value, icon, label, desc, cls }) => (
+                  <label
+                    key={value}
+                    className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all select-none flex-1 min-w-[200px] ${
+                      form.adminRole === value ? `${cls} shadow-sm` : "border-slate-200 bg-slate-50/50 hover:border-slate-300"
+                    }`}
+                  >
+                    <input type="radio" name="adminRole" className="hidden" value={value}
+                      checked={form.adminRole === value}
+                      onChange={() => setForm({ ...form, adminRole: value })} />
+                    <span className="text-xl mt-0.5">{icon}</span>
+                    <div>
+                      <p className={`font-bold text-sm ${form.adminRole === value ? (value === "superAdmin" ? "text-amber-800" : "text-indigo-800") : "text-slate-700"}`}>{label}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 leading-snug">{desc}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading} className="admin-btn admin-btn-primary disabled:opacity-60">
+              {loading ? "Creating…" : "Create Admin"}
+            </button>
+          </form>
+        </div>
       )}
 
       {/* Role Legend */}
-      <div style={styles.legend}>
-        <span style={styles.legendItem}><span style={{ color: "#ffd700" }}>⭐ Super Admin</span> — Full access, can manage other admins</span>
-        <span style={styles.legendItem}><span style={{ color: "#87ceeb" }}>👤 Sub Admin</span> — Limited access, cannot manage other admins</span>
+      <div className="flex flex-wrap gap-4 bg-white border border-slate-100 rounded-xl px-4 py-3 mb-5 shadow-card">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span className="status-badge bg-amber-100 text-amber-700">⭐ Super Admin</span>
+          <span>Full access — can manage other admins</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span className="status-badge bg-indigo-100 text-indigo-700">👤 Sub Admin</span>
+          <span>Limited access — cannot manage other admins</span>
+        </div>
       </div>
 
-      {/* Admins Table */}
+      {/* Table */}
       {loading && !showForm ? (
-        <p style={styles.msg}>Loading...</p>
+        <div className="flex items-center justify-center py-24">
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+          </div>
+        </div>
+      ) : admins.length === 0 ? (
+        <div className="admin-card p-16 text-center">
+          <p className="text-4xl mb-3">🔐</p>
+          <p className="text-slate-500 font-medium">No admins yet.</p>
+        </div>
       ) : (
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                {["Name", "Email", "Admin Role", "Joined", "Actions"].map((h) => (
-                  <th key={h} style={styles.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {admins.map((admin) => (
-                <tr key={admin._id} style={{ ...styles.tr, opacity: admin._id === currentUser?._id ? 0.6 : 1 }}>
-                  <td style={styles.td}>
-                    <div style={styles.nameCell}>
-                      <div style={styles.avatar}>{admin.name[0]?.toUpperCase()}</div>
-                      <div>
-                        <p style={{ color: "#fff", margin: 0 }}>{admin.name}</p>
-                        {admin._id === currentUser?._id && (
-                          <p style={{ color: "#ffd700", fontSize: "0.75rem", margin: 0 }}>You</p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td style={styles.td}>{admin.email}</td>
-                  <td style={styles.td}>
-                    <span style={{ ...styles.roleBadge, background: admin.adminRole === "superAdmin" ? "#ffd700" : "#87ceeb", color: "#1a1a2e" }}>
-                      {admin.adminRole === "superAdmin" ? "⭐ Super Admin" : "👤 Sub Admin"}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{new Date(admin.createdAt).toLocaleDateString("en-IN")}</td>
-                  <td style={styles.td}>
-                    {admin._id !== currentUser?._id ? (
-                      <div style={styles.actions}>
-                        {/* Toggle role */}
-                        <button
-                          style={{ ...styles.actionBtn, background: "#1a4a7a" }}
-                          onClick={() => handleRoleChange(admin._id, admin.adminRole === "superAdmin" ? "subAdmin" : "superAdmin")}
-                        >
-                          Make {admin.adminRole === "superAdmin" ? "Sub Admin" : "Super Admin"}
-                        </button>
-                        <button
-                          style={{ ...styles.actionBtn, background: "#8b0000" }}
-                          onClick={() => handleRemove(admin)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <span style={{ color: "#888", fontSize: "0.8rem" }}>—</span>
-                    )}
-                  </td>
+        <div className="admin-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  {["Admin", "Email", "Phone", "Role", "Joined", "Actions"].map((h) => (
+                    <th key={h} className="th">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {admins.map((admin) => {
+                  const isSelf = admin._id === currentUser?._id;
+                  return (
+                    <tr key={admin._id} className={`transition-colors ${isSelf ? "bg-indigo-50/40" : "hover:bg-slate-50/80"}`}>
+                      <td className="td">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br ${avatarGradient(admin.name)} text-white flex items-center justify-center font-bold text-sm shadow-sm`}>
+                            {admin.name?.[0]?.toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-800 leading-tight">{admin.name}</p>
+                            {isSelf && (
+                              <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">You</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="td text-slate-500">{admin.email}</td>
+                      <td className="td text-slate-500">{admin.phone || <span className="text-slate-300">—</span>}</td>
+                      <td className="td">
+                        <span className={`status-badge ${
+                          admin.adminRole === "superAdmin"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-indigo-100 text-indigo-700"
+                        }`}>
+                          {admin.adminRole === "superAdmin" ? "⭐ Super Admin" : "👤 Sub Admin"}
+                        </span>
+                      </td>
+                      <td className="td text-slate-400 text-xs">
+                        {new Date(admin.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                      </td>
+                      <td className="td">
+                        {isSelf ? (
+                          <span className="text-xs text-slate-300 italic">Current session</span>
+                        ) : (
+                          <div className="flex gap-2 flex-wrap">
+                            <button
+                              onClick={() => handleRoleChange(admin._id, admin.adminRole === "superAdmin" ? "subAdmin" : "superAdmin")}
+                              className="admin-btn bg-indigo-50 hover:bg-indigo-100 text-indigo-700 !py-1.5 !px-3 !text-xs"
+                            >
+                              {admin.adminRole === "superAdmin" ? "↓ Make Sub Admin" : "↑ Make Super Admin"}
+                            </button>
+                            <button
+                              onClick={() => handleRemove(admin)}
+                              className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !py-1.5 !px-3 !text-xs"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50 text-xs text-slate-400">
+            {admins.length} admin account{admins.length !== 1 ? "s" : ""} total
+          </div>
         </div>
       )}
     </div>
   );
 }
-
-const styles = {
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" },
-  title: { color: "#fff", fontSize: "1.4rem", margin: 0 },
-  addBtn: { background: "#e94560", border: "none", color: "#fff", padding: "9px 18px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" },
-  form: { background: "#1a1a3a", borderRadius: "10px", padding: "20px", marginBottom: "24px" },
-  formTitle: { color: "#ffd700", marginBottom: "16px", fontSize: "1rem" },
-  formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "12px", marginBottom: "16px" },
-  input: { padding: "9px 12px", borderRadius: "6px", border: "1px solid #333", background: "#0d0d1a", color: "#fff", fontSize: "0.9rem" },
-  label: { color: "#ccc", fontSize: "0.9rem", display: "block", marginBottom: "8px" },
-  radioGroup: { display: "flex", gap: "20px" },
-  radioLabel: { display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "#ccc" },
-  submitBtn: { padding: "10px 24px", background: "#e94560", border: "none", color: "#fff", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" },
-  legend: { display: "flex", gap: "24px", flexWrap: "wrap", marginBottom: "16px", padding: "12px 16px", background: "#1a1a3a", borderRadius: "8px" },
-  legendItem: { color: "#aaa", fontSize: "0.85rem" },
-  msg: { color: "#aaa", textAlign: "center", padding: "40px" },
-  tableWrap: { overflowX: "auto" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: { background: "#1a1a3a", color: "#ffd700", padding: "12px 14px", textAlign: "left", fontSize: "0.82rem" },
-  tr: { borderBottom: "1px solid #1a1a3a" },
-  td: { color: "#ccc", padding: "12px 14px", verticalAlign: "middle" },
-  nameCell: { display: "flex", alignItems: "center", gap: "10px" },
-  avatar: { width: "32px", height: "32px", borderRadius: "50%", background: "#e94560", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "0.85rem", flexShrink: 0 },
-  roleBadge: { padding: "3px 10px", borderRadius: "20px", fontSize: "0.78rem", fontWeight: "bold" },
-  actions: { display: "flex", gap: "6px", flexWrap: "wrap" },
-  actionBtn: { border: "none", color: "#fff", padding: "5px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "0.78rem" },
-};

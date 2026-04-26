@@ -6,13 +6,11 @@ const { cloudinary } = require("../config/cloudinary");
 // @access  Public
 const getProducts = async (req, res) => {
   try {
-    const { category, search } = req.query;
+    const { category, subcategory, search } = req.query;
     let filter = { isAvailable: true };
 
-    // Filter by category if provided
     if (category) filter.category = category;
-
-    // Search by name if provided
+    if (subcategory) filter.subcategory = subcategory;
     if (search) filter.name = { $regex: search, $options: "i" };
 
     const products = await Product.find(filter).sort({ createdAt: -1 });
@@ -44,8 +42,12 @@ const createProduct = async (req, res) => {
   try {
     const { name, description, price, category, stock, allowCustomImage, requiresCustomImage } = req.body;
 
-    // If admin uploaded an image, req.file.path is the Cloudinary URL
-    const image = req.file ? req.file.path : "";
+    // Support multiple uploaded images (req.files array) or single (req.file)
+    const uploadedImages = req.files?.length
+      ? req.files.map((f) => f.path)
+      : req.file
+      ? [req.file.path]
+      : [];
 
     const product = await Product.create({
       name,
@@ -55,7 +57,8 @@ const createProduct = async (req, res) => {
       stock,
       allowCustomImage,
       requiresCustomImage,
-      image,
+      image: uploadedImages[0] || "",
+      images: uploadedImages,
     });
 
     res.status(201).json(product);
@@ -76,8 +79,13 @@ const updateProduct = async (req, res) => {
 
     const { name, description, price, category, stock, isAvailable, allowCustomImage, requiresCustomImage } = req.body;
 
-    // Update image if a new one was uploaded
-    if (req.file) {
+    // Update images if new files were uploaded
+    if (req.files?.length) {
+      const newImages = req.files.map((f) => f.path);
+      product.images = newImages;
+      product.image = newImages[0];
+    } else if (req.file) {
+      product.images = [req.file.path];
       product.image = req.file.path;
     }
 

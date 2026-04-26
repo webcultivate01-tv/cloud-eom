@@ -1,6 +1,14 @@
+const Razorpay = require("razorpay");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
-const { sendCancelOTP } = require("../config/mailer");
+const User = require("../models/User");
+const { sendCancelOTP, sendOrderConfirmation, sendOrderStatusUpdate } = require("../config/mailer");
+
+const getRazorpay = () =>
+  new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
 
 // @desc    Place a new order
 // @route   POST /api/orders
@@ -47,6 +55,18 @@ const createOrder = async (req, res) => {
       paymentMethod: paymentMethod === "razorpay" ? "razorpay" : "cod",
       paymentStatus: "pending",
     });
+
+    // Send order confirmation email (non-blocking)
+    try {
+      const user = await User.findById(req.user._id).select("name email");
+      if (user) {
+        await sendOrderConfirmation({
+          toEmail: user.email,
+          toName: user.name,
+          order: { ...order.toObject(), user: { name: user.name, email: user.email } },
+        });
+      }
+    } catch (_) {}
 
     res.status(201).json(order);
   } catch (error) {
@@ -155,6 +175,20 @@ const updateOrderStatus = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
+
+    // Send status update email to the customer (non-blocking)
+    try {
+      if (order.user?.email) {
+        await sendOrderStatusUpdate({
+          toEmail: order.user.email,
+          toName: order.user.name,
+          orderId: order._id.toString(),
+          status,
+          totalPrice: order.totalPrice,
+          items: order.items,
+        });
+      }
+    } catch (_) {}
 
     res.json(order);
   } catch (error) {
@@ -266,7 +300,25 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({ message: "Invalid OTP. Please check and try again." });
     }
 
-    // OTP valid — cancel order and clear OTP fields
+    // OTP valid — if the order was paid online, auto-refund via Razorpay
+    if (
+      order.paymentMethod === "razorpay" &&
+      order.paymentStatus === "paid" &&
+      order.razorpayPaymentId
+    ) {
+      try {
+        await getRazorpay().payments.refund(order.razorpayPaymentId, {
+          amount: Math.round(order.totalPrice * 100), // paise
+          speed: "normal",
+          notes: { reason: "Customer requested cancellation" },
+        });
+        order.paymentStatus = "refunded";
+      } catch (refundErr) {
+        console.error("Razorpay auto-refund failed:", refundErr.message);
+        // Still cancel the order; admin can process refund manually
+      }
+    }
+
     order.status = "Cancelled";
     order.cancelOTP = null;
     order.cancelOTPExpiry = null;

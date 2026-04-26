@@ -20,9 +20,17 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, "Category is required"],
     },
+    subcategory: {
+      type: String,
+      default: "",
+    },
     image: {
       type: String,
       default: "",
+    },
+    images: {
+      type: [String],
+      default: [],
     },
     stock: {
       type: Number,

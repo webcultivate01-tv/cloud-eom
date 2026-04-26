@@ -1,58 +1,90 @@
-/* ─── Campus-style Light Theme ───────────────────────────── */
-:root {
-  --primary:       #c41230;
-  --primary-dark:  #8b0a21;
-  --primary-light: #f5e6e9;
-  --bg:            #ffffff;
-  --bg-light:      #f7f7f7;
-  --bg-mid:        #f0f0f0;
-  --text:          #1a1a1a;
-  --text-muted:    #666666;
-  --text-light:    #999999;
-  --border:        #e0e0e0;
-  --shadow-sm:     0 1px 4px rgba(0,0,0,0.08);
-  --shadow-md:     0 4px 16px rgba(0,0,0,0.12);
-  --radius:        8px;
-  --transition:    0.2s ease;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base ─────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    font-family: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #f8fafc;
+    color: #1e293b;
+  }
+
+  #root { min-height: 100vh; display: flex; flex-direction: column; }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  a { text-decoration: none; color: inherit; }
+  input, textarea, select, button { font-family: inherit; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  button { cursor: pointer; }
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* ─── Components ────────────────────────────────── */
+@layer components {
+  /* Shared admin input */
+  .admin-input {
+    @apply w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white
+           text-slate-800 text-sm placeholder-slate-400
+           focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
+           transition-all duration-200;
+  }
 
-body {
-  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
-  font-size: 14px;
+  /* Card shell */
+  .admin-card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-card;
+  }
+
+  /* Buttons */
+  .admin-btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+           font-semibold text-sm transition-all duration-200 active:scale-95;
+  }
+  .admin-btn-primary {
+    @apply admin-btn bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md;
+  }
+  .admin-btn-success {
+    @apply admin-btn bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm;
+  }
+  .admin-btn-danger {
+    @apply admin-btn border border-red-200 bg-red-50 hover:bg-red-100 text-red-600;
+  }
+  .admin-btn-ghost {
+    @apply admin-btn bg-slate-100 hover:bg-slate-200 text-slate-600;
+  }
+
+  /* Status badge */
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  /* Table head cell */
+  .th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap;
+  }
+  /* Table data cell */
+  .td {
+    @apply px-4 py-3.5;
+  }
 }
 
-#root { min-height: 100vh; display: flex; flex-direction: column; }
+/* ─── Utilities ─────────────────────────────────── */
+@layer utilities {
+  .product-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-/* Links */
-a { text-decoration: none; color: inherit; }
-
-/* Inputs */
-input, textarea, select {
-  font-family: inherit;
-  font-size: 14px;
-  outline: none;
+  /* Sidebar gradient — referenced in AdminLayout */
+  .sidebar-gradient {
+    background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 100%);
+  }
 }
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-
-/* Buttons */
-button { cursor: pointer; font-family: inherit; }
-
-/* Utility */
-.text-primary { color: var(--primary); }
-.bg-primary { background: var(--primary); }
-
-/* Hover card effect */
-.product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-.product-card { transition: transform var(--transition), box-shadow var(--transition); }

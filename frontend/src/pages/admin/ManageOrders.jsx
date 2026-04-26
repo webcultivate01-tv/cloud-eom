@@ -7,32 +7,32 @@ import api from "../../utils/api";
 
 const STATUSES = ["Pending", "Processing", "Printing", "Shipped", "Delivered", "Cancelled"];
 
-const STATUS_COLORS = {
-  Pending: "#ffd700",
-  Processing: "#87ceeb",
-  Printing: "#c084fc",
-  Shipped: "#60a5fa",
-  Delivered: "#a8d8a8",
-  Cancelled: "#e94560",
+const STATUS_CFG = {
+  Pending:    { cls: "bg-amber-100 text-amber-700",   dot: "bg-amber-400" },
+  Processing: { cls: "bg-blue-100 text-blue-700",     dot: "bg-blue-400" },
+  Printing:   { cls: "bg-violet-100 text-violet-700", dot: "bg-violet-400" },
+  Shipped:    { cls: "bg-sky-100 text-sky-700",       dot: "bg-sky-400" },
+  Delivered:  { cls: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-400" },
+  Cancelled:  { cls: "bg-red-100 text-red-600",       dot: "bg-red-400" },
 };
 
 const DATE_FILTERS = [
-  { label: "All", value: "" },
-  { label: "Today", value: "today" },
-  { label: "Last 3 Days", value: "3days" },
-  { label: "Last 7 Days", value: "7days" },
-  { label: "Last 30 Days", value: "30days" },
-  { label: "Custom", value: "custom" },
+  { label: "All",        value: "" },
+  { label: "Today",      value: "today" },
+  { label: "Last 3 Days",value: "3days" },
+  { label: "Last 7 Days",value: "7days" },
+  { label: "Last 30 Days",value: "30days" },
+  { label: "Custom",     value: "custom" },
 ];
 
 export default function ManageOrders() {
   const dispatch = useDispatch();
   const { orders, loading } = useSelector((state) => state.orders);
 
-  const [dateFilter, setDateFilter] = useState("");
+  const [dateFilter, setDateFilter]     = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [fromDate, setFromDate]         = useState("");
+  const [toDate, setToDate]             = useState("");
   const [shippingOrderId, setShippingOrderId] = useState(null);
   const [shipForm, setShipForm] = useState({ state: "Maharashtra", length: 10, breadth: 10, height: 5, weight: 0.5 });
   const [refunding, setRefunding] = useState(null);
@@ -40,15 +40,13 @@ export default function ManageOrders() {
   const loadOrders = () => {
     const params = {};
     if (dateFilter && dateFilter !== "custom") params.filter = dateFilter;
-    if (dateFilter === "custom" && fromDate) params.from = fromDate;
-    if (dateFilter === "custom" && toDate) params.to = toDate;
-    if (statusFilter) params.status = statusFilter;
+    if (dateFilter === "custom" && fromDate)   params.from = fromDate;
+    if (dateFilter === "custom" && toDate)     params.to   = toDate;
+    if (statusFilter)                          params.status = statusFilter;
     dispatch(fetchAllOrders(params));
   };
 
-  useEffect(() => {
-    loadOrders();
-  }, [dateFilter, statusFilter, fromDate, toDate]);
+  useEffect(() => { loadOrders(); }, [dateFilter, statusFilter, fromDate, toDate]);
 
   const handleStatusChange = async (orderId, status) => {
     const result = await dispatch(updateOrderStatus({ id: orderId, status }));
@@ -61,12 +59,8 @@ export default function ManageOrders() {
     setRefunding(orderId);
     const result = await dispatch(markOrderRefunded(orderId));
     setRefunding(null);
-    if (!result.error) {
-      toast.success("Order marked as refunded");
-      loadOrders();
-    } else {
-      toast.error("Refund failed");
-    }
+    if (!result.error) { toast.success("Order marked as refunded"); loadOrders(); }
+    else toast.error("Refund failed");
   };
 
   const handleShipOrder = async (orderId) => {
@@ -74,43 +68,56 @@ export default function ManageOrders() {
       const { data } = await api.post(`/shipment/${orderId}`, shipForm);
       toast.success(`Shipped! Tracking: ${data.shipment.trackingId || "Assigned"}`);
       setShippingOrderId(null);
-      loadOrders(); // refresh
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Shiprocket error. Check credentials in .env");
+      loadOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Shiprocket error. Check credentials in .env");
     }
   };
 
   return (
-    <div>
-      <h1 style={styles.title}>📦 All Orders ({orders.length})</h1>
+    <div className="animate-fade-in-up">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">All Orders</h1>
+          <p className="text-slate-400 text-sm mt-0.5">{orders.length} orders found</p>
+        </div>
+        <button onClick={loadOrders} className="admin-btn admin-btn-ghost text-xs">
+          ↻ Refresh
+        </button>
+      </div>
 
-      {/* ── Filters ──────────────────────────────────── */}
-      <div style={styles.filterBar}>
-        {/* Date filter chips */}
-        <div style={styles.chipRow}>
+      {/* Filters */}
+      <div className="admin-card p-4 mb-5">
+        {/* Date pill filters */}
+        <div className="flex flex-wrap gap-2 mb-3">
           {DATE_FILTERS.map(({ label, value }) => (
             <button
               key={value}
-              style={{ ...styles.chip, ...(dateFilter === value ? styles.activeChip : {}) }}
               onClick={() => setDateFilter(value)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${
+                dateFilter === value
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                  : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+              }`}
             >
               {label}
             </button>
           ))}
         </div>
 
-        {/* Custom date pickers */}
+        {/* Custom date range */}
         {dateFilter === "custom" && (
-          <div style={styles.datePickers}>
-            <input type="date" style={styles.dateInput} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-            <span style={{ color: "#aaa" }}>to</span>
-            <input type="date" style={styles.dateInput} value={toDate} onChange={(e) => setToDate(e.target.value)} />
+          <div className="flex items-center gap-2 flex-wrap mb-3">
+            <input type="date" className="admin-input !w-auto" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+            <span className="text-slate-400 text-sm font-medium">→</span>
+            <input type="date" className="admin-input !w-auto" value={toDate}   onChange={(e) => setToDate(e.target.value)} />
           </div>
         )}
 
         {/* Status filter */}
         <select
-          style={styles.statusSelect}
+          className="admin-input !w-auto"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -119,197 +126,193 @@ export default function ManageOrders() {
         </select>
       </div>
 
-      {/* ── Orders List ──────────────────────────────── */}
+      {/* Orders list */}
       {loading ? (
-        <p style={styles.msg}>Loading orders...</p>
+        <div className="flex items-center justify-center py-24">
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+          </div>
+        </div>
       ) : orders.length === 0 ? (
-        <p style={styles.msg}>No orders found for this filter.</p>
+        <div className="admin-card p-16 text-center">
+          <p className="text-4xl mb-3">📭</p>
+          <p className="text-slate-500 font-medium">No orders found for this filter.</p>
+        </div>
       ) : (
-        orders.map((order) => (
-          <div key={order._id} style={styles.card}>
-            {/* Header row */}
-            <div style={styles.cardHeader}>
-              <div>
-                <p style={{ color: "#888", fontSize: "0.78rem", margin: 0 }}>Order ID</p>
-                <p style={{ color: "#fff", fontFamily: "monospace", fontSize: "0.85rem", margin: "2px 0 0" }}>
-                  {order._id}
-                </p>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <p style={{ color: "#888", fontSize: "0.78rem", margin: 0 }}>
-                  {new Date(order.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
-                </p>
-                <p style={{ color: "#ffd700", fontWeight: "bold", margin: "2px 0 0" }}>
-                  ₹{order.totalPrice.toLocaleString()}
-                </p>
-              </div>
-            </div>
+        <div className="flex flex-col gap-4">
+          {orders.map((order) => {
+            const cfg = STATUS_CFG[order.status] || { cls: "bg-slate-100 text-slate-600", dot: "bg-slate-400" };
+            return (
+              <div key={order._id} className="admin-card hover:shadow-card-hover transition-shadow duration-200">
+                {/* Card top stripe by status */}
+                <div className={`h-1 w-full ${cfg.dot} rounded-t-2xl`} />
 
-            {/* Customer Info */}
-            <div style={styles.customerRow}>
-              <span style={{ color: "#87ceeb" }}>👤 {order.user?.name}</span>
-              <span style={{ color: "#888" }}> — {order.user?.email}</span>
-              <span style={{ color: "#888" }}> | 📞 {order.shippingAddress?.phone}</span>
-            </div>
-            <p style={{ color: "#888", fontSize: "0.82rem", margin: "4px 0 8px" }}>
-              📍 {order.shippingAddress?.address}, {order.shippingAddress?.city} – {order.shippingAddress?.pincode}
-            </p>
-
-            {/* Payment Info Row */}
-            <div style={styles.paymentRow}>
-              <span style={{
-                ...styles.payBadge,
-                background: order.paymentStatus === "paid" ? "#1b4a1b" : order.paymentStatus === "refunded" ? "#3a1020" : "#2a2000",
-                color: order.paymentStatus === "paid" ? "#a8d8a8" : order.paymentStatus === "refunded" ? "#e94560" : "#ffd700",
-              }}>
-                {order.paymentMethod === "razorpay" ? "💳 Razorpay" : "💵 COD"}
-                {" · "}{order.paymentStatus?.toUpperCase()}
-              </span>
-              {order.razorpayPaymentId && (
-                <span style={{ color: "#666", fontSize: "0.75rem" }}>
-                  ID: <code style={{ color: "#87ceeb" }}>{order.razorpayPaymentId}</code>
-                </span>
-              )}
-            </div>
-
-            {/* Items */}
-            <div style={styles.itemsSection}>
-              {order.items.map((item, i) => (
-                <div key={i} style={styles.item}>
-                  <div>
-                    <p style={{ color: "#fff", margin: 0, fontSize: "0.9rem" }}>{item.name}</p>
-                    <p style={{ color: "#aaa", margin: 0, fontSize: "0.8rem" }}>
-                      Qty: {item.quantity} × ₹{item.price}
-                    </p>
-                  </div>
-                  {item.uploadedImage ? (
-                    <a href={item.uploadedImage} target="_blank" rel="noreferrer" style={styles.viewImgBtn}>
-                      View Custom Image ↗
-                    </a>
-                  ) : (
-                    <span style={{ color: "#444", fontSize: "0.78rem" }}>No custom image</span>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Note */}
-            {order.customerNote && (
-              <p style={{ color: "#ffd700", fontSize: "0.83rem", margin: "8px 0 0" }}>
-                📝 {order.customerNote}
-              </p>
-            )}
-
-            {/* Shipment Info */}
-            {order.shipment?.trackingId && (
-              <div style={styles.shipmentInfo}>
-                <span>🚚 <strong>{order.shipment.courierName}</strong></span>
-                <span> · AWB: <code style={{ color: "#87ceeb" }}>{order.shipment.trackingId}</code></span>
-                {order.shipment.shippedAt && (
-                  <span style={{ color: "#888", fontSize: "0.8rem" }}>
-                    {" "}· Shipped {new Date(order.shipment.shippedAt).toLocaleDateString("en-IN")}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Bottom row: status + actions */}
-            <div style={styles.bottomRow}>
-              {/* Status badge + changer */}
-              <div style={styles.statusRow}>
-                <span style={{ ...styles.statusBadge, background: STATUS_COLORS[order.status] || "#888" }}>
-                  {order.status}
-                </span>
-                <select
-                  style={styles.statusDropdown}
-                  value={order.status}
-                  onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                >
-                  {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-
-              {/* Refund button — only for paid Razorpay orders */}
-              {order.paymentMethod === "razorpay" && order.paymentStatus === "paid" && order.status !== "Cancelled" && (
-                <button
-                  style={styles.refundBtn}
-                  disabled={refunding === order._id}
-                  onClick={() => handleRefund(order._id)}
-                >
-                  {refunding === order._id ? "Processing..." : "↩ Mark Refunded"}
-                </button>
-              )}
-
-              {/* Ship via Shiprocket */}
-              {!order.shipment?.trackingId && order.status !== "Cancelled" && (
-                <div>
-                  {shippingOrderId === order._id ? (
-                    <div style={styles.shipForm}>
-                      <p style={{ color: "#ffd700", margin: "0 0 8px", fontSize: "0.85rem" }}>
-                        📦 Shipment Details (Shiprocket)
+                <div className="p-5">
+                  {/* Header row */}
+                  <div className="flex justify-between flex-wrap gap-2 mb-4">
+                    <div>
+                      <p className="text-xs font-medium text-slate-400 mb-0.5">Order ID</p>
+                      <p className="font-mono text-sm text-slate-700 font-semibold">{order._id}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-400 mb-0.5">
+                        {new Date(order.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
                       </p>
-                      <div style={styles.shipFormRow}>
-                        <input style={styles.shipInput} placeholder="State" value={shipForm.state} onChange={(e) => setShipForm({ ...shipForm, state: e.target.value })} />
-                        <input style={styles.shipInput} type="number" placeholder="Length cm" value={shipForm.length} onChange={(e) => setShipForm({ ...shipForm, length: e.target.value })} />
-                        <input style={styles.shipInput} type="number" placeholder="Breadth cm" value={shipForm.breadth} onChange={(e) => setShipForm({ ...shipForm, breadth: e.target.value })} />
-                        <input style={styles.shipInput} type="number" placeholder="Height cm" value={shipForm.height} onChange={(e) => setShipForm({ ...shipForm, height: e.target.value })} />
-                        <input style={styles.shipInput} type="number" step="0.1" placeholder="Weight kg" value={shipForm.weight} onChange={(e) => setShipForm({ ...shipForm, weight: e.target.value })} />
+                      <p className="font-black text-slate-900 text-lg">₹{order.totalPrice.toLocaleString()}</p>
+                    </div>
+                  </div>
+
+                  {/* Customer info */}
+                  <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl mb-4">
+                    <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                      {order.user?.name?.[0]?.toUpperCase() ?? "?"}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-800 text-sm">{order.user?.name}</p>
+                      <p className="text-xs text-slate-500 truncate">{order.user?.email}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        📞 {order.shippingAddress?.phone} &nbsp;·&nbsp;
+                        📍 {order.shippingAddress?.address}, {order.shippingAddress?.city} — {order.shippingAddress?.pincode}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Payment badge */}
+                  <div className="flex items-center gap-2 flex-wrap mb-4">
+                    <span className={`status-badge ${
+                      order.paymentStatus === "paid"     ? "bg-emerald-100 text-emerald-700" :
+                      order.paymentStatus === "refunded" ? "bg-red-100 text-red-600"         :
+                                                           "bg-amber-100 text-amber-700"
+                    }`}>
+                      {order.paymentMethod === "razorpay" ? "💳 Razorpay" : "💵 COD"}
+                      {" · "}{order.paymentStatus?.toUpperCase()}
+                    </span>
+                    {order.razorpayPaymentId && (
+                      <span className="text-xs text-slate-400 font-mono">
+                        ID: <span className="text-indigo-500">{order.razorpayPaymentId}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Items */}
+                  <div className="border-t border-slate-100 pt-3 flex flex-col gap-2 mb-4">
+                    {order.items.map((item, i) => (
+                      <div key={i} className="flex justify-between items-center flex-wrap gap-2">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">{item.name}</p>
+                          <p className="text-xs text-slate-400">Qty: {item.quantity} × ₹{item.price}</p>
+                        </div>
+                        {item.uploadedImage ? (
+                          <a
+                            href={item.uploadedImage} target="_blank" rel="noreferrer"
+                            className="text-xs border border-emerald-200 text-emerald-600 px-2.5 py-1 rounded-lg hover:bg-emerald-50 transition-colors font-medium"
+                          >
+                            View Design ↗
+                          </a>
+                        ) : (
+                          <span className="text-xs text-slate-300">No custom image</span>
+                        )}
                       </div>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <button style={styles.confirmShipBtn} onClick={() => handleShipOrder(order._id)}>
-                          ✅ Confirm & Ship
-                        </button>
-                        <button style={styles.cancelBtn} onClick={() => setShippingOrderId(null)}>
-                          Cancel
-                        </button>
+                    ))}
+                  </div>
+
+                  {order.customerNote && (
+                    <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 mb-3">
+                      <span className="mt-0.5">📝</span>
+                      <span>{order.customerNote}</span>
+                    </div>
+                  )}
+
+                  {order.shipment?.trackingId && (
+                    <div className="flex items-start gap-2 bg-sky-50 border border-sky-100 rounded-xl px-3 py-2.5 text-sm text-sky-700 mb-3">
+                      <span>🚚</span>
+                      <div>
+                        <span className="font-semibold">{order.shipment.courierName}</span>
+                        {" · "}AWB: <code className="font-mono text-xs">{order.shipment.trackingId}</code>
+                        {order.shipment.shippedAt && (
+                          <span className="text-xs text-sky-400 ml-1">
+                            · {new Date(order.shipment.shippedAt).toLocaleDateString("en-IN")}
+                          </span>
+                        )}
                       </div>
                     </div>
-                  ) : (
-                    <button
-                      style={styles.shipBtn}
-                      onClick={() => setShippingOrderId(order._id)}
-                    >
-                      🚚 Ship via Shiprocket
-                    </button>
                   )}
+
+                  {/* Bottom action row */}
+                  <div className="flex flex-wrap gap-3 items-start pt-3 border-t border-slate-100">
+                    {/* Status */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`status-badge ${cfg.cls} flex items-center gap-1.5`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                        {order.status}
+                      </span>
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                        className="admin-input !w-auto !py-1.5 !text-xs"
+                      >
+                        {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Refund */}
+                    {order.paymentMethod === "razorpay" && order.paymentStatus === "paid" && order.status !== "Cancelled" && (
+                      <button
+                        disabled={refunding === order._id}
+                        onClick={() => handleRefund(order._id)}
+                        className="admin-btn admin-btn-danger !py-1.5 !text-xs disabled:opacity-50"
+                      >
+                        {refunding === order._id ? "Processing…" : "↩ Mark Refunded"}
+                      </button>
+                    )}
+
+                    {/* Shiprocket */}
+                    {!order.shipment?.trackingId && order.status !== "Cancelled" && (
+                      shippingOrderId === order._id ? (
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 w-full mt-1">
+                          <p className="text-xs font-bold text-indigo-700 mb-3 flex items-center gap-1.5">📦 Shipment Details (Shiprocket)</p>
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {[
+                              { key: "state",   placeholder: "State",       type: "text" },
+                              { key: "length",  placeholder: "Length (cm)", type: "number" },
+                              { key: "breadth", placeholder: "Breadth (cm)",type: "number" },
+                              { key: "height",  placeholder: "Height (cm)", type: "number" },
+                              { key: "weight",  placeholder: "Weight (kg)", type: "number", step: "0.1" },
+                            ].map(({ key, placeholder, type, step }) => (
+                              <input
+                                key={key} type={type} step={step} placeholder={placeholder}
+                                value={shipForm[key]}
+                                onChange={(e) => setShipForm({ ...shipForm, [key]: e.target.value })}
+                                className="admin-input !w-36 !py-1.5 !text-xs"
+                              />
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => handleShipOrder(order._id)} className="admin-btn admin-btn-success !py-1.5 !text-xs">
+                              ✅ Confirm & Ship
+                            </button>
+                            <button onClick={() => setShippingOrderId(null)} className="admin-btn admin-btn-ghost !py-1.5 !text-xs">
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setShippingOrderId(order._id)}
+                          className="admin-btn bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 !py-1.5 !text-xs"
+                        >
+                          🚚 Ship via Shiprocket
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-        ))
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
 }
-
-const styles = {
-  title: { color: "#fff", fontSize: "1.4rem", marginBottom: "20px" },
-  filterBar: { background: "#1a1a3a", borderRadius: "10px", padding: "16px", marginBottom: "20px", display: "flex", flexDirection: "column", gap: "12px" },
-  chipRow: { display: "flex", flexWrap: "wrap", gap: "8px" },
-  chip: { padding: "6px 14px", borderRadius: "20px", border: "1px solid #333", background: "transparent", color: "#aaa", cursor: "pointer", fontSize: "0.82rem" },
-  activeChip: { background: "#e94560", color: "#fff", border: "1px solid #e94560" },
-  datePickers: { display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" },
-  dateInput: { padding: "6px 10px", borderRadius: "6px", border: "1px solid #333", background: "#0d0d1a", color: "#fff", fontSize: "0.85rem" },
-  statusSelect: { background: "#0d0d1a", color: "#fff", border: "1px solid #444", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", fontSize: "0.85rem", alignSelf: "flex-start" },
-  msg: { color: "#aaa", textAlign: "center", padding: "60px" },
-  card: { background: "#1a1a3a", borderRadius: "12px", padding: "18px", marginBottom: "16px" },
-  cardHeader: { display: "flex", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "8px" },
-  customerRow: { marginBottom: "4px", flexWrap: "wrap", wordBreak: "break-word" },
-  itemsSection: { borderTop: "1px solid #2a2a4e", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "8px" },
-  item: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" },
-  viewImgBtn: { border: "1px solid #a8d8a8", color: "#a8d8a8", padding: "4px 10px", borderRadius: "4px", textDecoration: "none", fontSize: "0.78rem", whiteSpace: "nowrap" },
-  shipmentInfo: { background: "#0d1a2e", borderRadius: "6px", padding: "8px 12px", marginTop: "10px", fontSize: "0.85rem", color: "#ccc" },
-  bottomRow: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "14px", flexWrap: "wrap", gap: "12px" },
-  statusRow: { display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" },
-  statusBadge: { color: "#1a1a2e", padding: "4px 12px", borderRadius: "20px", fontWeight: "bold", fontSize: "0.82rem" },
-  statusDropdown: { background: "#0d0d1a", color: "#fff", border: "1px solid #444", borderRadius: "6px", padding: "5px 10px", cursor: "pointer", fontSize: "0.82rem" },
-  shipBtn: { background: "#1a4a7a", border: "none", color: "#87ceeb", padding: "7px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "0.85rem" },
-  shipForm: { background: "#0d1a2e", borderRadius: "8px", padding: "12px" },
-  shipFormRow: { display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "10px" },
-  shipInput: { padding: "6px 10px", borderRadius: "4px", border: "1px solid #333", background: "#1a1a3a", color: "#fff", fontSize: "0.82rem", width: "100px", boxSizing: "border-box" },
-  confirmShipBtn: { background: "#2a7a2a", border: "none", color: "#fff", padding: "7px 14px", borderRadius: "6px", cursor: "pointer", fontSize: "0.82rem", fontWeight: "bold" },
-  cancelBtn: { background: "#333", border: "none", color: "#aaa", padding: "7px 14px", borderRadius: "6px", cursor: "pointer", fontSize: "0.82rem" },
-  paymentRow: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px", flexWrap: "wrap" },
-  payBadge: { padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "700" },
-  refundBtn: { background: "#2a0a14", border: "1px solid #e94560", color: "#e94560", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.8rem", fontWeight: "600" },
-};

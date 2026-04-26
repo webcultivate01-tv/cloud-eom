@@ -2,6 +2,8 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const User = require("../models/User");
+const { sendOrderConfirmation } = require("../config/mailer");
 
 // Lazy-initialize so placeholder values in .env don't crash on startup
 const getRazorpay = () =>
@@ -97,6 +99,18 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       paidAt: new Date(),
       status: "Processing", // auto-advance from Pending since payment confirmed
     });
+
+    // Send order confirmation email (non-blocking)
+    try {
+      const user = await User.findById(req.user._id).select("name email");
+      if (user) {
+        await sendOrderConfirmation({
+          toEmail: user.email,
+          toName: user.name,
+          order: { ...order.toObject(), user: { name: user.name, email: user.email } },
+        });
+      }
+    } catch (_) {}
 
     res.status(201).json(order);
   } catch (err) {

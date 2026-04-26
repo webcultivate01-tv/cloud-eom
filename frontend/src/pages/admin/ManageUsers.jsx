@@ -3,14 +3,23 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchAllUsers, toggleBlockUser, deleteUser } from "../../features/users/userSlice";
 import { toast } from "react-toastify";
 
+const AVATAR_GRADIENTS = [
+  "from-indigo-500 to-blue-600",
+  "from-violet-500 to-purple-600",
+  "from-emerald-500 to-teal-600",
+  "from-amber-500 to-orange-500",
+  "from-rose-500 to-pink-600",
+  "from-cyan-500 to-sky-600",
+];
+
+const avatarGradient = (name) => AVATAR_GRADIENTS[name.charCodeAt(0) % AVATAR_GRADIENTS.length];
+
 export default function ManageUsers() {
   const dispatch = useDispatch();
   const { users, loading } = useSelector((state) => state.users);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    dispatch(fetchAllUsers());
-  }, [dispatch]);
+  useEffect(() => { dispatch(fetchAllUsers()); }, [dispatch]);
 
   const handleToggleBlock = async (user) => {
     const action = user.isBlocked ? "Unblock" : "Block";
@@ -34,90 +43,106 @@ export default function ManageUsers() {
   );
 
   return (
-    <div>
-      <div style={styles.header}>
-        <h1 style={styles.title}>👥 Users ({users.length})</h1>
-        <input
-          style={styles.search}
-          placeholder="Search by name or email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+    <div className="animate-fade-in-up">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Users</h1>
+          <p className="text-slate-400 text-sm mt-0.5">{users.length} registered users</p>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            className="admin-input !pl-9 w-72"
+            placeholder="Search by name or email…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {loading ? (
-        <p style={styles.msg}>Loading users...</p>
+        <div className="flex items-center justify-center py-24">
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+          </div>
+        </div>
       ) : filtered.length === 0 ? (
-        <p style={styles.msg}>No users found.</p>
+        <div className="admin-card p-16 text-center">
+          <p className="text-4xl mb-3">👥</p>
+          <p className="text-slate-500 font-medium">No users found.</p>
+        </div>
       ) : (
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                {["#", "Name", "Email", "Phone", "Status", "Joined", "Actions"].map((h) => (
-                  <th key={h} style={styles.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((user, i) => (
-                <tr key={user._id} style={styles.tr}>
-                  <td style={styles.td}>{i + 1}</td>
-                  <td style={styles.td}>
-                    <div style={styles.nameCell}>
-                      <div style={styles.avatar}>{user.name[0]?.toUpperCase()}</div>
-                      {user.name}
-                    </div>
-                  </td>
-                  <td style={styles.td}>{user.email}</td>
-                  <td style={styles.td}>{user.phone || "—"}</td>
-                  <td style={styles.td}>
-                    <span style={{ ...styles.statusBadge, background: user.isBlocked ? "#e94560" : "#a8d8a8", color: "#1a1a2e" }}>
-                      {user.isBlocked ? "Blocked" : "Active"}
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    {new Date(user.createdAt).toLocaleDateString("en-IN")}
-                  </td>
-                  <td style={styles.td}>
-                    <div style={styles.actions}>
-                      <button
-                        style={{ ...styles.actionBtn, background: user.isBlocked ? "#2a7a2a" : "#b86000" }}
-                        onClick={() => handleToggleBlock(user)}
-                      >
-                        {user.isBlocked ? "Unblock" : "Block"}
-                      </button>
-                      <button
-                        style={{ ...styles.actionBtn, background: "#8b0000" }}
-                        onClick={() => handleDelete(user)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+        <div className="admin-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  {["#", "User", "Email", "Phone", "Status", "Joined", "Actions"].map((h) => (
+                    <th key={h} className="th">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filtered.map((user, i) => (
+                  <tr key={user._id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="td text-slate-400 text-xs font-medium">{i + 1}</td>
+                    <td className="td">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br ${avatarGradient(user.name)} text-white flex items-center justify-center font-bold text-sm shadow-sm`}>
+                          {user.name[0]?.toUpperCase()}
+                        </div>
+                        <span className="font-semibold text-slate-800">{user.name}</span>
+                      </div>
+                    </td>
+                    <td className="td text-slate-500">{user.email}</td>
+                    <td className="td text-slate-500">{user.phone || <span className="text-slate-300">—</span>}</td>
+                    <td className="td">
+                      <span className={`status-badge ${user.isBlocked ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-700"}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 inline-block ${user.isBlocked ? "bg-red-400" : "bg-emerald-400"}`} />
+                        {user.isBlocked ? "Blocked" : "Active"}
+                      </span>
+                    </td>
+                    <td className="td text-slate-400 text-xs">
+                      {new Date(user.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                    </td>
+                    <td className="td">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleToggleBlock(user)}
+                          className={`admin-btn !py-1.5 !px-3 !text-xs ${
+                            user.isBlocked
+                              ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
+                              : "bg-amber-50 hover:bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          {user.isBlocked ? "Unblock" : "Block"}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user)}
+                          className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !py-1.5 !px-3 !text-xs"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50 text-xs text-slate-400">
+            Showing {filtered.length} of {users.length} users
+          </div>
         </div>
       )}
     </div>
   );
 }
-
-const styles = {
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" },
-  title: { color: "#fff", fontSize: "1.4rem", margin: 0 },
-  search: { padding: "8px 14px", borderRadius: "6px", border: "1px solid #333", background: "#12122a", color: "#fff", fontSize: "0.9rem", width: "280px" },
-  msg: { color: "#aaa", textAlign: "center", padding: "40px" },
-  tableWrap: { overflowX: "auto" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: { background: "#1a1a3a", color: "#ffd700", padding: "12px 14px", textAlign: "left", fontSize: "0.82rem", whiteSpace: "nowrap" },
-  tr: { borderBottom: "1px solid #1a1a3a" },
-  td: { color: "#ccc", padding: "12px 14px", verticalAlign: "middle", fontSize: "0.88rem" },
-  nameCell: { display: "flex", alignItems: "center", gap: "10px" },
-  avatar: { width: "32px", height: "32px", borderRadius: "50%", background: "#e94560", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "0.85rem", flexShrink: 0 },
-  statusBadge: { padding: "3px 10px", borderRadius: "20px", fontSize: "0.78rem", fontWeight: "bold" },
-  actions: { display: "flex", gap: "6px", flexWrap: "nowrap" },
-  actionBtn: { border: "none", color: "#fff", padding: "5px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "0.8rem", whiteSpace: "nowrap" },
-};
