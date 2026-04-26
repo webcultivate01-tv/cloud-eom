@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMyOrders, cancelOrder } from "../features/orders/orderSlice";
+import { fetchMyOrders, requestCancelOTP, cancelOrder } from "../features/orders/orderSlice";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
@@ -16,15 +16,46 @@ const STATUS_STYLES = {
 export default function OrderHistory() {
   const dispatch = useDispatch();
   const { orders, loading } = useSelector((state) => state.orders);
-  const [cancelling, setCancelling] = useState(null);
 
-  const handleCancel = async (order) => {
-    if (!window.confirm(`Cancel order #${order._id.slice(-8).toUpperCase()}? This cannot be undone.`)) return;
-    setCancelling(order._id);
-    const result = await dispatch(cancelOrder(order._id));
-    setCancelling(null);
-    if (!result.error) toast.success("Order cancelled successfully");
-    else toast.error(result.payload || "Could not cancel order");
+  // OTP modal state
+  const [otpModal, setOtpModal]   = useState(null);  // order object being cancelled
+  const [otp, setOtp]             = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifying, setVerifying]   = useState(false);
+  const [otpSent, setOtpSent]       = useState(false); // whether OTP was sent
+
+  const closeModal = () => { setOtpModal(null); setOtp(""); setOtpSent(false); };
+
+  // Step 1 — user clicks Cancel → send OTP email
+  const handleRequestOTP = async (order) => {
+    setOtpModal(order);
+    setOtp("");
+    setOtpSent(false);
+    setSendingOtp(true);
+    const result = await dispatch(requestCancelOTP(order._id));
+    setSendingOtp(false);
+    if (!result.error) {
+      setOtpSent(true);
+      toast.success(result.payload?.message || "OTP sent to your email");
+    } else {
+      toast.error(result.payload || "Failed to send OTP");
+      setOtpModal(null);
+    }
+  };
+
+  // Step 2 — user submits OTP → cancel order
+  const handleConfirmCancel = async (e) => {
+    e.preventDefault();
+    if (!otp.trim() || otp.trim().length !== 6) { toast.error("Enter the 6-digit OTP"); return; }
+    setVerifying(true);
+    const result = await dispatch(cancelOrder({ id: otpModal._id, otp: otp.trim() }));
+    setVerifying(false);
+    if (!result.error) {
+      toast.success("Order cancelled successfully");
+      closeModal();
+    } else {
+      toast.error(result.payload || "Invalid OTP. Try again.");
+    }
   };
 
   useEffect(() => {
@@ -41,6 +72,72 @@ export default function OrderHistory() {
 
   return (
     <div style={s.page}>
+
+      {/* ── OTP Cancellation Modal ─────────────────────────── */}
+      {otpModal && (
+        <div style={s.overlay}>
+          <div style={s.modal}>
+            {/* Close */}
+            <button style={s.modalClose} onClick={closeModal}>✕</button>
+
+            <div style={s.modalIcon}>🔐</div>
+            <h2 style={s.modalTitle}>Verify to Cancel Order</h2>
+            <p style={s.modalSub}>
+              Order <strong>#{otpModal._id.slice(-8).toUpperCase()}</strong> · ₹{otpModal.totalPrice?.toLocaleString()}
+            </p>
+
+            {sendingOtp ? (
+              <p style={s.modalInfo}>📨 Sending OTP to your registered email…</p>
+            ) : otpSent ? (
+              <form onSubmit={handleConfirmCancel}>
+                <p style={s.modalInfo}>
+                  A 6-digit OTP has been sent to your registered email address.
+                  Enter it below to confirm cancellation.
+                </p>
+
+                {/* 6-box OTP input */}
+                <div style={s.otpBoxRow}>
+                  {[0,1,2,3,4,5].map((i) => (
+                    <input
+                      key={i}
+                      id={`otp-box-${i}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      style={s.otpBox}
+                      value={otp[i] || ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/, "");
+                        const arr = otp.split("");
+                        arr[i] = val;
+                        setOtp(arr.join("").slice(0, 6));
+                        if (val && i < 5) document.getElementById(`otp-box-${i + 1}`)?.focus();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Backspace" && !otp[i] && i > 0)
+                          document.getElementById(`otp-box-${i - 1}`)?.focus();
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div style={s.modalActions}>
+                  <button type="button" style={s.modalResendBtn}
+                    onClick={() => handleRequestOTP(otpModal)} disabled={sendingOtp}>
+                    Resend OTP
+                  </button>
+                  <button type="submit" style={s.modalConfirmBtn} disabled={verifying || otp.length < 6}>
+                    {verifying ? "Verifying…" : "Confirm Cancel"}
+                  </button>
+                </div>
+
+                <p style={s.modalExpiry}>⏱ OTP expires in 10 minutes</p>
+              </form>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       <div style={s.header}>
         <h1 style={s.title}>My Orders</h1>
         <Link to="/products" style={s.shopBtn}>Continue Shopping</Link>
@@ -125,13 +222,12 @@ export default function OrderHistory() {
                 {["Pending", "Processing"].includes(order.status) && (
                   <div style={s.cancelRow}>
                     <button
-                      style={{ ...s.cancelBtn, opacity: cancelling === order._id ? 0.6 : 1 }}
-                      disabled={cancelling === order._id}
-                      onClick={() => handleCancel(order)}
+                      style={s.cancelBtn}
+                      onClick={() => handleRequestOTP(order)}
                     >
-                      {cancelling === order._id ? "Cancelling..." : "✕ Cancel Order"}
+                      ✕ Cancel Order
                     </button>
-                    <p style={s.cancelNote}>Orders in Printing / Shipped state cannot be cancelled.</p>
+                    <p style={s.cancelNote}>Email OTP verification required · Printing / Shipped orders cannot be cancelled.</p>
                   </div>
                 )}
 
@@ -192,6 +288,21 @@ const s = {
   cancelRow: { padding: "10px 20px", display: "flex", alignItems: "center", gap: "14px", borderTop: "1px solid #f0f0f0", background: "#fff9f9" },
   cancelBtn: { background: "#fff", border: "1.5px solid #c41230", color: "#c41230", padding: "7px 18px", borderRadius: "6px", fontWeight: "700", fontSize: "0.82rem", cursor: "pointer", whiteSpace: "nowrap" },
   cancelNote: { color: "#bbb", fontSize: "0.75rem", margin: 0 },
+
+  // OTP Modal
+  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" },
+  modal: { background: "#fff", borderRadius: "16px", padding: "36px 32px", maxWidth: "420px", width: "100%", position: "relative", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" },
+  modalClose: { position: "absolute", top: "14px", right: "16px", background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#999", fontWeight: "700" },
+  modalIcon: { fontSize: "2.8rem", marginBottom: "10px" },
+  modalTitle: { fontSize: "1.2rem", fontWeight: "800", color: "#1a1a1a", marginBottom: "6px" },
+  modalSub: { color: "#888", fontSize: "0.85rem", marginBottom: "20px" },
+  modalInfo: { color: "#555", fontSize: "0.88rem", lineHeight: "1.6", marginBottom: "20px", background: "#f7f7f7", padding: "12px 14px", borderRadius: "8px" },
+  otpBoxRow: { display: "flex", gap: "10px", justifyContent: "center", marginBottom: "24px" },
+  otpBox: { width: "44px", height: "52px", textAlign: "center", fontSize: "1.4rem", fontWeight: "800", border: "2px solid #e0e0e0", borderRadius: "8px", outline: "none", color: "#1a1a1a", caretColor: "#c41230" },
+  modalActions: { display: "flex", gap: "10px", justifyContent: "center", marginBottom: "12px" },
+  modalResendBtn: { background: "#fff", border: "1.5px solid #c41230", color: "#c41230", padding: "10px 18px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem" },
+  modalConfirmBtn: { background: "#c41230", border: "none", color: "#fff", padding: "10px 22px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem" },
+  modalExpiry: { color: "#bbb", fontSize: "0.75rem", margin: 0 },
   shippingInfo: { color: "#666", fontSize: "0.8rem" },
   trackingInfo: { color: "#333", fontSize: "0.8rem", marginTop: "4px" },
   progressWrap: { display: "flex", alignItems: "flex-start", padding: "14px 20px 16px", gap: "0", overflowX: "auto" },

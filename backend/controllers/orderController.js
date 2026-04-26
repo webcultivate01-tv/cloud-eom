@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const { sendCancelOTP } = require("../config/mailer");
 
 // @desc    Place a new order
 // @route   POST /api/orders
@@ -197,11 +198,50 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-// @desc    Cancel own order (user) — only if Pending or Processing
+// @desc    Send a 6-digit OTP to user's email to confirm cancellation
+// @route   POST /api/orders/:id/cancel-otp
+// @access  Private
+const requestCancelOTP = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate("user", "name email");
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (order.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorised" });
+    }
+
+    const cancellable = ["Pending", "Processing"];
+    if (!cancellable.includes(order.status)) {
+      return res.status(400).json({ message: `Cannot cancel an order that is already "${order.status}"` });
+    }
+
+    // Generate 6-digit OTP, valid for 10 minutes
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    order.cancelOTP = otp;
+    order.cancelOTPExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    await order.save();
+
+    await sendCancelOTP({
+      toEmail: order.user.email,
+      toName: order.user.name,
+      orderId: order._id.toString(),
+      otp,
+    });
+
+    res.json({ message: `OTP sent to ${order.user.email}` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Verify OTP and cancel the order
 // @route   PUT /api/orders/:id/cancel
 // @access  Private
 const cancelOrder = async (req, res) => {
   try {
+    const { otp } = req.body;
+    if (!otp) return res.status(400).json({ message: "OTP is required" });
+
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
@@ -214,7 +254,22 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({ message: `Cannot cancel an order that is already "${order.status}"` });
     }
 
+    // Verify OTP
+    if (!order.cancelOTP || !order.cancelOTPExpiry) {
+      return res.status(400).json({ message: "No OTP requested. Please request a new OTP first." });
+    }
+    if (new Date() > order.cancelOTPExpiry) {
+      order.cancelOTP = null; order.cancelOTPExpiry = null; await order.save();
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+    }
+    if (order.cancelOTP !== otp.trim()) {
+      return res.status(400).json({ message: "Invalid OTP. Please check and try again." });
+    }
+
+    // OTP valid — cancel order and clear OTP fields
     order.status = "Cancelled";
+    order.cancelOTP = null;
+    order.cancelOTPExpiry = null;
     const updated = await order.save();
     res.json(updated);
   } catch (error) {
@@ -229,5 +284,6 @@ module.exports = {
   getAllOrders,
   updateOrderStatus,
   getDashboardStats,
+  requestCancelOTP,
   cancelOrder,
 };

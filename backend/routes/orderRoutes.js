@@ -7,6 +7,7 @@ const {
   getAllOrders,
   updateOrderStatus,
   getDashboardStats,
+  requestCancelOTP,
   cancelOrder,
 } = require("../controllers/orderController");
 const { protect } = require("../middleware/authMiddleware");
@@ -27,7 +28,10 @@ router.get("/my", protect, getMyOrders);
 // User or Admin: view single order
 router.get("/:id", protect, getOrderById);
 
-// User: cancel own order
+// User: request OTP to cancel order (sends email)
+router.post("/:id/cancel-otp", protect, requestCancelOTP);
+
+// User: verify OTP and cancel order
 router.put("/:id/cancel", protect, cancelOrder);
 
 // Admin: change order status

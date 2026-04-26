@@ -52,11 +52,23 @@ export const updateOrderStatus = createAsyncThunk(
   }
 );
 
-export const cancelOrder = createAsyncThunk(
-  "orders/cancel",
+export const requestCancelOTP = createAsyncThunk(
+  "orders/requestCancelOTP",
   async (id, { rejectWithValue }) => {
     try {
-      const { data } = await api.put(`/orders/${id}/cancel`);
+      const { data } = await api.post(`/orders/${id}/cancel-otp`);
+      return data; // { message: "OTP sent to ..." }
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to send OTP");
+    }
+  }
+);
+
+export const cancelOrder = createAsyncThunk(
+  "orders/cancel",
+  async ({ id, otp }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.put(`/orders/${id}/cancel`, { otp });
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to cancel order");
@@ -111,6 +123,10 @@ const orderSlice = createSlice({
         const idx = state.orders.findIndex((o) => o._id === action.payload._id);
         if (idx !== -1) state.orders[idx] = action.payload;
       })
+
+      .addCase(requestCancelOTP.pending,   (state) => { state.loading = true; state.error = null; })
+      .addCase(requestCancelOTP.fulfilled, (state) => { state.loading = false; })
+      .addCase(requestCancelOTP.rejected,  (state, action) => { state.loading = false; state.error = action.payload; })
 
       .addCase(cancelOrder.pending,   (state) => { state.loading = true; })
       .addCase(cancelOrder.fulfilled, (state, action) => {

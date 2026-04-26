@@ -63,6 +63,10 @@ const orderSchema = new mongoose.Schema(
     razorpaySignature: { type: String, default: "" },
     paidAt: { type: Date, default: null },
 
+    // Cancellation OTP (cleared after use)
+    cancelOTP:       { type: String, default: null },
+    cancelOTPExpiry: { type: Date,   default: null },
+
     // Filled when admin ships via Shiprocket
     shipment: {
       shiprocketOrderId: { type: String, default: "" },
