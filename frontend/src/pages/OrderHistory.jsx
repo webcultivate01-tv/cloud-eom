@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMyOrders } from "../features/orders/orderSlice";
+import { fetchMyOrders, cancelOrder } from "../features/orders/orderSlice";
+import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
 const STATUS_STYLES = {
@@ -15,6 +16,16 @@ const STATUS_STYLES = {
 export default function OrderHistory() {
   const dispatch = useDispatch();
   const { orders, loading } = useSelector((state) => state.orders);
+  const [cancelling, setCancelling] = useState(null);
+
+  const handleCancel = async (order) => {
+    if (!window.confirm(`Cancel order #${order._id.slice(-8).toUpperCase()}? This cannot be undone.`)) return;
+    setCancelling(order._id);
+    const result = await dispatch(cancelOrder(order._id));
+    setCancelling(null);
+    if (!result.error) toast.success("Order cancelled successfully");
+    else toast.error(result.payload || "Could not cancel order");
+  };
 
   useEffect(() => {
     dispatch(fetchMyOrders());
@@ -56,10 +67,19 @@ export default function OrderHistory() {
                       Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
                     </p>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                     <span style={{ ...s.statusBadge, background: st.bg, color: st.color }}>
                       <span style={{ ...s.statusDot, background: st.dot }} />
                       {order.status}
+                    </span>
+                    {/* Payment badge */}
+                    <span style={{
+                      ...s.payBadge,
+                      background: order.paymentStatus === "paid" ? "#e8f5e9" : order.paymentStatus === "refunded" ? "#ffebee" : "#fff8e1",
+                      color: order.paymentStatus === "paid" ? "#2e7d32" : order.paymentStatus === "refunded" ? "#c62828" : "#e65100",
+                    }}>
+                      {order.paymentMethod === "razorpay" ? "💳" : "💵"}
+                      {" "}{order.paymentStatus === "paid" ? "Paid" : order.paymentStatus === "refunded" ? "Refunded" : "Pending"}
                     </span>
                     <span style={s.totalPrice}>₹{order.totalPrice.toLocaleString()}</span>
                   </div>
@@ -100,6 +120,20 @@ export default function OrderHistory() {
                     </div>
                   )}
                 </div>
+
+                {/* Cancel button — only for Pending or Processing orders */}
+                {["Pending", "Processing"].includes(order.status) && (
+                  <div style={s.cancelRow}>
+                    <button
+                      style={{ ...s.cancelBtn, opacity: cancelling === order._id ? 0.6 : 1 }}
+                      disabled={cancelling === order._id}
+                      onClick={() => handleCancel(order)}
+                    >
+                      {cancelling === order._id ? "Cancelling..." : "✕ Cancel Order"}
+                    </button>
+                    <p style={s.cancelNote}>Orders in Printing / Shipped state cannot be cancelled.</p>
+                  </div>
+                )}
 
                 {/* Progress bar */}
                 <div style={s.progressWrap}>
@@ -143,6 +177,7 @@ const s = {
   orderId: { fontWeight: "700", color: "#1a1a1a", fontSize: "0.9rem" },
   orderDate: { color: "#999", fontSize: "0.8rem", marginTop: "2px" },
   statusBadge: { display: "flex", alignItems: "center", gap: "6px", padding: "5px 12px", borderRadius: "20px", fontSize: "0.8rem", fontWeight: "700" },
+  payBadge: { padding: "4px 10px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "700" },
   statusDot: { width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0 },
   totalPrice: { fontWeight: "800", color: "#c41230", fontSize: "1rem" },
   itemsList: { padding: "12px 20px", display: "flex", flexDirection: "column", gap: "12px" },
@@ -154,6 +189,9 @@ const s = {
   viewDesign: { color: "#c41230", fontSize: "0.76rem", fontWeight: "600" },
   itemTotal: { fontWeight: "700", color: "#1a1a1a", fontSize: "0.88rem" },
   cardBottom: { padding: "10px 20px", background: "#f9f9f9", borderTop: "1px solid #f0f0f0" },
+  cancelRow: { padding: "10px 20px", display: "flex", alignItems: "center", gap: "14px", borderTop: "1px solid #f0f0f0", background: "#fff9f9" },
+  cancelBtn: { background: "#fff", border: "1.5px solid #c41230", color: "#c41230", padding: "7px 18px", borderRadius: "6px", fontWeight: "700", fontSize: "0.82rem", cursor: "pointer", whiteSpace: "nowrap" },
+  cancelNote: { color: "#bbb", fontSize: "0.75rem", margin: 0 },
   shippingInfo: { color: "#666", fontSize: "0.8rem" },
   trackingInfo: { color: "#333", fontSize: "0.8rem", marginTop: "4px" },
   progressWrap: { display: "flex", alignItems: "flex-start", padding: "14px 20px 16px", gap: "0", overflowX: "auto" },

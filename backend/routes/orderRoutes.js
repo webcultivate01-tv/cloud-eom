@@ -7,6 +7,7 @@ const {
   getAllOrders,
   updateOrderStatus,
   getDashboardStats,
+  cancelOrder,
 } = require("../controllers/orderController");
 const { protect } = require("../middleware/authMiddleware");
 const { adminOnly } = require("../middleware/adminMiddleware");
@@ -25,6 +26,9 @@ router.get("/my", protect, getMyOrders);
 
 // User or Admin: view single order
 router.get("/:id", protect, getOrderById);
+
+// User: cancel own order
+router.put("/:id/cancel", protect, cancelOrder);
 
 // Admin: change order status
 router.put("/:id/status", protect, adminOnly, updateOrderStatus);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllOrders, updateOrderStatus } from "../../features/orders/orderSlice";
+import { markOrderRefunded } from "../../features/payment/paymentSlice";
 import { toast } from "react-toastify";
 import api from "../../utils/api";
 
@@ -32,8 +33,9 @@ export default function ManageOrders() {
   const [statusFilter, setStatusFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [shippingOrderId, setShippingOrderId] = useState(null); // which order is being shipped
+  const [shippingOrderId, setShippingOrderId] = useState(null);
   const [shipForm, setShipForm] = useState({ state: "Maharashtra", length: 10, breadth: 10, height: 5, weight: 0.5 });
+  const [refunding, setRefunding] = useState(null);
 
   const loadOrders = () => {
     const params = {};
@@ -52,6 +54,19 @@ export default function ManageOrders() {
     const result = await dispatch(updateOrderStatus({ id: orderId, status }));
     if (!result.error) toast.success(`Status updated to "${status}"`);
     else toast.error("Failed to update status");
+  };
+
+  const handleRefund = async (orderId) => {
+    if (!window.confirm("Mark this order as refunded and cancel it?")) return;
+    setRefunding(orderId);
+    const result = await dispatch(markOrderRefunded(orderId));
+    setRefunding(null);
+    if (!result.error) {
+      toast.success("Order marked as refunded");
+      loadOrders();
+    } else {
+      toast.error("Refund failed");
+    }
   };
 
   const handleShipOrder = async (orderId) => {
@@ -136,9 +151,26 @@ export default function ManageOrders() {
               <span style={{ color: "#888" }}> — {order.user?.email}</span>
               <span style={{ color: "#888" }}> | 📞 {order.shippingAddress?.phone}</span>
             </div>
-            <p style={{ color: "#888", fontSize: "0.82rem", margin: "4px 0 12px" }}>
+            <p style={{ color: "#888", fontSize: "0.82rem", margin: "4px 0 8px" }}>
               📍 {order.shippingAddress?.address}, {order.shippingAddress?.city} – {order.shippingAddress?.pincode}
             </p>
+
+            {/* Payment Info Row */}
+            <div style={styles.paymentRow}>
+              <span style={{
+                ...styles.payBadge,
+                background: order.paymentStatus === "paid" ? "#1b4a1b" : order.paymentStatus === "refunded" ? "#3a1020" : "#2a2000",
+                color: order.paymentStatus === "paid" ? "#a8d8a8" : order.paymentStatus === "refunded" ? "#e94560" : "#ffd700",
+              }}>
+                {order.paymentMethod === "razorpay" ? "💳 Razorpay" : "💵 COD"}
+                {" · "}{order.paymentStatus?.toUpperCase()}
+              </span>
+              {order.razorpayPaymentId && (
+                <span style={{ color: "#666", fontSize: "0.75rem" }}>
+                  ID: <code style={{ color: "#87ceeb" }}>{order.razorpayPaymentId}</code>
+                </span>
+              )}
+            </div>
 
             {/* Items */}
             <div style={styles.itemsSection}>
@@ -196,6 +228,17 @@ export default function ManageOrders() {
                   {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
+
+              {/* Refund button — only for paid Razorpay orders */}
+              {order.paymentMethod === "razorpay" && order.paymentStatus === "paid" && order.status !== "Cancelled" && (
+                <button
+                  style={styles.refundBtn}
+                  disabled={refunding === order._id}
+                  onClick={() => handleRefund(order._id)}
+                >
+                  {refunding === order._id ? "Processing..." : "↩ Mark Refunded"}
+                </button>
+              )}
 
               {/* Ship via Shiprocket */}
               {!order.shipment?.trackingId && order.status !== "Cancelled" && (
@@ -266,4 +309,7 @@ const styles = {
   shipInput: { padding: "6px 10px", borderRadius: "4px", border: "1px solid #333", background: "#1a1a3a", color: "#fff", fontSize: "0.82rem", width: "100px", boxSizing: "border-box" },
   confirmShipBtn: { background: "#2a7a2a", border: "none", color: "#fff", padding: "7px 14px", borderRadius: "6px", cursor: "pointer", fontSize: "0.82rem", fontWeight: "bold" },
   cancelBtn: { background: "#333", border: "none", color: "#aaa", padding: "7px 14px", borderRadius: "6px", cursor: "pointer", fontSize: "0.82rem" },
+  paymentRow: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px", flexWrap: "wrap" },
+  payBadge: { padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "700" },
+  refundBtn: { background: "#2a0a14", border: "1px solid #e94560", color: "#e94560", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "0.8rem", fontWeight: "600" },
 };

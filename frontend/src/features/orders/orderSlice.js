@@ -52,6 +52,18 @@ export const updateOrderStatus = createAsyncThunk(
   }
 );
 
+export const cancelOrder = createAsyncThunk(
+  "orders/cancel",
+  async (id, { rejectWithValue }) => {
+    try {
+      const { data } = await api.put(`/orders/${id}/cancel`);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to cancel order");
+    }
+  }
+);
+
 export const fetchDashboardStats = createAsyncThunk(
   "orders/dashboardStats",
   async (_, { rejectWithValue }) => {
@@ -99,6 +111,14 @@ const orderSlice = createSlice({
         const idx = state.orders.findIndex((o) => o._id === action.payload._id);
         if (idx !== -1) state.orders[idx] = action.payload;
       })
+
+      .addCase(cancelOrder.pending,   (state) => { state.loading = true; })
+      .addCase(cancelOrder.fulfilled, (state, action) => {
+        state.loading = false;
+        const idx = state.orders.findIndex((o) => o._id === action.payload._id);
+        if (idx !== -1) state.orders[idx] = action.payload;
+      })
+      .addCase(cancelOrder.rejected,  (state, action) => { state.loading = false; state.error = action.payload; })
 
       .addCase(fetchDashboardStats.pending, (state) => { state.loading = true; })
       .addCase(fetchDashboardStats.fulfilled, (state, action) => { state.loading = false; state.stats = action.payload; })

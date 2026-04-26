@@ -47,11 +47,27 @@ const orderSchema = new mongoose.Schema(
       default: "",
     },
 
+    // Payment info
+    paymentMethod: {
+      type: String,
+      enum: ["razorpay", "cod"],
+      default: "cod",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+    },
+    razorpayOrderId:   { type: String, default: "" },
+    razorpayPaymentId: { type: String, default: "" },
+    razorpaySignature: { type: String, default: "" },
+    paidAt: { type: Date, default: null },
+
     // Filled when admin ships via Shiprocket
     shipment: {
       shiprocketOrderId: { type: String, default: "" },
       shipmentId: { type: String, default: "" },
-      trackingId: { type: String, default: "" },   // AWB number
+      trackingId: { type: String, default: "" },
       courierName: { type: String, default: "" },
       shippedAt: { type: Date, default: null },
     },

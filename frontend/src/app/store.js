@@ -6,6 +6,7 @@ import orderReducer from "../features/orders/orderSlice";
 import userReducer from "../features/users/userSlice";
 import eventReducer from "../features/events/eventSlice";
 import categoryReducer from "../features/categories/categorySlice";
+import paymentReducer from "../features/payment/paymentSlice";
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     users: userReducer,
     events: eventReducer,
     categories: categoryReducer,
+    payment: paymentReducer,
   },
 });
 

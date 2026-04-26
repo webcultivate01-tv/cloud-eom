@@ -6,7 +6,7 @@ const Product = require("../models/Product");
 // @access  Private (logged-in users)
 const createOrder = async (req, res) => {
   try {
-    const { items, shippingAddress, customerNote } = req.body;
+    const { items, shippingAddress, customerNote, paymentMethod } = req.body;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "No items in order" });
@@ -43,6 +43,8 @@ const createOrder = async (req, res) => {
       shippingAddress,
       totalPrice,
       customerNote,
+      paymentMethod: paymentMethod === "razorpay" ? "razorpay" : "cod",
+      paymentStatus: "pending",
     });
 
     res.status(201).json(order);
@@ -170,9 +172,16 @@ const getDashboardStats = async (req, res) => {
     const totalUsers = await User.countDocuments({ role: "user" });
     const totalProducts = await require("../models/Product").countDocuments();
 
-    // Sum revenue only from completed orders
+    // Sum revenue: paid online + all COD orders
     const revenueResult = await Order.aggregate([
-      { $match: { status: { $in: ["Completed", "Processing"] } } },
+      {
+        $match: {
+          $or: [
+            { paymentStatus: "paid" },
+            { paymentMethod: "cod", status: { $nin: ["Cancelled"] } },
+          ],
+        },
+      },
       { $group: { _id: null, total: { $sum: "$totalPrice" } } },
     ]);
     const totalRevenue = revenueResult[0]?.total || 0;
@@ -188,6 +197,31 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
+// @desc    Cancel own order (user) — only if Pending or Processing
+// @route   PUT /api/orders/:id/cancel
+// @access  Private
+const cancelOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorised to cancel this order" });
+    }
+
+    const cancellable = ["Pending", "Processing"];
+    if (!cancellable.includes(order.status)) {
+      return res.status(400).json({ message: `Cannot cancel an order that is already "${order.status}"` });
+    }
+
+    order.status = "Cancelled";
+    const updated = await order.save();
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -195,4 +229,5 @@ module.exports = {
   getAllOrders,
   updateOrderStatus,
   getDashboardStats,
+  cancelOrder,
 };
