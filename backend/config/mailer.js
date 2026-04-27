@@ -165,4 +165,114 @@ const sendOrderStatusUpdate = async ({ toEmail, toName, orderId, status, totalPr
   });
 };
 
-module.exports = { sendCancelOTP, sendOrderConfirmation, sendOrderStatusUpdate };
+// ── Inquiry emails ────────────────────────────────────────────
+
+const sendInquiryToAdmin = async ({ name, email, phone, subject, message }) => {
+  await transporter.sendMail({
+    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
+    to: process.env.SMTP_USER,
+    subject: `New Inquiry Received — ${subject}`,
+    html: wrap(`
+      <p style="color:#c41230;font-size:1rem;font-weight:700;margin:0 0 16px;">📬 New Inquiry Received</p>
+
+      <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+        <tr>
+          <td style="padding:9px 12px;background:#f7f7f7;font-weight:700;color:#555;width:130px;border-radius:4px 0 0 4px;">Name</td>
+          <td style="padding:9px 12px;color:#1a1a1a;border-bottom:1px solid #f0f0f0;">${name}</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 12px;background:#f7f7f7;font-weight:700;color:#555;">Email</td>
+          <td style="padding:9px 12px;color:#1a1a1a;border-bottom:1px solid #f0f0f0;">${email}</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 12px;background:#f7f7f7;font-weight:700;color:#555;">Phone</td>
+          <td style="padding:9px 12px;color:#1a1a1a;border-bottom:1px solid #f0f0f0;">${phone}</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 12px;background:#f7f7f7;font-weight:700;color:#555;">Subject</td>
+          <td style="padding:9px 12px;color:#1a1a1a;border-bottom:1px solid #f0f0f0;">${subject}</td>
+        </tr>
+      </table>
+
+      <div style="margin-top:16px;">
+        <p style="font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Message</p>
+        <div style="background:#f7f7f7;border-left:4px solid #c41230;border-radius:6px;padding:14px 16px;">
+          <p style="color:#333;font-size:0.9rem;line-height:1.7;margin:0;">${message.replace(/\n/g, "<br/>")}</p>
+        </div>
+      </div>
+
+      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
+        Log in to the <strong>Admin Panel → Enquiries</strong> to view and respond to this inquiry.
+      </p>
+    `),
+  });
+};
+
+const sendInquiryConfirmationToUser = async ({ toEmail, toName, subject }) => {
+  await transporter.sendMail({
+    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
+    to: toEmail,
+    subject: `Thank You for Contacting Us — Cloud Graphics Amravati`,
+    html: wrap(`
+      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
+
+      <div style="background:#f1f8e9;border-left:4px solid #2e7d32;border-radius:6px;padding:14px 18px;margin:16px 0;">
+        <p style="color:#2e7d32;font-size:1rem;font-weight:700;margin:0 0 4px;">✅ Inquiry Received!</p>
+        <p style="color:#555;font-size:0.88rem;margin:0;">
+          Thank you for reaching out to us. We have received your inquiry and our team will get back to you as soon as possible.
+        </p>
+      </div>
+
+      <p style="color:#555;font-size:0.85rem;">
+        <strong>Your Subject:</strong> ${subject}
+      </p>
+
+      <p style="color:#888;font-size:0.85rem;line-height:1.7;margin-top:16px;">
+        We typically respond within <strong>24–48 hours</strong> on business days.
+        If your matter is urgent, feel free to visit our store or call us directly.
+      </p>
+
+      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
+        Thank you for choosing Cloud Graphics Amravati!<br/>
+        <strong style="color:#c41230;">— The Cloud Graphics Team</strong>
+      </p>
+    `),
+  });
+};
+
+const sendInquiryResponseToUser = async ({ toEmail, toName, subject, adminResponse }) => {
+  await transporter.sendMail({
+    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
+    to: toEmail,
+    subject: `Re: ${subject} — Cloud Graphics Amravati`,
+    html: wrap(`
+      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
+
+      <p style="color:#555;font-size:0.9rem;">
+        Thank you for your patience. Our team has responded to your inquiry regarding
+        <strong>"${subject}"</strong>.
+      </p>
+
+      <div style="margin:20px 0;">
+        <p style="font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Our Response</p>
+        <div style="background:#f7f7f7;border-left:4px solid #c41230;border-radius:6px;padding:16px 18px;">
+          <p style="color:#1a1a1a;font-size:0.9rem;line-height:1.75;margin:0;">${adminResponse.replace(/\n/g, "<br/>")}</p>
+        </div>
+      </div>
+
+      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
+        If you have further questions, feel free to reach out to us again.<br/>
+        <strong style="color:#c41230;">— The Cloud Graphics Team</strong>
+      </p>
+    `),
+  });
+};
+
+module.exports = {
+  sendCancelOTP,
+  sendOrderConfirmation,
+  sendOrderStatusUpdate,
+  sendInquiryToAdmin,
+  sendInquiryConfirmationToUser,
+  sendInquiryResponseToUser,
+};

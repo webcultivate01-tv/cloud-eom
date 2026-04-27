@@ -8,6 +8,7 @@ import eventReducer from "../features/events/eventSlice";
 import categoryReducer from "../features/categories/categorySlice";
 import paymentReducer from "../features/payment/paymentSlice";
 import favoritesReducer from "../features/favorites/favoritesSlice";
+import inquiryReducer from "../features/inquiry/inquirySlice";
 
 const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ const store = configureStore({
     categories: categoryReducer,
     payment: paymentReducer,
     favorites: favoritesReducer,
+    inquiry: inquiryReducer,
   },
 });
 

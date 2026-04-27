@@ -184,6 +184,12 @@ export default function Navbar() {
               </Link>
             );
           })}
+          <Link
+            to="/contact"
+            style={{ ...s.catLink, ...(location.pathname === "/contact" ? s.catLinkActive : {}) }}
+          >
+            CONTACT US
+          </Link>
         </div>
       </nav>
     </header>

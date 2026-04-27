@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import { clearCart } from "../features/cart/cartSlice";
+import { fetchPendingCount } from "../features/inquiry/inquirySlice";
 import { toast } from "react-toastify";
 
 /* ── Inline SVG Icons ──────────────────────────── */
@@ -70,6 +71,12 @@ const IC = {
       <line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
   ),
+  Mail: () => (
+    <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+      <polyline points="22,6 12,13 2,6"/>
+    </svg>
+  ),
   Menu: () => (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
       <line x1="4" y1="7" x2="20" y2="7"/>
@@ -93,13 +100,22 @@ const NAV_LINKS = [
   { to: "/admin/admins",     Icon: IC.Shield,    label: "Admin Management" },
   { to: "/admin/events",     Icon: IC.Calendar,  label: "Events" },
   { to: "/admin/categories", Icon: IC.Tag,       label: "Categories" },
+  { to: "/admin/inquiries",  Icon: IC.Mail,      label: "Enquiries",  badge: true },
 ];
 
 export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+  const { user }         = useSelector((state) => state.auth);
+  const { pendingCount } = useSelector((state) => state.inquiry);
+
+  // Poll pending inquiry count every 60 s so the badge stays fresh
+  useEffect(() => {
+    dispatch(fetchPendingCount());
+    const id = setInterval(() => dispatch(fetchPendingCount()), 60_000);
+    return () => clearInterval(id);
+  }, [dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -167,7 +183,7 @@ export default function AdminLayout({ children }) {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
-          {NAV_LINKS.map(({ to, Icon, label }) => (
+          {NAV_LINKS.map(({ to, Icon, label, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -182,8 +198,20 @@ export default function AdminLayout({ children }) {
                  }`
               }
             >
-              <span className="shrink-0"><Icon /></span>
+              <span className="shrink-0 relative">
+                <Icon />
+                {badge && pendingCount > 0 && !sidebarOpen && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </span>
+                )}
+              </span>
               {sidebarOpen && <span className="flex-1">{label}</span>}
+              {sidebarOpen && badge && pendingCount > 0 && (
+                <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center leading-none">
+                  {pendingCount > 99 ? "99+" : pendingCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -234,9 +262,18 @@ export default function AdminLayout({ children }) {
 
           <div className="flex items-center gap-3">
             {/* Notification bell */}
-            <button className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+            <NavLink
+              to="/admin/inquiries"
+              className="relative w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+              title={pendingCount > 0 ? `${pendingCount} pending enquir${pendingCount === 1 ? "y" : "ies"}` : "Enquiries"}
+            >
               <IC.Bell />
-            </button>
+              {pendingCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {pendingCount > 9 ? "9+" : pendingCount}
+                </span>
+              )}
+            </NavLink>
             <div className="h-8 w-px bg-slate-100" />
             {/* User info */}
             <div className="text-right hidden sm:block">
