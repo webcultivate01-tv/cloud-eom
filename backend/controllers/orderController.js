@@ -166,9 +166,12 @@ const updateOrderStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid status value" });
     }
 
+    const updateFields = { status };
+    if (status === "Delivered") updateFields.deliveredAt = new Date();
+
     const order = await Order.findByIdAndUpdate(
       req.params.id,
-      { status },
+      updateFields,
       { new: true }
     ).populate("user", "name email");
 

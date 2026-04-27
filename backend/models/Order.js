@@ -66,6 +66,9 @@ const orderSchema = new mongoose.Schema(
     razorpaySignature: { type: String, default: "" },
     paidAt: { type: Date, default: null },
 
+    // Set when admin marks the order as Delivered — used for 7-day replacement window
+    deliveredAt: { type: Date, default: null },
+
     // Cancellation OTP (cleared after use)
     cancelOTP:       { type: String, default: null },
     cancelOTPExpiry: { type: Date,   default: null },

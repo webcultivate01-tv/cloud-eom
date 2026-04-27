@@ -9,6 +9,8 @@ import categoryReducer from "../features/categories/categorySlice";
 import paymentReducer from "../features/payment/paymentSlice";
 import favoritesReducer from "../features/favorites/favoritesSlice";
 import inquiryReducer from "../features/inquiry/inquirySlice";
+import reviewReducer from "../features/review/reviewSlice";
+import replacementReducer from "../features/replacement/replacementSlice";
 
 const store = configureStore({
   reducer: {
@@ -22,6 +24,8 @@ const store = configureStore({
     payment: paymentReducer,
     favorites: favoritesReducer,
     inquiry: inquiryReducer,
+    review:       reviewReducer,
+    replacement:  replacementReducer,
   },
 });
 

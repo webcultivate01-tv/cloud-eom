@@ -171,7 +171,7 @@ const sendInquiryToAdmin = async ({ name, email, phone, subject, message }) => {
   await transporter.sendMail({
     from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
     to: process.env.SMTP_USER,
-    subject: `New Inquiry Received — ${subject}`,
+    subject: `New Enquiry Received`,
     html: wrap(`
       <p style="color:#c41230;font-size:1rem;font-weight:700;margin:0 0 16px;">📬 New Inquiry Received</p>
 
@@ -212,7 +212,7 @@ const sendInquiryConfirmationToUser = async ({ toEmail, toName, subject }) => {
   await transporter.sendMail({
     from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
     to: toEmail,
-    subject: `Thank You for Contacting Us — Cloud Graphics Amravati`,
+    subject: `Thank You for Contacting Cloud Graphics`,
     html: wrap(`
       <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
 
@@ -268,6 +268,56 @@ const sendInquiryResponseToUser = async ({ toEmail, toName, subject, adminRespon
   });
 };
 
+// ── Replacement request emails ────────────────────────────────
+
+const REPLACEMENT_STATUS_INFO = {
+  approved:   { emoji: "✅", color: "#2e7d32", bg: "#f1f8e9", text: "Your replacement request has been approved! We will process it shortly." },
+  rejected:   { emoji: "❌", color: "#b71c1c", bg: "#ffebee", text: "Unfortunately, your replacement request has been rejected." },
+  processing: { emoji: "⚙️", color: "#1565c0", bg: "#e3f2fd", text: "Your replacement is currently being processed by our team." },
+  completed:  { emoji: "🎉", color: "#1b5e20", bg: "#e8f5e9", text: "Your replacement has been completed and dispatched. Thank you for your patience!" },
+};
+
+const sendReplacementStatusUpdate = async ({ toEmail, toName, productName, status, adminResponse }) => {
+  const info = REPLACEMENT_STATUS_INFO[status] || {
+    emoji: "📋", color: "#333", bg: "#f7f7f7",
+    text: `Your replacement request status has been updated to: ${status}.`,
+  };
+
+  await transporter.sendMail({
+    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
+    to: toEmail,
+    subject: `Replacement Request Update — Cloud Graphics Amravati`,
+    html: wrap(`
+      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
+
+      <div style="background:${info.bg};border-left:4px solid ${info.color};border-radius:6px;padding:14px 18px;margin:16px 0;">
+        <p style="color:${info.color};font-size:1rem;font-weight:700;margin:0 0 4px;">
+          ${info.emoji} Replacement Status: ${status.charAt(0).toUpperCase() + status.slice(1)}
+        </p>
+        <p style="color:#555;font-size:0.88rem;margin:0;">${info.text}</p>
+      </div>
+
+      <p style="color:#555;font-size:0.85rem;">
+        <strong>Product:</strong> ${productName}
+      </p>
+
+      ${adminResponse ? `
+        <div style="margin-top:16px;">
+          <p style="font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Message from Our Team</p>
+          <div style="background:#f7f7f7;border-left:4px solid #c41230;border-radius:6px;padding:14px 16px;">
+            <p style="color:#333;font-size:0.9rem;line-height:1.7;margin:0;">${adminResponse.replace(/\n/g, "<br/>")}</p>
+          </div>
+        </div>
+      ` : ""}
+
+      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
+        If you have any questions, feel free to contact us.<br/>
+        <strong style="color:#c41230;">— The Cloud Graphics Team</strong>
+      </p>
+    `),
+  });
+};
+
 module.exports = {
   sendCancelOTP,
   sendOrderConfirmation,
@@ -275,4 +325,5 @@ module.exports = {
   sendInquiryToAdmin,
   sendInquiryConfirmationToUser,
   sendInquiryResponseToUser,
+  sendReplacementStatusUpdate,
 };

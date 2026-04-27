@@ -147,6 +147,9 @@ export default function Navbar() {
                   <Link to="/favorites" style={s.dropItem} onClick={() => setMenuOpen(false)}>
                     ❤️ My Favourites
                   </Link>
+                  <Link to="/replacements" style={s.dropItem} onClick={() => setMenuOpen(false)}>
+                    🔄 My Replacements
+                  </Link>
                   <Link to="/orders" style={s.dropItem} onClick={() => setMenuOpen(false)}>
                     📦 My Orders
                   </Link>

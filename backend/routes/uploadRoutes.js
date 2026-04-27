@@ -18,4 +18,19 @@ router.post("/", protect, upload.single("image"), (req, res) => {
   }
 });
 
+// @desc    Upload multiple images (up to 5) — used for replacement requests
+// @route   POST /api/upload/multiple
+// @access  Private
+router.post("/multiple", protect, upload.array("images", 5), (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No image files provided" });
+    }
+    const imageUrls = req.files.map((f) => f.path);
+    res.json({ imageUrls });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
