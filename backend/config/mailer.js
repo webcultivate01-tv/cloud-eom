@@ -318,6 +318,93 @@ const sendReplacementStatusUpdate = async ({ toEmail, toName, productName, statu
   });
 };
 
+// ── Shipment dispatched email (with tracking details) ───────
+
+const sendShipmentEmail = async ({ toEmail, toName, orderId, items, totalPrice, trackingId, courierName, shippingAddress }) => {
+  const shortId = orderId.slice(-8).toUpperCase();
+
+  // Shiprocket public tracking URL
+  const trackingUrl = trackingId
+    ? `https://shiprocket.co/tracking/${trackingId}`
+    : null;
+
+  const itemRows = items
+    .map(
+      (it) =>
+        `<tr>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#333;font-size:0.85rem;">${it.name}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#555;font-size:0.85rem;text-align:center;">${it.quantity}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#333;font-size:0.85rem;text-align:right;">₹${(it.price * it.quantity).toLocaleString("en-IN")}</td>
+        </tr>`
+    )
+    .join("");
+
+  await transporter.sendMail({
+    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
+    to: toEmail,
+    subject: `Your Order #${shortId} Has Been Shipped! 🚚`,
+    html: wrap(`
+      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
+
+      <div style="background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;padding:14px 18px;margin:16px 0;">
+        <p style="color:#2e7d32;font-size:1rem;font-weight:700;margin:0 0 4px;">🚚 Your order is on its way!</p>
+        <p style="color:#555;font-size:0.88rem;margin:0;">Your package has been handed over to the courier and is heading to you.</p>
+      </div>
+
+      <!-- Tracking Box -->
+      <div style="background:#f7f9ff;border:2px solid #c41230;border-radius:10px;padding:20px 24px;margin:20px 0;text-align:center;">
+        <p style="color:#888;font-size:0.72rem;margin:0 0 6px;letter-spacing:1px;text-transform:uppercase;">Tracking Number (AWB)</p>
+        <p style="color:#c41230;font-size:1.6rem;font-weight:900;letter-spacing:4px;margin:0 0 8px;">${trackingId || "Pending"}</p>
+        ${courierName ? `<p style="color:#555;font-size:0.85rem;margin:0 0 12px;">Courier: <strong>${courierName}</strong></p>` : ""}
+        ${trackingUrl ? `
+          <a href="${trackingUrl}"
+             style="display:inline-block;background:#c41230;color:#fff;padding:10px 28px;border-radius:6px;font-weight:700;font-size:0.88rem;text-decoration:none;">
+            Track Your Order →
+          </a>
+        ` : ""}
+      </div>
+
+      <!-- Delivery Address -->
+      <h3 style="color:#1a1a1a;font-size:0.9rem;margin:20px 0 8px;">📍 Delivering To</h3>
+      <p style="color:#555;font-size:0.85rem;line-height:1.7;margin:0 0 16px;background:#f7f7f7;padding:12px 14px;border-radius:8px;">
+        <strong>${shippingAddress.fullName}</strong><br/>
+        📞 ${shippingAddress.phone}<br/>
+        ${shippingAddress.address}${shippingAddress.addressLine2 ? ", " + shippingAddress.addressLine2 : ""}<br/>
+        ${shippingAddress.landmark ? "Near: " + shippingAddress.landmark + "<br/>" : ""}
+        ${shippingAddress.city}${shippingAddress.state ? ", " + shippingAddress.state : ""} – ${shippingAddress.pincode}
+      </p>
+
+      <!-- Items -->
+      <h3 style="color:#1a1a1a;font-size:0.9rem;margin:16px 0 8px;">📦 Items Shipped</h3>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+        <thead>
+          <tr style="background:#f7f7f7;">
+            <th style="padding:8px 10px;text-align:left;font-size:0.78rem;color:#888;text-transform:uppercase;">Item</th>
+            <th style="padding:8px 10px;text-align:center;font-size:0.78rem;color:#888;text-transform:uppercase;">Qty</th>
+            <th style="padding:8px 10px;text-align:right;font-size:0.78rem;color:#888;text-transform:uppercase;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding:10px;font-weight:700;color:#1a1a1a;font-size:0.9rem;">Total</td>
+            <td style="padding:10px;font-weight:700;color:#c41230;font-size:1rem;text-align:right;">₹${totalPrice.toLocaleString("en-IN")}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <p style="color:#888;font-size:0.82rem;margin-top:8px;">
+        Expected delivery: <strong>3–7 business days</strong> depending on your location.
+      </p>
+
+      <p style="color:#888;font-size:0.82rem;margin-top:16px;">
+        If you have any questions about your delivery, reply to this email or contact us.<br/>
+        Thank you for shopping with <strong style="color:#c41230;">Cloud Graphics Amravati</strong>!
+      </p>
+    `),
+  });
+};
+
 const sendPasswordResetOTP = async ({ toEmail, toName, otp }) => {
   await transporter.sendMail({
     from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
@@ -346,6 +433,7 @@ module.exports = {
   sendCancelOTP,
   sendOrderConfirmation,
   sendOrderStatusUpdate,
+  sendShipmentEmail,
   sendInquiryToAdmin,
   sendInquiryConfirmationToUser,
   sendInquiryResponseToUser,

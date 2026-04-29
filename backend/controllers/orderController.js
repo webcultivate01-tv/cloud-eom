@@ -166,8 +166,21 @@ const updateOrderStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid status value" });
     }
 
+    // Fetch the order first to check if it was cancelled by the user
+    const existing = await Order.findById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Order not found" });
+
+    // If the user cancelled this order, admin cannot change its status
+    if (existing.cancelledBy === "user") {
+      return res.status(403).json({
+        message: "This order was cancelled by the customer and cannot be modified.",
+      });
+    }
+
     const updateFields = { status };
     if (status === "Delivered") updateFields.deliveredAt = new Date();
+    // Track admin cancellation
+    if (status === "Cancelled") updateFields.cancelledBy = "admin";
 
     const order = await Order.findByIdAndUpdate(
       req.params.id,
@@ -323,6 +336,7 @@ const cancelOrder = async (req, res) => {
     }
 
     order.status = "Cancelled";
+    order.cancelledBy = "user";
     order.cancelOTP = null;
     order.cancelOTPExpiry = null;
     const updated = await order.save();

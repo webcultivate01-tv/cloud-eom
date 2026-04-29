@@ -73,6 +73,9 @@ const orderSchema = new mongoose.Schema(
     cancelOTP:       { type: String, default: null },
     cancelOTPExpiry: { type: Date,   default: null },
 
+    // Who cancelled: 'user' = customer self-cancelled, 'admin' = admin cancelled
+    cancelledBy: { type: String, enum: ["user", "admin"], default: null },
+
     // Filled when admin ships via Shiprocket
     shipment: {
       shiprocketOrderId: { type: String, default: "" },

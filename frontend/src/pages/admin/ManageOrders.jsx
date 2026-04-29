@@ -36,6 +36,7 @@ export default function ManageOrders() {
   const [shippingOrderId, setShippingOrderId] = useState(null);
   const [shipForm, setShipForm] = useState({ state: "Maharashtra", length: 10, breadth: 10, height: 5, weight: 0.5 });
   const [refunding, setRefunding] = useState(null);
+  const [cancellingShipment, setCancellingShipment] = useState(null);
 
   const loadOrders = () => {
     const params = {};
@@ -66,11 +67,29 @@ export default function ManageOrders() {
   const handleShipOrder = async (orderId) => {
     try {
       const { data } = await api.post(`/shipment/${orderId}`, shipForm);
-      toast.success(`Shipped! Tracking: ${data.shipment.trackingId || "Assigned"}`);
+      if (data.pickupScheduled) {
+        toast.success(`✅ Shipped & pickup scheduled! AWB: ${data.shipment.trackingId || "Pending"}`);
+      } else {
+        toast.warn(`Order created on Shiprocket but pickup needs manual confirmation. AWB: ${data.shipment.trackingId || "Pending"}`);
+      }
       setShippingOrderId(null);
       loadOrders();
     } catch (err) {
       toast.error(err.response?.data?.message || "Shiprocket error. Check credentials in .env");
+    }
+  };
+
+  const handleCancelShipment = async (orderId) => {
+    if (!window.confirm("Cancel this shipment on Shiprocket? The order will go back to Processing status.")) return;
+    setCancellingShipment(orderId);
+    try {
+      const { data } = await api.post(`/shipment/${orderId}/cancel`);
+      toast.success(data.message);
+      loadOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to cancel shipment");
+    } finally {
+      setCancellingShipment(null);
     }
   };
 
@@ -227,15 +246,25 @@ export default function ManageOrders() {
                   {order.shipment?.trackingId && (
                     <div className="flex items-start gap-2 bg-sky-50 border border-sky-100 rounded-xl px-3 py-2.5 text-sm text-sky-700 mb-3">
                       <span>🚚</span>
-                      <div>
-                        <span className="font-semibold">{order.shipment.courierName}</span>
-                        {" · "}AWB: <code className="font-mono text-xs">{order.shipment.trackingId}</code>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold">{order.shipment.courierName || "Courier Assigned"}</p>
+                        <p className="text-xs mt-0.5">AWB: <code className="font-mono">{order.shipment.trackingId}</code></p>
                         {order.shipment.shippedAt && (
-                          <span className="text-xs text-sky-400 ml-1">
-                            · {new Date(order.shipment.shippedAt).toLocaleDateString("en-IN")}
-                          </span>
+                          <p className="text-xs text-sky-400 mt-0.5">
+                            Shipped: {new Date(order.shipment.shippedAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                          </p>
                         )}
                       </div>
+                      {/* Cancel shipment — only before delivery */}
+                      {order.status === "Shipped" && (
+                        <button
+                          disabled={cancellingShipment === order._id}
+                          onClick={() => handleCancelShipment(order._id)}
+                          className="text-xs text-red-500 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 transition-colors font-semibold shrink-0 disabled:opacity-50"
+                        >
+                          {cancellingShipment === order._id ? "Cancelling…" : "Cancel Shipment"}
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -247,13 +276,28 @@ export default function ManageOrders() {
                         <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                         {order.status}
                       </span>
-                      <select
-                        value={order.status}
-                        onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                        className="admin-input !w-auto !py-1.5 !text-xs"
-                      >
-                        {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
+
+                      {/* If cancelled by user — show locked badge, no dropdown */}
+                      {order.cancelledBy === "user" ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold">
+                          🔒 Cancelled by Customer — Cannot Edit
+                        </span>
+                      ) : order.status === "Cancelled" ? (
+                        // Admin-cancelled — also locked (no point re-editing)
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs font-semibold">
+                          🔒 Cancelled by Admin
+                        </span>
+                      ) : (
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                          className="admin-input !w-auto !py-1.5 !text-xs"
+                        >
+                          {STATUSES.filter((s) => s !== "Cancelled" || order.status === "Cancelled").map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                     {/* Refund */}
@@ -271,28 +315,49 @@ export default function ManageOrders() {
                     {!order.shipment?.trackingId && order.status !== "Cancelled" && (
                       shippingOrderId === order._id ? (
                         <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 w-full mt-1">
-                          <p className="text-xs font-bold text-indigo-700 mb-3 flex items-center gap-1.5">📦 Shipment Details (Shiprocket)</p>
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {[
-                              { key: "state",   placeholder: "State",       type: "text" },
-                              { key: "length",  placeholder: "Length (cm)", type: "number" },
-                              { key: "breadth", placeholder: "Breadth (cm)",type: "number" },
-                              { key: "height",  placeholder: "Height (cm)", type: "number" },
-                              { key: "weight",  placeholder: "Weight (kg)", type: "number", step: "0.1" },
-                            ].map(({ key, placeholder, type, step }) => (
-                              <input
-                                key={key} type={type} step={step} placeholder={placeholder}
-                                value={shipForm[key]}
-                                onChange={(e) => setShipForm({ ...shipForm, [key]: e.target.value })}
-                                className="admin-input !w-36 !py-1.5 !text-xs"
-                              />
-                            ))}
+                          <p className="text-xs font-bold text-indigo-700 mb-2 flex items-center gap-1.5">
+                            📦 Shipment Details (Shiprocket)
+                          </p>
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3 text-xs text-amber-700 leading-relaxed">
+                            ⚠️ <strong>Important:</strong> Ensure your pickup address is configured in Shiprocket Dashboard → Settings → Manage Pickup Addresses. The delivery boy will come to collect the parcel from this address.
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">State *</label>
+                              <input type="text" placeholder="Maharashtra" value={shipForm.state}
+                                onChange={(e) => setShipForm({ ...shipForm, state: e.target.value })}
+                                className="admin-input !py-1.5 !text-xs" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Length (cm) *</label>
+                              <input type="number" placeholder="10" value={shipForm.length}
+                                onChange={(e) => setShipForm({ ...shipForm, length: e.target.value })}
+                                className="admin-input !py-1.5 !text-xs" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Breadth (cm) *</label>
+                              <input type="number" placeholder="10" value={shipForm.breadth}
+                                onChange={(e) => setShipForm({ ...shipForm, breadth: e.target.value })}
+                                className="admin-input !py-1.5 !text-xs" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Height (cm) *</label>
+                              <input type="number" placeholder="5" value={shipForm.height}
+                                onChange={(e) => setShipForm({ ...shipForm, height: e.target.value })}
+                                className="admin-input !py-1.5 !text-xs" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Weight (kg) *</label>
+                              <input type="number" step="0.1" placeholder="0.5" value={shipForm.weight}
+                                onChange={(e) => setShipForm({ ...shipForm, weight: e.target.value })}
+                                className="admin-input !py-1.5 !text-xs" />
+                            </div>
                           </div>
                           <div className="flex gap-2">
-                            <button onClick={() => handleShipOrder(order._id)} className="admin-btn admin-btn-success !py-1.5 !text-xs">
-                              ✅ Confirm & Ship
+                            <button onClick={() => handleShipOrder(order._id)} className="admin-btn admin-btn-success !py-2 !text-xs">
+                              ✅ Confirm & Ship — Schedule Pickup
                             </button>
-                            <button onClick={() => setShippingOrderId(null)} className="admin-btn admin-btn-ghost !py-1.5 !text-xs">
+                            <button onClick={() => setShippingOrderId(null)} className="admin-btn admin-btn-ghost !py-2 !text-xs">
                               Cancel
                             </button>
                           </div>
