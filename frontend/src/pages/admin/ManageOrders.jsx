@@ -37,6 +37,9 @@ export default function ManageOrders() {
   const [shipForm, setShipForm] = useState({ state: "Maharashtra", length: 10, breadth: 10, height: 5, weight: 0.5 });
   const [refunding, setRefunding] = useState(null);
   const [cancellingShipment, setCancellingShipment] = useState(null);
+  const [trackingModal, setTrackingModal] = useState(null);
+  const [trackingData, setTrackingData] = useState(null);
+  const [loadingTracking, setLoadingTracking] = useState(false);
 
   const loadOrders = () => {
     const params = {};
@@ -93,8 +96,190 @@ export default function ManageOrders() {
     }
   };
 
+  const handleTrackShipment = async (order) => {
+    setTrackingModal(order);
+    setTrackingData(null);
+    setLoadingTracking(true);
+    try {
+      const { data } = await api.get(`/shipment/${order._id}`);
+      setTrackingData(data);
+    } catch (err) {
+      toast.error("Failed to fetch tracking info");
+      setTrackingModal(null);
+    } finally {
+      setLoadingTracking(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in-up">
+
+      {/* ── Live Tracking Modal ─────────────────────────────── */}
+      {trackingModal && (
+        <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h2 className="font-black text-slate-800 text-base">🚚 Live Shipment Tracking</h2>
+                <p className="text-slate-400 text-xs mt-0.5">Order #{trackingModal._id.slice(-8).toUpperCase()}</p>
+              </div>
+              <button onClick={() => { setTrackingModal(null); setTrackingData(null); }}
+                className="text-slate-400 hover:text-slate-700 bg-transparent border-none text-xl font-bold cursor-pointer">
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6">
+              {loadingTracking ? (
+                <div className="flex flex-col items-center py-10 gap-3">
+                  <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
+                  <p className="text-slate-400 text-sm">Fetching live tracking from Shiprocket…</p>
+                </div>
+              ) : trackingData ? (
+                <>
+                  {/* Shipment summary */}
+                  <div className="bg-sky-50 border border-sky-100 rounded-xl p-4 mb-5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Courier</p>
+                        <p className="font-bold text-slate-800 text-sm">{trackingData.shipment?.courierName || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">AWB Number</p>
+                        <p className="font-mono font-bold text-indigo-600 text-sm">{trackingData.shipment?.trackingId || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Shipped On</p>
+                        <p className="font-semibold text-slate-700 text-sm">
+                          {trackingData.shipment?.shippedAt
+                            ? new Date(trackingData.shipment.shippedAt).toLocaleDateString("en-IN", { dateStyle: "medium" })
+                            : "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Order Status</p>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                          STATUS_CFG[trackingData.status]?.cls || "bg-slate-100 text-slate-600"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${STATUS_CFG[trackingData.status]?.dot || "bg-slate-400"}`} />
+                          {trackingData.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live tracking events from Shiprocket */}
+                  {trackingData.liveTracking ? (
+                    <>
+                      {/* Current status highlight */}
+                      {trackingData.liveTracking.shipment_track?.[0] && (
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4">
+                          <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Current Status</p>
+                          <p className="font-bold text-emerald-800 text-sm">
+                            {trackingData.liveTracking.shipment_track[0].current_status || "In Transit"}
+                          </p>
+                          {trackingData.liveTracking.shipment_track[0].delivered_date && (
+                            <p className="text-emerald-600 text-xs mt-1">
+                              Delivered: {trackingData.liveTracking.shipment_track[0].delivered_date}
+                            </p>
+                          )}
+                          {trackingData.liveTracking.shipment_track[0].etd && (
+                            <p className="text-emerald-600 text-xs mt-1">
+                              Expected Delivery: {trackingData.liveTracking.shipment_track[0].etd}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Tracking activity timeline */}
+                      {trackingData.liveTracking.shipment_track_activities?.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Tracking Timeline</p>
+                          <div className="flex flex-col gap-0 relative">
+                            {/* Vertical line */}
+                            <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-slate-200" />
+                            {trackingData.liveTracking.shipment_track_activities.map((activity, i) => (
+                              <div key={i} className="flex gap-3 pb-4 relative">
+                                <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center z-10 mt-0.5 ${
+                                  i === 0 ? "bg-indigo-600" : "bg-slate-200"
+                                }`}>
+                                  <span className={`text-[9px] font-bold ${
+                                    i === 0 ? "text-white" : "text-slate-500"
+                                  }`}>{i === 0 ? "●" : "○"}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-semibold ${
+                                    i === 0 ? "text-indigo-700" : "text-slate-700"
+                                  }`}>
+                                    {activity["sr-status-label"] || activity.activity || "Update"}
+                                  </p>
+                                  {activity.location && (
+                                    <p className="text-xs text-slate-500 mt-0.5">📍 {activity.location}</p>
+                                  )}
+                                  {activity.date && (
+                                    <p className="text-xs text-slate-400 mt-0.5">🕐 {activity.date}</p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* No live data yet — show pickup status info */
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                      <p className="font-bold text-amber-700 text-sm mb-2">⏳ Pickup Pending</p>
+                      <p className="text-amber-600 text-xs leading-relaxed">
+                        The shipment has been created and pickup is scheduled. Live tracking will be available once the courier partner scans the parcel at pickup.
+                      </p>
+                      <div className="mt-3 flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">✓</span>
+                          <span className="text-xs text-slate-600 font-medium">Order created on Shiprocket</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">✓</span>
+                          <span className="text-xs text-slate-600 font-medium">AWB assigned — {trackingData.shipment?.courierName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">✓</span>
+                          <span className="text-xs text-slate-600 font-medium">Pickup scheduled</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-[9px] font-bold shrink-0">○</span>
+                          <span className="text-xs text-slate-400">Waiting for courier to collect parcel…</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-[9px] font-bold shrink-0">○</span>
+                          <span className="text-xs text-slate-400">In transit</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-[9px] font-bold shrink-0">○</span>
+                          <span className="text-xs text-slate-400">Delivered to customer</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* External track link */}
+                  {trackingData.shipment?.trackingId && (
+                    <a
+                      href={`https://shiprocket.co/tracking/${trackingData.shipment.trackingId}`}
+                      target="_blank" rel="noreferrer"
+                      className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-colors"
+                    >
+                      🔗 Open Full Tracking on Shiprocket ↗
+                    </a>
+                  )}
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -255,16 +440,25 @@ export default function ManageOrders() {
                           </p>
                         )}
                       </div>
-                      {/* Cancel shipment — only before delivery */}
-                      {order.status === "Shipped" && (
+                      <div className="flex flex-col gap-1.5 shrink-0">
+                        {/* Live Track button */}
                         <button
-                          disabled={cancellingShipment === order._id}
-                          onClick={() => handleCancelShipment(order._id)}
-                          className="text-xs text-red-500 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 transition-colors font-semibold shrink-0 disabled:opacity-50"
+                          onClick={() => handleTrackShipment(order)}
+                          className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg font-semibold transition-colors border-none cursor-pointer"
                         >
-                          {cancellingShipment === order._id ? "Cancelling…" : "Cancel Shipment"}
+                          📍 Track Live
                         </button>
-                      )}
+                        {/* Cancel shipment — only before delivery */}
+                        {order.status === "Shipped" && (
+                          <button
+                            disabled={cancellingShipment === order._id}
+                            onClick={() => handleCancelShipment(order._id)}
+                            className="text-xs text-red-500 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 transition-colors font-semibold shrink-0 disabled:opacity-50"
+                          >
+                            {cancellingShipment === order._id ? "Cancelling…" : "Cancel"}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
 
