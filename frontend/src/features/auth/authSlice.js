@@ -41,13 +41,36 @@ export const updateProfile = createAsyncThunk(
   async (profileData, { getState, rejectWithValue }) => {
     try {
       const { data } = await api.put("/auth/profile", profileData);
-      // Keep the existing token — it doesn't change when profile is updated
       const token = getState().auth.user?.token;
       const updated = { ...data, token };
       localStorage.setItem("user", JSON.stringify(updated));
       return updated;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Update failed");
+    }
+  }
+);
+
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async (email, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post("/auth/forgot-password", { email });
+      return data.message;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to send OTP");
+    }
+  }
+);
+
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ email, otp, newPassword }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post("/auth/reset-password", { email, otp, newPassword });
+      return data.message;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Password reset failed");
     }
   }
 );

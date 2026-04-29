@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const { sendPasswordResetOTP } = require("../config/mailer");
 
 // Helper: generate a JWT token for a user
 const generateToken = (id) => {
@@ -129,4 +131,60 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, updateProfile };
+// @desc    Send password reset OTP to email
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    // Always respond with success to prevent email enumeration
+    if (!user) return res.json({ message: "If this email is registered, an OTP has been sent." });
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+    user.resetPasswordOTP = otp;
+    user.resetPasswordOTPExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    await user.save();
+
+    await sendPasswordResetOTP({ toEmail: user.email, toName: user.name, otp });
+
+    res.json({ message: "If this email is registered, an OTP has been sent." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Verify OTP and reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword)
+      return res.status(400).json({ message: "Email, OTP and new password are required" });
+    if (newPassword.length < 6)
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) return res.status(400).json({ message: "Invalid OTP or email" });
+
+    if (!user.resetPasswordOTP || user.resetPasswordOTP !== otp.trim())
+      return res.status(400).json({ message: "Invalid OTP" });
+
+    if (!user.resetPasswordOTPExpiry || new Date() > user.resetPasswordOTPExpiry)
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+
+    user.password = newPassword;
+    user.resetPasswordOTP = null;
+    user.resetPasswordOTPExpiry = null;
+    await user.save();
+
+    res.json({ message: "Password reset successfully. You can now log in." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { register, login, getProfile, updateProfile, forgotPassword, resetPassword };

@@ -4,246 +4,184 @@ import { fetchMyOrders, requestCancelOTP, cancelOrder } from "../features/orders
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
-const STATUS_STYLES = {
-  Pending:    { bg: "#fff8e1", color: "#f57f17", dot: "#f9a825" },
-  Processing: { bg: "#e3f2fd", color: "#1565c0", dot: "#1e88e5" },
-  Printing:   { bg: "#f3e5f5", color: "#6a1b9a", dot: "#8e24aa" },
-  Shipped:    { bg: "#e8f5e9", color: "#1b5e20", dot: "#43a047" },
-  Delivered:  { bg: "#e8f5e9", color: "#1b5e20", dot: "#2e7d32" },
-  Cancelled:  { bg: "#ffebee", color: "#b71c1c", dot: "#e53935" },
+const STATUS_CLS = {
+  Pending:    { badge: "bg-amber-100 text-amber-700", dot: "bg-amber-400" },
+  Processing: { badge: "bg-blue-100 text-blue-700",   dot: "bg-blue-400" },
+  Printing:   { badge: "bg-purple-100 text-purple-700", dot: "bg-purple-400" },
+  Shipped:    { badge: "bg-green-100 text-green-700",  dot: "bg-green-500" },
+  Delivered:  { badge: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" },
+  Cancelled:  { badge: "bg-red-100 text-red-700",     dot: "bg-red-500" },
 };
+const PAY_CLS = {
+  paid:     "bg-green-100 text-green-700",
+  refunded: "bg-red-100 text-red-700",
+  pending:  "bg-amber-100 text-amber-700",
+};
+const STATUS_ORDER = ["Pending", "Processing", "Printing", "Shipped", "Delivered"];
 
 export default function OrderHistory() {
   const dispatch = useDispatch();
-  const { orders, loading } = useSelector((state) => state.orders);
-
-  // OTP modal state
-  const [otpModal, setOtpModal]   = useState(null);  // order object being cancelled
-  const [otp, setOtp]             = useState("");
+  const { orders, loading } = useSelector((s) => s.orders);
+  const [otpModal, setOtpModal] = useState(null);
+  const [otp, setOtp] = useState("");
   const [sendingOtp, setSendingOtp] = useState(false);
-  const [verifying, setVerifying]   = useState(false);
-  const [otpSent, setOtpSent]       = useState(false); // whether OTP was sent
+  const [verifying, setVerifying] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
   const closeModal = () => { setOtpModal(null); setOtp(""); setOtpSent(false); };
 
-  // Step 1 — user clicks Cancel → send OTP email
   const handleRequestOTP = async (order) => {
-    setOtpModal(order);
-    setOtp("");
-    setOtpSent(false);
-    setSendingOtp(true);
+    setOtpModal(order); setOtp(""); setOtpSent(false); setSendingOtp(true);
     const result = await dispatch(requestCancelOTP(order._id));
     setSendingOtp(false);
-    if (!result.error) {
-      setOtpSent(true);
-      toast.success(result.payload?.message || "OTP sent to your email");
-    } else {
-      toast.error(result.payload || "Failed to send OTP");
-      setOtpModal(null);
-    }
+    if (!result.error) { setOtpSent(true); toast.success(result.payload?.message || "OTP sent to your email"); }
+    else { toast.error(result.payload || "Failed to send OTP"); setOtpModal(null); }
   };
 
-  // Step 2 — user submits OTP → cancel order
   const handleConfirmCancel = async (e) => {
     e.preventDefault();
     if (!otp.trim() || otp.trim().length !== 6) { toast.error("Enter the 6-digit OTP"); return; }
     setVerifying(true);
     const result = await dispatch(cancelOrder({ id: otpModal._id, otp: otp.trim() }));
     setVerifying(false);
-    if (!result.error) {
-      toast.success("Order cancelled successfully");
-      closeModal();
-    } else {
-      toast.error(result.payload || "Invalid OTP. Try again.");
-    }
+    if (!result.error) { toast.success("Order cancelled successfully"); closeModal(); }
+    else toast.error(result.payload || "Invalid OTP. Try again.");
   };
 
-  useEffect(() => {
-    dispatch(fetchMyOrders());
-  }, [dispatch]);
+  useEffect(() => { dispatch(fetchMyOrders()); }, [dispatch]);
 
-  if (loading) {
-    return (
-      <div style={{ padding: "60px", textAlign: "center" }}>
-        <p style={{ color: "#999" }}>Loading your orders...</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-16 text-gray-400">Loading your orders...</div>;
 
   return (
-    <div style={s.page}>
+    <div className="bg-gray-50 min-h-[80vh] px-4 md:px-12 py-8 pb-16">
 
-      {/* ── OTP Cancellation Modal ─────────────────────────── */}
+      {/* OTP Modal */}
       {otpModal && (
-        <div style={s.overlay}>
-          <div style={s.modal}>
-            {/* Close */}
-            <button style={s.modalClose} onClick={closeModal}>✕</button>
-
-            <div style={s.modalIcon}>🔐</div>
-            <h2 style={s.modalTitle}>Verify to Cancel Order</h2>
-            <p style={s.modalSub}>
-              Order <strong>#{otpModal._id.slice(-8).toUpperCase()}</strong> · ₹{otpModal.totalPrice?.toLocaleString()}
-            </p>
-
+        <div className="fixed inset-0 bg-black/55 z-[1000] flex items-center justify-center p-5">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full relative text-center shadow-2xl">
+            <button onClick={closeModal} className="absolute top-3.5 right-4 bg-transparent border-none text-gray-400 text-xl font-bold cursor-pointer hover:text-gray-700">✕</button>
+            <div className="text-5xl mb-3">🔐</div>
+            <h2 className="text-lg font-black text-gray-900 mb-1.5">Verify to Cancel Order</h2>
+            <p className="text-gray-500 text-sm mb-5">Order <strong>#{otpModal._id.slice(-8).toUpperCase()}</strong> · ₹{otpModal.totalPrice?.toLocaleString()}</p>
             {sendingOtp ? (
-              <p style={s.modalInfo}>📨 Sending OTP to your registered email…</p>
+              <p className="text-gray-500 text-sm bg-gray-50 rounded-lg px-4 py-3">📨 Sending OTP to your registered email…</p>
             ) : otpSent ? (
               <form onSubmit={handleConfirmCancel}>
-                <p style={s.modalInfo}>
-                  A 6-digit OTP has been sent to your registered email address.
-                  Enter it below to confirm cancellation.
-                </p>
-
-                {/* 6-box OTP input */}
-                <div style={s.otpBoxRow}>
+                <p className="text-gray-500 text-sm bg-gray-50 rounded-lg px-4 py-3 mb-5 leading-relaxed">A 6-digit OTP has been sent to your registered email. Enter it below to confirm cancellation.</p>
+                <div className="flex gap-2.5 justify-center mb-6">
                   {[0,1,2,3,4,5].map((i) => (
-                    <input
-                      key={i}
-                      id={`otp-box-${i}`}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      style={s.otpBox}
+                    <input key={i} id={`otp-box-${i}`} type="text" inputMode="numeric" maxLength={1}
+                      className="w-11 h-13 text-center text-2xl font-black border-2 border-gray-200 rounded-xl outline-none focus:border-red-700 text-gray-900 box-border"
+                      style={{ height: "52px" }}
                       value={otp[i] || ""}
                       onChange={(e) => {
                         const val = e.target.value.replace(/\D/, "");
-                        const arr = otp.split("");
-                        arr[i] = val;
+                        const arr = otp.split(""); arr[i] = val;
                         setOtp(arr.join("").slice(0, 6));
                         if (val && i < 5) document.getElementById(`otp-box-${i + 1}`)?.focus();
                       }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Backspace" && !otp[i] && i > 0)
-                          document.getElementById(`otp-box-${i - 1}`)?.focus();
-                      }}
+                      onKeyDown={(e) => { if (e.key === "Backspace" && !otp[i] && i > 0) document.getElementById(`otp-box-${i - 1}`)?.focus(); }}
                     />
                   ))}
                 </div>
-
-                <div style={s.modalActions}>
-                  <button type="button" style={s.modalResendBtn}
-                    onClick={() => handleRequestOTP(otpModal)} disabled={sendingOtp}>
-                    Resend OTP
-                  </button>
-                  <button type="submit" style={s.modalConfirmBtn} disabled={verifying || otp.length < 6}>
+                <div className="flex gap-2.5 justify-center mb-3">
+                  <button type="button" onClick={() => handleRequestOTP(otpModal)} disabled={sendingOtp}
+                    className="bg-white border-2 border-red-700 text-red-700 px-5 py-2.5 rounded-xl font-bold text-sm cursor-pointer hover:bg-red-50 transition-colors">Resend OTP</button>
+                  <button type="submit" disabled={verifying || otp.length < 6}
+                    className="bg-red-700 border-none text-white px-5 py-2.5 rounded-xl font-bold text-sm cursor-pointer hover:bg-red-800 transition-colors disabled:opacity-50">
                     {verifying ? "Verifying…" : "Confirm Cancel"}
                   </button>
                 </div>
-
-                <p style={s.modalExpiry}>⏱ OTP expires in 10 minutes</p>
+                <p className="text-gray-300 text-xs">⏱ OTP expires in 10 minutes</p>
               </form>
             ) : null}
           </div>
         </div>
       )}
 
-      <div style={s.header}>
-        <h1 style={s.title}>My Orders</h1>
-        <Link to="/products" style={s.shopBtn}>Continue Shopping</Link>
+      <div className="flex justify-between items-center mb-7">
+        <h1 className="text-2xl font-black text-gray-900">My Orders</h1>
+        <Link to="/products" className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-gray-50 transition-colors">Continue Shopping</Link>
       </div>
 
       {orders.length === 0 ? (
-        <div style={s.empty}>
-          <span style={{ fontSize: "3.5rem" }}>📦</span>
-          <h2 style={s.emptyTitle}>No orders yet</h2>
-          <p style={s.emptyDesc}>You haven't placed any orders. Start shopping!</p>
-          <Link to="/products" style={s.emptyBtn}>Browse Products</Link>
+        <div className="bg-white rounded-2xl p-16 text-center flex flex-col items-center gap-3">
+          <span className="text-6xl">📦</span>
+          <h2 className="text-xl font-black text-gray-900">No orders yet</h2>
+          <p className="text-gray-400 text-sm">You haven't placed any orders. Start shopping!</p>
+          <Link to="/products" className="bg-red-700 text-white px-7 py-3 rounded-lg font-bold text-sm mt-2 hover:bg-red-800 transition-colors">Browse Products</Link>
         </div>
       ) : (
-        <div style={s.ordersList}>
+        <div className="flex flex-col gap-4">
           {orders.map((order) => {
-            const st = STATUS_STYLES[order.status] || STATUS_STYLES.Pending;
+            const st = STATUS_CLS[order.status] || STATUS_CLS.Pending;
+            const payCls = PAY_CLS[order.paymentStatus] || PAY_CLS.pending;
+            const currentIdx = STATUS_ORDER.indexOf(order.status);
             return (
-              <div key={order._id} style={s.card}>
-                {/* Card header */}
-                <div style={s.cardTop}>
-                  <div style={s.orderMeta}>
-                    <p style={s.orderId}>Order #{order._id.slice(-8).toUpperCase()}</p>
-                    <p style={s.orderDate}>
-                      Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
-                    </p>
+              <div key={order._id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                {/* Card top */}
+                <div className="flex flex-wrap justify-between items-start gap-3 px-5 py-4 border-b border-gray-100">
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">Order #{order._id.slice(-8).toUpperCase()}</p>
+                    <p className="text-gray-400 text-xs mt-0.5">Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                    <span style={{ ...s.statusBadge, background: st.bg, color: st.color }}>
-                      <span style={{ ...s.statusDot, background: st.dot }} />
-                      {order.status}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${st.badge}`}>
+                      <span className={`w-2 h-2 rounded-full ${st.dot}`} />{order.status}
                     </span>
-                    {/* Payment badge */}
-                    <span style={{
-                      ...s.payBadge,
-                      background: order.paymentStatus === "paid" ? "#e8f5e9" : order.paymentStatus === "refunded" ? "#ffebee" : "#fff8e1",
-                      color: order.paymentStatus === "paid" ? "#2e7d32" : order.paymentStatus === "refunded" ? "#c62828" : "#e65100",
-                    }}>
-                      {order.paymentMethod === "razorpay" ? "💳" : "💵"}
-                      {" "}{order.paymentStatus === "paid" ? "Paid" : order.paymentStatus === "refunded" ? "Refunded" : "Pending"}
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${payCls}`}>
+                      {order.paymentMethod === "razorpay" ? "💳" : "💵"} {order.paymentStatus === "paid" ? "Paid" : order.paymentStatus === "refunded" ? "Refunded" : "Pending"}
                     </span>
-                    <span style={s.totalPrice}>₹{order.totalPrice.toLocaleString()}</span>
+                    <span className="font-black text-red-700 text-base">₹{order.totalPrice.toLocaleString()}</span>
                   </div>
                 </div>
 
                 {/* Items */}
-                <div style={s.itemsList}>
+                <div className="px-5 py-3 flex flex-col gap-3">
                   {order.items.map((item, i) => (
-                    <div key={i} style={s.item}>
-                      <img
-                        src={item.product?.image || "https://placehold.co/64x64/f5f5f5/999?text=Item"}
-                        alt={item.name}
-                        style={s.itemImg}
-                      />
-                      <div style={s.itemInfo}>
-                        <p style={s.itemName}>{item.name}</p>
-                        <p style={s.itemQty}>Qty: {item.quantity} × ₹{item.price.toLocaleString()}</p>
-                        {item.uploadedImage && (
-                          <a href={item.uploadedImage} target="_blank" rel="noreferrer" style={s.viewDesign}>
-                            🎨 View Custom Design ↗
-                          </a>
-                        )}
+                    <div key={i} className="flex items-center gap-3 flex-wrap">
+                      <img src={item.product?.image || "https://placehold.co/64x64/f5f5f5/999?text=Item"} alt={item.name}
+                        className="w-16 h-16 object-cover rounded-xl bg-gray-50 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm truncate">{item.name}</p>
+                        <p className="text-gray-400 text-xs mt-0.5">Qty: {item.quantity} × ₹{item.price.toLocaleString()}</p>
+                        {item.uploadedImage && <a href={item.uploadedImage} target="_blank" rel="noreferrer" className="text-red-700 text-xs font-semibold">🎨 View Custom Design ↗</a>}
                       </div>
-                      <p style={s.itemTotal}>₹{(item.price * item.quantity).toLocaleString()}</p>
+                      <p className="font-bold text-gray-900 text-sm">₹{(item.price * item.quantity).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
 
-                {/* Shipping + Tracking */}
-                <div style={s.cardBottom}>
-                  <p style={s.shippingInfo}>
-                    📍 {order.shippingAddress?.address}, {order.shippingAddress?.city} – {order.shippingAddress?.pincode}
-                  </p>
+                {/* Shipping */}
+                <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-100">
+                  <p className="text-gray-500 text-xs">📍 {order.shippingAddress?.address}, {order.shippingAddress?.city} – {order.shippingAddress?.pincode}</p>
                   {order.shipment?.trackingId && (
-                    <div style={s.trackingInfo}>
-                      <span>🚚 {order.shipment.courierName}</span>
-                      <span> · AWB: <strong style={{ color: "#1565c0" }}>{order.shipment.trackingId}</strong></span>
-                    </div>
+                    <p className="text-gray-700 text-xs mt-1">🚚 {order.shipment.courierName} · AWB: <strong className="text-blue-700">{order.shipment.trackingId}</strong></p>
                   )}
                 </div>
 
-                {/* Cancel button — only for Pending or Processing orders */}
+                {/* Cancel */}
                 {["Pending", "Processing"].includes(order.status) && (
-                  <div style={s.cancelRow}>
-                    <button
-                      style={s.cancelBtn}
-                      onClick={() => handleRequestOTP(order)}
-                    >
+                  <div className="px-5 py-3 flex flex-wrap items-center gap-3 border-t border-gray-100 bg-red-50">
+                    <button onClick={() => handleRequestOTP(order)}
+                      className="bg-white border-2 border-red-700 text-red-700 px-4 py-1.5 rounded-lg font-bold text-xs cursor-pointer hover:bg-red-50 transition-colors whitespace-nowrap">
                       ✕ Cancel Order
                     </button>
-                    <p style={s.cancelNote}>Email OTP verification required · Printing / Shipped orders cannot be cancelled.</p>
+                    <p className="text-gray-400 text-xs">Email OTP verification required · Printing / Shipped orders cannot be cancelled.</p>
                   </div>
                 )}
 
-                {/* Progress bar */}
-                <div style={s.progressWrap}>
-                  {["Pending", "Processing", "Printing", "Shipped", "Delivered"].map((st2, i) => {
-                    const statusOrder = ["Pending", "Processing", "Printing", "Shipped", "Delivered"];
-                    const currentIdx = statusOrder.indexOf(order.status);
+                {/* Progress */}
+                <div className="flex items-start px-5 py-4 overflow-x-auto gap-0">
+                  {STATUS_ORDER.map((s2, i) => {
                     const isDone = i <= currentIdx && order.status !== "Cancelled";
                     return (
-                      <div key={st2} style={s.progressStep}>
-                        <div style={{ ...s.progressDot, background: isDone ? "#c41230" : "#e0e0e0" }}>
-                          {isDone && <span style={{ color: "#fff", fontSize: "0.6rem" }}>✓</span>}
+                      <div key={s2} className="flex flex-col items-center relative flex-1">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center mb-1 shrink-0 transition-colors ${isDone ? "bg-red-700" : "bg-gray-200"}`}>
+                          {isDone && <span className="text-white text-[9px] font-bold">✓</span>}
                         </div>
-                        <p style={{ ...s.progressLabel, color: isDone ? "#c41230" : "#bbb" }}>{st2}</p>
-                        {i < 4 && <div style={{ ...s.progressLine, background: i < currentIdx && order.status !== "Cancelled" ? "#c41230" : "#e0e0e0" }} />}
+                        <p className={`text-[10px] font-semibold text-center whitespace-nowrap ${isDone ? "text-red-700" : "text-gray-300"}`}>{s2}</p>
+                        {i < 4 && <div className={`absolute top-3 left-1/2 w-[calc(100%-24px)] h-0.5 translate-x-3 ${i < currentIdx && order.status !== "Cancelled" ? "bg-red-700" : "bg-gray-200"}`} />}
                       </div>
                     );
                   })}
@@ -256,58 +194,3 @@ export default function OrderHistory() {
     </div>
   );
 }
-
-const s = {
-  page: { background: "#f7f7f7", minHeight: "80vh", padding: "32px 60px" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" },
-  title: { fontSize: "1.6rem", fontWeight: "800", color: "#1a1a1a" },
-  shopBtn: { background: "#fff", border: "1px solid #e0e0e0", color: "#333", padding: "8px 18px", borderRadius: "6px", fontWeight: "600", fontSize: "0.85rem" },
-  empty: { background: "#fff", borderRadius: "12px", padding: "80px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" },
-  emptyTitle: { fontSize: "1.4rem", fontWeight: "800", color: "#1a1a1a" },
-  emptyDesc: { color: "#999", fontSize: "0.9rem" },
-  emptyBtn: { background: "#c41230", color: "#fff", padding: "11px 28px", borderRadius: "6px", fontWeight: "700", marginTop: "8px" },
-  ordersList: { display: "flex", flexDirection: "column", gap: "16px" },
-  card: { background: "#fff", borderRadius: "12px", border: "1px solid #e0e0e0", overflow: "hidden" },
-  cardTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "16px 20px", borderBottom: "1px solid #f0f0f0", flexWrap: "wrap", gap: "12px" },
-  orderMeta: {},
-  orderId: { fontWeight: "700", color: "#1a1a1a", fontSize: "0.9rem" },
-  orderDate: { color: "#999", fontSize: "0.8rem", marginTop: "2px" },
-  statusBadge: { display: "flex", alignItems: "center", gap: "6px", padding: "5px 12px", borderRadius: "20px", fontSize: "0.8rem", fontWeight: "700" },
-  payBadge: { padding: "4px 10px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "700" },
-  statusDot: { width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0 },
-  totalPrice: { fontWeight: "800", color: "#c41230", fontSize: "1rem" },
-  itemsList: { padding: "12px 20px", display: "flex", flexDirection: "column", gap: "12px" },
-  item: { display: "flex", gap: "14px", alignItems: "center" },
-  itemImg: { width: "64px", height: "64px", objectFit: "cover", borderRadius: "8px", background: "#f5f5f5", flexShrink: 0 },
-  itemInfo: { flex: 1 },
-  itemName: { fontWeight: "600", color: "#1a1a1a", fontSize: "0.88rem" },
-  itemQty: { color: "#999", fontSize: "0.8rem", marginTop: "2px" },
-  viewDesign: { color: "#c41230", fontSize: "0.76rem", fontWeight: "600" },
-  itemTotal: { fontWeight: "700", color: "#1a1a1a", fontSize: "0.88rem" },
-  cardBottom: { padding: "10px 20px", background: "#f9f9f9", borderTop: "1px solid #f0f0f0" },
-  cancelRow: { padding: "10px 20px", display: "flex", alignItems: "center", gap: "14px", borderTop: "1px solid #f0f0f0", background: "#fff9f9" },
-  cancelBtn: { background: "#fff", border: "1.5px solid #c41230", color: "#c41230", padding: "7px 18px", borderRadius: "6px", fontWeight: "700", fontSize: "0.82rem", cursor: "pointer", whiteSpace: "nowrap" },
-  cancelNote: { color: "#bbb", fontSize: "0.75rem", margin: 0 },
-
-  // OTP Modal
-  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" },
-  modal: { background: "#fff", borderRadius: "16px", padding: "36px 32px", maxWidth: "420px", width: "100%", position: "relative", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" },
-  modalClose: { position: "absolute", top: "14px", right: "16px", background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#999", fontWeight: "700" },
-  modalIcon: { fontSize: "2.8rem", marginBottom: "10px" },
-  modalTitle: { fontSize: "1.2rem", fontWeight: "800", color: "#1a1a1a", marginBottom: "6px" },
-  modalSub: { color: "#888", fontSize: "0.85rem", marginBottom: "20px" },
-  modalInfo: { color: "#555", fontSize: "0.88rem", lineHeight: "1.6", marginBottom: "20px", background: "#f7f7f7", padding: "12px 14px", borderRadius: "8px" },
-  otpBoxRow: { display: "flex", gap: "10px", justifyContent: "center", marginBottom: "24px" },
-  otpBox: { width: "44px", height: "52px", textAlign: "center", fontSize: "1.4rem", fontWeight: "800", border: "2px solid #e0e0e0", borderRadius: "8px", outline: "none", color: "#1a1a1a", caretColor: "#c41230" },
-  modalActions: { display: "flex", gap: "10px", justifyContent: "center", marginBottom: "12px" },
-  modalResendBtn: { background: "#fff", border: "1.5px solid #c41230", color: "#c41230", padding: "10px 18px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem" },
-  modalConfirmBtn: { background: "#c41230", border: "none", color: "#fff", padding: "10px 22px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "0.85rem" },
-  modalExpiry: { color: "#bbb", fontSize: "0.75rem", margin: 0 },
-  shippingInfo: { color: "#666", fontSize: "0.8rem" },
-  trackingInfo: { color: "#333", fontSize: "0.8rem", marginTop: "4px" },
-  progressWrap: { display: "flex", alignItems: "flex-start", padding: "14px 20px 16px", gap: "0", overflowX: "auto" },
-  progressStep: { display: "flex", flexDirection: "column", alignItems: "center", position: "relative", flex: 1 },
-  progressDot: { width: "24px", height: "24px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "4px", flexShrink: 0, transition: "background 0.3s" },
-  progressLabel: { fontSize: "0.68rem", fontWeight: "600", textAlign: "center", whiteSpace: "nowrap" },
-  progressLine: { position: "absolute", top: "12px", left: "50%", width: "calc(100% - 24px)", height: "2px", transform: "translateX(12px)" },
-};

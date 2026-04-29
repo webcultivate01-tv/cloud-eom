@@ -21,6 +21,7 @@ import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import Contact from "./pages/Contact";
 import Replacements from "./pages/Replacements";
+import ForgotPassword from "./pages/ForgotPassword";
 
 // ── Admin Pages ──────────────────────────────────────────────
 import Dashboard from "./pages/admin/Dashboard";
@@ -66,6 +67,7 @@ export default function App() {
                 <Route path="/"          element={<Home />} />
                 <Route path="/login"     element={<Login />} />
                 <Route path="/register"  element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/products"  element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/cart"      element={<Cart />} />

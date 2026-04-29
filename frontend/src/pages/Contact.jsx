@@ -4,34 +4,25 @@ import { submitInquiry } from "../features/inquiry/inquirySlice";
 import { toast } from "react-toastify";
 
 const EMPTY = { name: "", email: "", phone: "", subject: "", message: "" };
-
-const SUBJECTS = [
-  "Order / Delivery Issue",
-  "Custom Printing Query",
-  "Bulk Order Enquiry",
-  "Product Information",
-  "Payment / Refund",
-  "Other",
-];
+const SUBJECTS = ["Order / Delivery Issue","Custom Printing Query","Bulk Order Enquiry","Product Information","Payment / Refund","Other"];
 
 export default function Contact() {
   const dispatch = useDispatch();
   const { loading } = useSelector((s) => s.inquiry);
-
-  const [form, setForm]       = useState(EMPTY);
-  const [errors, setErrors]   = useState({});
+  const [form, setForm] = useState(EMPTY);
+  const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim())                          e.name    = "Name is required";
-    if (!form.email.trim())                         e.email   = "Email is required";
+    if (!form.name.trim()) e.name = "Name is required";
+    if (!form.email.trim()) e.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email";
-    if (!form.phone.trim())                         e.phone   = "Phone number is required";
-    else if (!/^\+?[\d\s\-()]{7,15}$/.test(form.phone))      e.phone = "Enter a valid phone number";
-    if (!form.subject)                              e.subject = "Please select a subject";
-    if (!form.message.trim())                       e.message = "Message is required";
-    else if (form.message.trim().length < 10)       e.message = "Message must be at least 10 characters";
+    if (!form.phone.trim()) e.phone = "Phone number is required";
+    else if (!/^\+?[\d\s\-()]{7,15}$/.test(form.phone)) e.phone = "Enter a valid phone number";
+    if (!form.subject) e.subject = "Please select a subject";
+    if (!form.message.trim()) e.message = "Message is required";
+    else if (form.message.trim().length < 10) e.message = "Message must be at least 10 characters";
     return e;
   };
 
@@ -45,151 +36,98 @@ export default function Contact() {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
-
     const result = await dispatch(submitInquiry(form));
     if (!result.error) {
       toast.success("Inquiry submitted! Check your email for confirmation.");
-      setForm(EMPTY);
-      setErrors({});
-      setSubmitted(true);
-    } else {
-      toast.error(result.payload || "Failed to submit. Please try again.");
-    }
+      setForm(EMPTY); setErrors({}); setSubmitted(true);
+    } else { toast.error(result.payload || "Failed to submit. Please try again."); }
   };
 
-  if (submitted) {
-    return (
-      <div style={s.page}>
-        <div style={s.successBox}>
-          <div style={s.successIcon}>✅</div>
-          <h2 style={s.successTitle}>Inquiry Sent!</h2>
-          <p style={s.successText}>
-            Thank you for reaching out. We've received your inquiry and sent a confirmation to your
-            email. Our team will get back to you within <strong>24–48 hours</strong>.
-          </p>
-          <button style={s.backBtn} onClick={() => setSubmitted(false)}>
-            Send Another Inquiry
-          </button>
-        </div>
+  const inputCls = (err) => `w-full border rounded-xl px-3.5 py-2.5 text-sm outline-none font-[inherit] transition-colors box-border ${err ? "border-red-600 bg-red-50" : "border-gray-200 bg-white focus:border-red-700"}`;
+
+  if (submitted) return (
+    <div className="bg-gray-50 min-h-[80vh] flex items-center justify-center px-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-12 max-w-md w-full text-center">
+        <div className="text-6xl mb-4">✅</div>
+        <h2 className="text-2xl font-black text-gray-900 mb-3">Inquiry Sent!</h2>
+        <p className="text-gray-500 text-sm leading-relaxed mb-7">Thank you for reaching out. We've received your inquiry and sent a confirmation to your email. Our team will get back to you within <strong>24–48 hours</strong>.</p>
+        <button onClick={() => setSubmitted(false)} className="bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-colors">Send Another Inquiry</button>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div style={s.page}>
-
-      {/* ── Hero ─────────────────────────────────────── */}
-      <div style={s.hero}>
-        <h1 style={s.heroTitle}>Contact Us</h1>
-        <p style={s.heroSub}>
-          Have a question or need help? Drop us a message and we'll get back to you shortly.
-        </p>
+    <div className="bg-gray-50 min-h-[80vh]">
+      {/* Hero */}
+      <div className="bg-gradient-to-br from-red-700 to-red-900 text-white text-center px-6 py-14">
+        <h1 className="text-3xl md:text-4xl font-black mb-3 -tracking-wide">Contact Us</h1>
+        <p className="text-white/90 text-base max-w-lg mx-auto">Have a question or need help? Drop us a message and we'll get back to you shortly.</p>
       </div>
 
-      <div style={s.container}>
-        <div style={s.grid}>
-
-          {/* ── Info Panel ──────────────────────────── */}
-          <aside style={s.infoPanel}>
-            <h2 style={s.infoTitle}>Get in Touch</h2>
-            <p style={s.infoText}>
-              We're here to help with any questions about our products, custom printing, bulk orders,
-              or anything else. Reach out using the form or via the details below.
-            </p>
-
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-10 md:py-14">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr] gap-8 items-start">
+          {/* Info Panel */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+            <h2 className="text-lg font-black text-gray-900 mb-3">Get in Touch</h2>
+            <p className="text-gray-500 text-sm leading-relaxed mb-6">We're here to help with any questions about our products, custom printing, bulk orders, or anything else.</p>
             {[
-              { icon: "📍", label: "Address",   value: "Cloud Graphics Amravati, Maharashtra, India" },
-              { icon: "📞", label: "Phone",      value: "+91 XXXXX XXXXX" },
-              { icon: "📧", label: "Email",      value: "cloudgraphics@example.com" },
-              { icon: "🕐", label: "Hours",      value: "Mon – Sat: 10 AM – 7 PM" },
+              { icon: "📍", label: "Address", value: "Cloud Graphics Amravati, Maharashtra, India" },
+              { icon: "📞", label: "Phone", value: "+91 XXXXX XXXXX" },
+              { icon: "📧", label: "Email", value: "cloudgraphics@example.com" },
+              { icon: "🕐", label: "Hours", value: "Mon – Sat: 10 AM – 7 PM" },
             ].map(({ icon, label, value }) => (
-              <div key={label} style={s.infoItem}>
-                <span style={s.infoItemIcon}>{icon}</span>
+              <div key={label} className="flex items-start gap-3.5 mb-5">
+                <span className="text-xl mt-0.5 shrink-0">{icon}</span>
                 <div>
-                  <p style={s.infoItemLabel}>{label}</p>
-                  <p style={s.infoItemValue}>{value}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
+                  <p className="text-gray-700 text-sm font-medium">{value}</p>
                 </div>
               </div>
             ))}
+            <div className="border-t border-gray-100 mt-6 pt-5">
+              <p className="text-gray-500 text-sm leading-relaxed">⚡ We typically respond within <strong>24–48 hours</strong> on business days.</p>
+            </div>
+          </div>
 
-            <div style={s.divider} />
-            <p style={s.responseNote}>
-              ⚡ We typically respond within <strong>24–48 hours</strong> on business days.
-            </p>
-          </aside>
-
-          {/* ── Form ────────────────────────────────── */}
-          <div style={s.formCard}>
-            <h2 style={s.formTitle}>Send Us a Message</h2>
-
-            <form onSubmit={handleSubmit} noValidate style={s.form}>
-
-              {/* Name + Email */}
-              <div style={s.row}>
-                <Field
-                  label="Full Name *"
-                  name="name"
-                  type="text"
-                  placeholder="Your full name"
-                  value={form.name}
-                  onChange={handleChange}
-                  error={errors.name}
-                />
-                <Field
-                  label="Email Address *"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={form.email}
-                  onChange={handleChange}
-                  error={errors.email}
-                />
-              </div>
-
-              {/* Phone + Subject */}
-              <div style={s.row}>
-                <Field
-                  label="Phone Number *"
-                  name="phone"
-                  type="tel"
-                  placeholder="+91 98765 43210"
-                  value={form.phone}
-                  onChange={handleChange}
-                  error={errors.phone}
-                />
-                <div style={s.fieldWrap}>
-                  <label style={s.label}>Subject *</label>
-                  <select
-                    name="subject"
-                    value={form.subject}
-                    onChange={handleChange}
-                    style={{ ...s.input, ...(errors.subject ? s.inputError : {}) }}
-                  >
-                    <option value="">— Select a subject —</option>
-                    {SUBJECTS.map((sub) => (
-                      <option key={sub} value={sub}>{sub}</option>
-                    ))}
-                  </select>
-                  {errors.subject && <span style={s.errorMsg}>{errors.subject}</span>}
+          {/* Form */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7 md:p-9">
+            <h2 className="text-lg font-black text-gray-900 mb-6">Send Us a Message</h2>
+            <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-600">Full Name *</label>
+                  <input type="text" name="name" placeholder="Your full name" value={form.name} onChange={handleChange} className={inputCls(errors.name)} />
+                  {errors.name && <span className="text-red-600 text-xs font-semibold">{errors.name}</span>}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-600">Email Address *</label>
+                  <input type="email" name="email" placeholder="you@example.com" value={form.email} onChange={handleChange} className={inputCls(errors.email)} />
+                  {errors.email && <span className="text-red-600 text-xs font-semibold">{errors.email}</span>}
                 </div>
               </div>
-
-              {/* Message */}
-              <div style={s.fieldWrap}>
-                <label style={s.label}>Message / Inquiry Description *</label>
-                <textarea
-                  name="message"
-                  rows={5}
-                  placeholder="Describe your inquiry in detail..."
-                  value={form.message}
-                  onChange={handleChange}
-                  style={{ ...s.input, ...s.textarea, ...(errors.message ? s.inputError : {}) }}
-                />
-                {errors.message && <span style={s.errorMsg}>{errors.message}</span>}
-                <span style={s.charCount}>{form.message.length} characters</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-600">Phone Number *</label>
+                  <input type="tel" name="phone" placeholder="+91 98765 43210" value={form.phone} onChange={handleChange} className={inputCls(errors.phone)} />
+                  {errors.phone && <span className="text-red-600 text-xs font-semibold">{errors.phone}</span>}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-600">Subject *</label>
+                  <select name="subject" value={form.subject} onChange={handleChange} className={inputCls(errors.subject)}>
+                    <option value="">— Select a subject —</option>
+                    {SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  {errors.subject && <span className="text-red-600 text-xs font-semibold">{errors.subject}</span>}
+                </div>
               </div>
-
-              <button type="submit" disabled={loading} style={{ ...s.submitBtn, ...(loading ? s.submitBtnDisabled : {}) }}>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-600">Message *</label>
+                <textarea name="message" rows={5} placeholder="Describe your inquiry in detail..." value={form.message} onChange={handleChange} className={`${inputCls(errors.message)} resize-y min-h-28`} />
+                {errors.message && <span className="text-red-600 text-xs font-semibold">{errors.message}</span>}
+                <span className="text-gray-300 text-xs text-right">{form.message.length} characters</span>
+              </div>
+              <button type="submit" disabled={loading}
+                className={`px-7 py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer transition-colors ${loading ? "bg-red-300 cursor-not-allowed" : "bg-red-700 hover:bg-red-800"}`}>
                 {loading ? "Sending…" : "Send Inquiry ✉️"}
               </button>
             </form>
@@ -199,102 +137,3 @@ export default function Contact() {
     </div>
   );
 }
-
-function Field({ label, name, type, placeholder, value, onChange, error }) {
-  return (
-    <div style={s.fieldWrap}>
-      <label style={s.label}>{label}</label>
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        style={{ ...s.input, ...(error ? s.inputError : {}) }}
-      />
-      {error && <span style={s.errorMsg}>{error}</span>}
-    </div>
-  );
-}
-
-const s = {
-  page: { background: "#f8f8f8", minHeight: "80vh" },
-
-  hero: {
-    background: "linear-gradient(135deg, #c41230 0%, #8b0d22 100%)",
-    color: "#fff",
-    textAlign: "center",
-    padding: "60px 24px 40px",
-  },
-  heroTitle: { fontSize: "clamp(1.8rem, 4vw, 2.6rem)", fontWeight: "900", margin: "0 0 12px", letterSpacing: "-0.5px" },
-  heroSub:   { fontSize: "1rem", opacity: 0.9, margin: 0, maxWidth: "540px", marginLeft: "auto", marginRight: "auto" },
-
-  container: { maxWidth: "1100px", margin: "0 auto", padding: "40px 20px 60px" },
-  grid:      { display: "grid", gridTemplateColumns: "1fr 1.8fr", gap: "32px", alignItems: "start" },
-
-  /* Info panel */
-  infoPanel: { background: "#fff", borderRadius: "14px", padding: "32px 28px", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: "1px solid #f0f0f0" },
-  infoTitle: { fontSize: "1.2rem", fontWeight: "800", color: "#1a1a1a", margin: "0 0 12px" },
-  infoText:  { color: "#666", fontSize: "0.9rem", lineHeight: "1.7", margin: "0 0 24px" },
-  infoItem:  { display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "18px" },
-  infoItemIcon: { fontSize: "1.2rem", lineHeight: 1, marginTop: "2px", flexShrink: 0 },
-  infoItemLabel: { fontSize: "0.75rem", fontWeight: "700", color: "#aaa", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 2px" },
-  infoItemValue: { fontSize: "0.9rem", color: "#333", margin: 0, fontWeight: "500" },
-  divider:   { borderTop: "1px solid #f0f0f0", margin: "24px 0" },
-  responseNote: { fontSize: "0.85rem", color: "#777", lineHeight: "1.6", margin: 0 },
-
-  /* Form card */
-  formCard:  { background: "#fff", borderRadius: "14px", padding: "36px 32px", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: "1px solid #f0f0f0" },
-  formTitle: { fontSize: "1.2rem", fontWeight: "800", color: "#1a1a1a", margin: "0 0 24px" },
-  form:      { display: "flex", flexDirection: "column", gap: "18px" },
-  row:       { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" },
-
-  fieldWrap: { display: "flex", flexDirection: "column", gap: "5px", flex: 1 },
-  label:     { fontSize: "0.8rem", fontWeight: "700", color: "#555", letterSpacing: "0.2px" },
-  input: {
-    border: "1.5px solid #e0e0e0",
-    borderRadius: "8px",
-    padding: "10px 14px",
-    fontSize: "0.92rem",
-    color: "#1a1a1a",
-    outline: "none",
-    transition: "border-color 0.2s",
-    background: "#fff",
-    width: "100%",
-    boxSizing: "border-box",
-    fontFamily: "inherit",
-  },
-  inputError: { borderColor: "#c41230", background: "#fff9f9" },
-  textarea:   { resize: "vertical", minHeight: "110px" },
-  errorMsg:   { color: "#c41230", fontSize: "0.78rem", fontWeight: "600" },
-  charCount:  { color: "#bbb", fontSize: "0.75rem", textAlign: "right", marginTop: "-2px" },
-
-  submitBtn: {
-    background: "#c41230",
-    color: "#fff",
-    border: "none",
-    borderRadius: "9px",
-    padding: "13px 28px",
-    fontSize: "0.95rem",
-    fontWeight: "700",
-    cursor: "pointer",
-    marginTop: "6px",
-    transition: "background 0.2s, transform 0.1s",
-    letterSpacing: "0.3px",
-  },
-  submitBtnDisabled: { background: "#e0a0ab", cursor: "not-allowed" },
-
-  /* Success */
-  successBox: {
-    maxWidth: "500px", margin: "80px auto", textAlign: "center",
-    background: "#fff", borderRadius: "16px", padding: "48px 40px",
-    boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid #f0f0f0",
-  },
-  successIcon:  { fontSize: "3.5rem", marginBottom: "16px" },
-  successTitle: { fontSize: "1.6rem", fontWeight: "900", color: "#1a1a1a", margin: "0 0 12px" },
-  successText:  { color: "#666", fontSize: "0.95rem", lineHeight: "1.7", margin: "0 0 28px" },
-  backBtn: {
-    background: "#c41230", color: "#fff", border: "none", borderRadius: "8px",
-    padding: "12px 24px", fontSize: "0.9rem", fontWeight: "700", cursor: "pointer",
-  },
-};

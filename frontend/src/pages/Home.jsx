@@ -9,28 +9,25 @@ import HeroSlider from "../components/HeroSlider";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const CAT_COLORS = ["#fff3e0","#e8f5e9","#e3f2fd","#fce4ec","#f3e5f5","#e0f7fa","#fff8e1","#fafafa"];
+const CAT_COLORS = ["bg-orange-50","bg-green-50","bg-blue-50","bg-pink-50","bg-purple-50","bg-cyan-50","bg-yellow-50","bg-gray-50"];
 const REVIEW_EMPTY = { name: "", email: "", rating: 0, message: "" };
+const FEATURES = [
+  { icon: "🚚", title: "Fast Delivery", desc: "Quick delivery across Amravati & Maharashtra" },
+  { icon: "🎨", title: "100% Custom Designs", desc: "Upload your photo or design — we print it" },
+  { icon: "⭐", title: "Premium Quality", desc: "Durable prints that last for years" },
+  { icon: "💰", title: "Best Prices", desc: "Affordable prices with bulk discounts" },
+];
 
 function StarPicker({ value, onChange }) {
   const [hovered, setHovered] = useState(0);
   return (
-    <div style={{ display: "flex", gap: "4px", marginTop: "4px" }}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
+    <div className="flex gap-1 mt-1">
+      {[1,2,3,4,5].map((star) => (
+        <button key={star} type="button"
           onClick={() => onChange(star)}
           onMouseEnter={() => setHovered(star)}
           onMouseLeave={() => setHovered(0)}
-          style={{
-            background: "none", border: "none", cursor: "pointer", padding: "2px",
-            fontSize: "1.6rem", lineHeight: 1,
-            color: star <= (hovered || value) ? "#f59e0b" : "#d1d5db",
-            transition: "color 0.15s, transform 0.1s",
-            transform: star <= (hovered || value) ? "scale(1.15)" : "scale(1)",
-          }}
-        >
+          className={`bg-transparent border-none cursor-pointer p-0.5 text-3xl leading-none transition-transform duration-100 ${star <= (hovered || value) ? "text-amber-400 scale-110" : "text-gray-300"}`}>
           ★
         </button>
       ))}
@@ -40,38 +37,29 @@ function StarPicker({ value, onChange }) {
 
 function StarDisplay({ rating }) {
   return (
-    <span style={{ display: "inline-flex", gap: "1px" }}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <span key={star} style={{ color: star <= rating ? "#f59e0b" : "#d1d5db", fontSize: "0.95rem" }}>★</span>
+    <span className="inline-flex gap-px">
+      {[1,2,3,4,5].map((star) => (
+        <span key={star} className={`text-base ${star <= rating ? "text-amber-400" : "text-gray-300"}`}>★</span>
       ))}
     </span>
   );
 }
 
-const FEATURES = [
-  { icon: "🚚", title: "Fast Delivery", desc: "Quick delivery across Amravati & Maharashtra" },
-  { icon: "🎨", title: "100% Custom Designs", desc: "Upload your photo or design — we print it" },
-  { icon: "⭐", title: "Premium Quality", desc: "Durable prints that last for years" },
-  { icon: "💰", title: "Best Prices", desc: "Affordable prices with bulk discounts" },
-];
-
 export default function Home() {
   const dispatch = useDispatch();
-  const { items: products, loading } = useSelector((state) => state.products);
-  const { events } = useSelector((state) => state.events);
-  const { items: categories } = useSelector((state) => state.categories);
-  const { approvedReviews, loading: reviewLoading } = useSelector((state) => state.review);
+  const { items: products, loading } = useSelector((s) => s.products);
+  const { events } = useSelector((s) => s.events);
+  const { items: categories } = useSelector((s) => s.categories);
+  const { approvedReviews, loading: reviewLoading } = useSelector((s) => s.review);
 
-  const [reviewForm, setReviewForm]       = useState(REVIEW_EMPTY);
-  const [reviewErrors, setReviewErrors]   = useState({});
+  const [reviewForm, setReviewForm] = useState(REVIEW_EMPTY);
+  const [reviewErrors, setReviewErrors] = useState({});
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
-  const [showReviewForm, setShowReviewForm]   = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchProducts());
-    dispatch(fetchActiveEvents());
-    dispatch(fetchCategories());
-    dispatch(fetchApprovedReviews());
+    dispatch(fetchProducts()); dispatch(fetchActiveEvents());
+    dispatch(fetchCategories()); dispatch(fetchApprovedReviews());
   }, [dispatch]);
 
   const featured = products.slice(0, 8);
@@ -79,10 +67,10 @@ export default function Home() {
 
   const validateReview = () => {
     const e = {};
-    if (!reviewForm.name.trim())    e.name    = "Name is required";
-    if (!reviewForm.email.trim())   e.email   = "Email is required";
+    if (!reviewForm.name.trim()) e.name = "Name is required";
+    if (!reviewForm.email.trim()) e.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reviewForm.email)) e.email = "Enter a valid email";
-    if (!reviewForm.rating)         e.rating  = "Please select a rating";
+    if (!reviewForm.rating) e.rating = "Please select a rating";
     if (!reviewForm.message.trim()) e.message = "Review message is required";
     else if (reviewForm.message.trim().length < 10) e.message = "At least 10 characters required";
     return e;
@@ -94,30 +82,26 @@ export default function Home() {
     if (Object.keys(errs).length) { setReviewErrors(errs); return; }
     const result = await dispatch(submitReview(reviewForm));
     if (!result.error) {
-      setReviewSubmitted(true);
-      setReviewForm(REVIEW_EMPTY);
-      setReviewErrors({});
-      setShowReviewForm(false);
+      setReviewSubmitted(true); setReviewForm(REVIEW_EMPTY); setReviewErrors({}); setShowReviewForm(false);
       toast.success("Review submitted! It will appear after approval.");
-    } else {
-      toast.error(result.payload || "Failed to submit. Please try again.");
-    }
+    } else { toast.error(result.payload || "Failed to submit. Please try again."); }
   };
 
+  const inputCls = (err) => `w-full border rounded-lg px-3.5 py-2.5 text-sm outline-none font-[inherit] transition-colors ${err ? "border-red-600 bg-red-50" : "border-gray-200 bg-white focus:border-red-600"}`;
+
   return (
-    <div style={s.page}>
-      {/* Hero Slider */}
+    <div className="bg-white">
       <HeroSlider />
 
-      {/* Announcement Events Banner */}
+      {/* Events Banner */}
       {events.length > 0 && (
-        <div style={s.eventsBanner}>
-          <div style={s.eventsInner}>
+        <div className="bg-red-50 border-b border-pink-100">
+          <div className="max-w-7xl mx-auto flex overflow-x-auto">
             {events.slice(0, 3).map((ev) => (
-              <div key={ev._id} style={s.eventChip}>
-                <span style={s.eventBadge}>{ev.badge}</span>
-                <span style={s.eventTitle}>{ev.title}</span>
-                {ev.link && <Link to={ev.link} style={s.eventLink}>View →</Link>}
+              <div key={ev._id} className="flex items-center gap-2 px-6 py-2.5 border-r border-pink-100 whitespace-nowrap">
+                <span className="bg-red-700 text-white text-[10px] font-bold px-2 py-0.5 rounded">{ev.badge}</span>
+                <span className="text-gray-800 text-xs font-medium">{ev.title}</span>
+                {ev.link && <Link to={ev.link} className="text-red-700 text-xs font-semibold">View →</Link>}
               </div>
             ))}
           </div>
@@ -125,153 +109,127 @@ export default function Home() {
       )}
 
       {/* Category Grid */}
-      <section style={s.section}>
-        <div style={s.sectionHeader}>
-          <h2 style={s.sectionTitle}>Shop by Category</h2>
-          <Link to="/products" style={s.viewAll}>View All →</Link>
+      <section className="max-w-7xl mx-auto px-4 md:px-12 py-10 md:py-12">
+        <div className="flex justify-between items-center mb-7">
+          <h2 className="text-2xl font-black text-gray-900 -tracking-wide">Shop by Category</h2>
+          <Link to="/products" className="text-red-700 font-bold text-sm">View All →</Link>
         </div>
-        <div style={s.catGrid}>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
           {categories.map((cat, i) => (
-            <Link key={cat._id} to={`/products?category=${cat.name}`} style={{ ...s.catCard, background: CAT_COLORS[i % CAT_COLORS.length] }}>
-              <span style={s.catIcon}>{cat.icon || "🏷️"}</span>
-              <p style={s.catName}>{cat.name}</p>
+            <Link key={cat._id} to={`/products?category=${cat.name}`}
+              className={`flex flex-col items-center gap-2 py-5 px-2 rounded-xl border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${CAT_COLORS[i % CAT_COLORS.length]}`}>
+              <span className="text-3xl">{cat.icon || "🏷️"}</span>
+              <p className="text-gray-900 text-xs font-bold text-center">{cat.name}</p>
             </Link>
           ))}
         </div>
       </section>
 
       {/* Featured Products */}
-      <section style={{ ...s.section, background: "#f7f7f7", padding: "48px 60px" }}>
-        <div style={s.sectionHeader}>
-          <h2 style={s.sectionTitle}>Featured Products</h2>
-          <Link to="/products" style={s.viewAll}>View All →</Link>
+      <section className="bg-gray-50 px-4 md:px-12 py-10 md:py-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-7">
+            <h2 className="text-2xl font-black text-gray-900 -tracking-wide">Featured Products</h2>
+            <Link to="/products" className="text-red-700 font-bold text-sm">View All →</Link>
+          </div>
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => <div key={i} className="h-72 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-xl animate-pulse" />)}
+            </div>
+          ) : featured.length === 0 ? (
+            <p className="text-gray-400 text-center py-10">No products yet. Check back soon!</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-5">
+              {featured.map((p) => <ProductCard key={p._id} product={p} />)}
+            </div>
+          )}
         </div>
-        {loading ? (
-          <div style={s.loadingGrid}>
-            {[...Array(4)].map((_, i) => <div key={i} style={s.skeleton} />)}
-          </div>
-        ) : featured.length === 0 ? (
-          <p style={s.emptyMsg}>No products yet. Check back soon!</p>
-        ) : (
-          <div style={s.productGrid}>
-            {featured.map((p) => <ProductCard key={p._id} product={p} />)}
-          </div>
-        )}
       </section>
 
-      {/* Customize Section */}
+      {/* Design Your Own */}
       {customize.length > 0 && (
-        <section style={s.section}>
-          <div style={s.sectionHeader}>
-            <h2 style={s.sectionTitle}>🎨 Design Your Own</h2>
-            <Link to="/products?type=customize" style={s.viewAll}>View All →</Link>
+        <section className="max-w-7xl mx-auto px-4 md:px-12 py-10 md:py-12">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-2xl font-black text-gray-900 -tracking-wide">🎨 Design Your Own</h2>
+            <Link to="/products?type=customize" className="text-red-700 font-bold text-sm">View All →</Link>
           </div>
-          <p style={s.sectionSub}>Upload your photo and get it printed on premium products</p>
-          <div style={s.productGrid}>
+          <p className="text-gray-500 text-sm mb-6">Upload your photo and get it printed on premium products</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-5">
             {customize.map((p) => <ProductCard key={p._id} product={p} badge="Customize" />)}
           </div>
         </section>
       )}
 
       {/* How It Works */}
-      <section style={s.howSection}>
-        <h2 style={{ ...s.sectionTitle, textAlign: "center", marginBottom: "40px" }}>How It Works</h2>
-        <div style={s.stepsGrid}>
+      <section className="bg-gray-50 px-4 md:px-12 py-12 md:py-16">
+        <h2 className="text-2xl font-black text-gray-900 text-center mb-10 -tracking-wide">How It Works</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
           {[
             { step: "01", title: "Choose Product", desc: "Pick from our range of printable products" },
             { step: "02", title: "Upload Design", desc: "Upload your photo, logo or custom artwork" },
             { step: "03", title: "Place Order", desc: "Review and confirm your personalized order" },
             { step: "04", title: "Receive Delivery", desc: "Get your custom product delivered fast" },
           ].map((item) => (
-            <div key={item.step} style={s.stepCard}>
-              <div style={s.stepNum}>{item.step}</div>
-              <h3 style={s.stepTitle}>{item.title}</h3>
-              <p style={s.stepDesc}>{item.desc}</p>
+            <div key={item.step} className="bg-white rounded-xl p-6 text-center border border-gray-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-full bg-red-700 text-white text-lg font-black flex items-center justify-center mx-auto mb-4">{item.step}</div>
+              <h3 className="text-gray-900 font-bold text-sm mb-2">{item.title}</h3>
+              <p className="text-gray-500 text-xs leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Customer Reviews ──────────────────────────────── */}
-      <section style={s.reviewsSection}>
-        <div style={s.reviewsInner}>
-
-          {/* Section header */}
-          <div style={s.reviewsHeader}>
+      {/* Customer Reviews */}
+      <section className="bg-white border-t border-gray-100 py-12 md:py-16">
+        <div className="max-w-5xl mx-auto px-4 md:px-12">
+          <div className="flex flex-wrap justify-between items-start gap-3 mb-8">
             <div>
-              <h2 style={s.sectionTitle}>⭐ Customer Reviews</h2>
-              <p style={{ color: "#666", fontSize: "0.9rem", marginTop: "4px" }}>
-                What our customers say about us
-              </p>
+              <h2 className="text-2xl font-black text-gray-900 -tracking-wide">⭐ Customer Reviews</h2>
+              <p className="text-gray-500 text-sm mt-1">What our customers say about us</p>
             </div>
-            <button
-              onClick={() => { setShowReviewForm((v) => !v); setReviewSubmitted(false); }}
-              style={s.writeReviewBtn}
-            >
+            <button onClick={() => { setShowReviewForm((v) => !v); setReviewSubmitted(false); }}
+              className="bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold cursor-pointer border-none transition-colors whitespace-nowrap">
               {showReviewForm ? "✕ Cancel" : "✍️ Write a Review"}
             </button>
           </div>
 
-          {/* Write a Review form */}
           {showReviewForm && (
-            <div style={s.reviewFormCard}>
-              <h3 style={s.reviewFormTitle}>Share Your Experience</h3>
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 md:p-8 mb-9">
+              <h3 className="text-base font-black text-gray-900 mb-5">Share Your Experience</h3>
               {reviewSubmitted ? (
-                <div style={s.reviewThanks}>
+                <div className="bg-green-50 border border-green-200 rounded-lg px-5 py-4 text-green-700 font-semibold text-sm">
                   ✅ Thank you! Your review has been submitted and will be visible after approval.
                 </div>
               ) : (
-                <form onSubmit={handleReviewSubmit} noValidate style={s.reviewForm}>
-                  <div style={s.reviewFormRow}>
-                    <div style={s.reviewField}>
-                      <label style={s.reviewLabel}>Your Name *</label>
-                      <input
-                        style={{ ...s.reviewInput, ...(reviewErrors.name ? s.reviewInputErr : {}) }}
-                        placeholder="John Doe"
-                        value={reviewForm.name}
-                        onChange={(e) => { setReviewForm({ ...reviewForm, name: e.target.value }); setReviewErrors({ ...reviewErrors, name: "" }); }}
-                      />
-                      {reviewErrors.name && <span style={s.reviewErrMsg}>{reviewErrors.name}</span>}
+                <form onSubmit={handleReviewSubmit} noValidate className="flex flex-col gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-gray-600">Your Name *</label>
+                      <input className={inputCls(reviewErrors.name)} placeholder="John Doe" value={reviewForm.name}
+                        onChange={(e) => { setReviewForm({ ...reviewForm, name: e.target.value }); setReviewErrors({ ...reviewErrors, name: "" }); }} />
+                      {reviewErrors.name && <span className="text-red-600 text-xs font-semibold">{reviewErrors.name}</span>}
                     </div>
-                    <div style={s.reviewField}>
-                      <label style={s.reviewLabel}>Email Address *</label>
-                      <input
-                        type="email"
-                        style={{ ...s.reviewInput, ...(reviewErrors.email ? s.reviewInputErr : {}) }}
-                        placeholder="you@example.com"
-                        value={reviewForm.email}
-                        onChange={(e) => { setReviewForm({ ...reviewForm, email: e.target.value }); setReviewErrors({ ...reviewErrors, email: "" }); }}
-                      />
-                      {reviewErrors.email && <span style={s.reviewErrMsg}>{reviewErrors.email}</span>}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-gray-600">Email Address *</label>
+                      <input type="email" className={inputCls(reviewErrors.email)} placeholder="you@example.com" value={reviewForm.email}
+                        onChange={(e) => { setReviewForm({ ...reviewForm, email: e.target.value }); setReviewErrors({ ...reviewErrors, email: "" }); }} />
+                      {reviewErrors.email && <span className="text-red-600 text-xs font-semibold">{reviewErrors.email}</span>}
                     </div>
                   </div>
-
-                  <div style={s.reviewField}>
-                    <label style={s.reviewLabel}>Your Rating *</label>
-                    <StarPicker
-                      value={reviewForm.rating}
-                      onChange={(v) => { setReviewForm({ ...reviewForm, rating: v }); setReviewErrors({ ...reviewErrors, rating: "" }); }}
-                    />
-                    {reviewErrors.rating && <span style={s.reviewErrMsg}>{reviewErrors.rating}</span>}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-gray-600">Your Rating *</label>
+                    <StarPicker value={reviewForm.rating} onChange={(v) => { setReviewForm({ ...reviewForm, rating: v }); setReviewErrors({ ...reviewErrors, rating: "" }); }} />
+                    {reviewErrors.rating && <span className="text-red-600 text-xs font-semibold">{reviewErrors.rating}</span>}
                   </div>
-
-                  <div style={s.reviewField}>
-                    <label style={s.reviewLabel}>Your Review *</label>
-                    <textarea
-                      rows={4}
-                      style={{ ...s.reviewInput, ...s.reviewTextarea, ...(reviewErrors.message ? s.reviewInputErr : {}) }}
-                      placeholder="Tell us about your experience with our products and service…"
-                      value={reviewForm.message}
-                      onChange={(e) => { setReviewForm({ ...reviewForm, message: e.target.value }); setReviewErrors({ ...reviewErrors, message: "" }); }}
-                    />
-                    {reviewErrors.message && <span style={s.reviewErrMsg}>{reviewErrors.message}</span>}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-gray-600">Your Review *</label>
+                    <textarea rows={4} className={`${inputCls(reviewErrors.message)} resize-y min-h-24`}
+                      placeholder="Tell us about your experience…" value={reviewForm.message}
+                      onChange={(e) => { setReviewForm({ ...reviewForm, message: e.target.value }); setReviewErrors({ ...reviewErrors, message: "" }); }} />
+                    {reviewErrors.message && <span className="text-red-600 text-xs font-semibold">{reviewErrors.message}</span>}
                   </div>
-
-                  <button
-                    type="submit"
-                    disabled={reviewLoading}
-                    style={{ ...s.submitReviewBtn, ...(reviewLoading ? s.submitReviewBtnDisabled : {}) }}
-                  >
+                  <button type="submit" disabled={reviewLoading}
+                    className={`w-fit px-6 py-3 rounded-lg text-sm font-bold text-white border-none cursor-pointer transition-colors ${reviewLoading ? "bg-red-300 cursor-not-allowed" : "bg-red-700 hover:bg-red-800"}`}>
                     {reviewLoading ? "Submitting…" : "Submit Review"}
                   </button>
                 </form>
@@ -279,30 +237,27 @@ export default function Home() {
             </div>
           )}
 
-          {/* Reviews grid */}
           {reviewLoading && approvedReviews.length === 0 ? (
-            <div style={s.reviewsLoadingGrid}>
-              {[...Array(3)].map((_, i) => <div key={i} style={s.reviewSkeleton} />)}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => <div key={i} className="h-40 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-2xl animate-pulse" />)}
             </div>
           ) : approvedReviews.length === 0 ? (
-            <div style={s.reviewsEmpty}>
-              <p>No reviews yet. Be the first to share your experience!</p>
-            </div>
+            <div className="text-center py-10 text-gray-400 text-sm">No reviews yet. Be the first to share your experience!</div>
           ) : (
-            <div style={s.reviewsGrid}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {approvedReviews.slice(0, 6).map((review) => (
-                <div key={review._id} style={s.reviewCard}>
-                  <div style={s.reviewCardTop}>
-                    <div style={s.reviewAvatar}>{review.name[0].toUpperCase()}</div>
+                <div key={review._id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-red-700 text-white flex items-center justify-center font-bold text-base shrink-0">
+                      {review.name[0].toUpperCase()}
+                    </div>
                     <div>
-                      <p style={s.reviewerName}>{review.name}</p>
+                      <p className="font-bold text-gray-900 text-sm mb-0.5">{review.name}</p>
                       <StarDisplay rating={review.rating} />
                     </div>
                   </div>
-                  <p style={s.reviewMessage}>"{review.message}"</p>
-                  <p style={s.reviewDate}>
-                    {new Date(review.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                  </p>
+                  <p className="text-gray-500 text-sm leading-relaxed italic flex-1">"{review.message}"</p>
+                  <p className="text-gray-300 text-xs">{new Date(review.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
                 </div>
               ))}
             </div>
@@ -311,13 +266,13 @@ export default function Home() {
       </section>
 
       {/* Features Strip */}
-      <div style={s.featuresStrip}>
-        {FEATURES.map((f) => (
-          <div key={f.title} style={s.feature}>
-            <span style={s.featureIcon}>{f.icon}</span>
+      <div className="bg-[#1a1a1a] grid grid-cols-2 md:grid-cols-4">
+        {FEATURES.map((f, i) => (
+          <div key={f.title} className={`flex items-start gap-3 px-6 py-6 ${i < 3 ? "border-r border-gray-800" : ""}`}>
+            <span className="text-3xl shrink-0">{f.icon}</span>
             <div>
-              <p style={s.featureTitle}>{f.title}</p>
-              <p style={s.featureDesc}>{f.desc}</p>
+              <p className="text-white font-bold text-sm mb-1">{f.title}</p>
+              <p className="text-gray-500 text-xs leading-relaxed">{f.desc}</p>
             </div>
           </div>
         ))}
@@ -325,105 +280,3 @@ export default function Home() {
     </div>
   );
 }
-
-const s = {
-  page: { background: "#fff" },
-
-  // Events banner
-  eventsBanner: { background: "#fff9f9", borderBottom: "1px solid #fce4ec" },
-  eventsInner: { display: "flex", gap: "0", overflowX: "auto", maxWidth: "1400px", margin: "0 auto" },
-  eventChip: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 24px", borderRight: "1px solid #fce4ec", whiteSpace: "nowrap" },
-  eventBadge: { background: "#c41230", color: "#fff", padding: "2px 8px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: "700" },
-  eventTitle: { color: "#1a1a1a", fontSize: "0.82rem", fontWeight: "500" },
-  eventLink: { color: "#c41230", fontSize: "0.78rem", fontWeight: "600" },
-
-  // Sections
-  section: { padding: "48px 60px", maxWidth: "1400px", margin: "0 auto" },
-  sectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" },
-  sectionTitle: { fontSize: "1.5rem", fontWeight: "800", color: "#1a1a1a", letterSpacing: "-0.3px" },
-  sectionSub: { color: "#666", fontSize: "0.9rem", marginTop: "-20px", marginBottom: "24px" },
-  viewAll: { color: "#c41230", fontWeight: "700", fontSize: "0.85rem", letterSpacing: "0.5px" },
-
-  // Category grid
-  catGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: "16px" },
-  catCard: { display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: "24px 12px", borderRadius: "12px", border: "1px solid #f0f0f0", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer" },
-  catIcon: { fontSize: "2rem" },
-  catName: { color: "#1a1a1a", fontSize: "0.82rem", fontWeight: "700", textAlign: "center" },
-
-  // Products grid
-  productGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "20px" },
-
-  // Skeleton
-  loadingGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px" },
-  skeleton: { height: "300px", background: "linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)", borderRadius: "10px" },
-  emptyMsg: { color: "#999", textAlign: "center", padding: "40px" },
-
-  // How it works
-  howSection: { padding: "60px", background: "#f7f7f7" },
-  stepsGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px", maxWidth: "1200px", margin: "0 auto" },
-  stepCard: { background: "#fff", borderRadius: "12px", padding: "28px 24px", textAlign: "center", border: "1px solid #e0e0e0" },
-  stepNum: { width: "48px", height: "48px", borderRadius: "50%", background: "#c41230", color: "#fff", fontSize: "1.1rem", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" },
-  stepTitle: { color: "#1a1a1a", fontWeight: "700", marginBottom: "8px", fontSize: "0.95rem" },
-  stepDesc: { color: "#666", fontSize: "0.83rem", lineHeight: 1.6 },
-
-  // Customer Reviews
-  reviewsSection: { background: "#fff", padding: "60px 0", borderTop: "1px solid #f0f0f0" },
-  reviewsInner:   { maxWidth: "1200px", margin: "0 auto", padding: "0 60px" },
-  reviewsHeader:  { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px", flexWrap: "wrap", gap: "12px" },
-  writeReviewBtn: {
-    background: "#c41230", color: "#fff", border: "none", borderRadius: "8px",
-    padding: "10px 20px", fontSize: "0.88rem", fontWeight: "700", cursor: "pointer",
-    whiteSpace: "nowrap",
-  },
-  reviewFormCard: {
-    background: "#fafafa", border: "1px solid #e8e8e8", borderRadius: "14px",
-    padding: "28px 32px", marginBottom: "36px",
-  },
-  reviewFormTitle: { fontSize: "1rem", fontWeight: "800", color: "#1a1a1a", marginBottom: "20px" },
-  reviewForm:  { display: "flex", flexDirection: "column", gap: "16px" },
-  reviewFormRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" },
-  reviewField: { display: "flex", flexDirection: "column", gap: "5px" },
-  reviewLabel: { fontSize: "0.8rem", fontWeight: "700", color: "#555" },
-  reviewInput: {
-    border: "1.5px solid #e0e0e0", borderRadius: "8px", padding: "10px 14px",
-    fontSize: "0.9rem", color: "#1a1a1a", background: "#fff", outline: "none",
-    fontFamily: "inherit", boxSizing: "border-box", width: "100%",
-  },
-  reviewInputErr: { borderColor: "#c41230", background: "#fff9f9" },
-  reviewTextarea: { resize: "vertical", minHeight: "96px" },
-  reviewErrMsg:  { color: "#c41230", fontSize: "0.77rem", fontWeight: "600" },
-  submitReviewBtn: {
-    background: "#c41230", color: "#fff", border: "none", borderRadius: "8px",
-    padding: "12px 24px", fontSize: "0.9rem", fontWeight: "700", cursor: "pointer",
-    width: "fit-content",
-  },
-  submitReviewBtnDisabled: { background: "#e0a0ab", cursor: "not-allowed" },
-  reviewThanks: {
-    background: "#f1f8e9", border: "1px solid #c8e6c9", borderRadius: "8px",
-    padding: "16px 20px", color: "#2e7d32", fontWeight: "600", fontSize: "0.9rem",
-  },
-  reviewsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px" },
-  reviewCard: {
-    background: "#fff", border: "1px solid #f0f0f0", borderRadius: "14px", padding: "24px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: "12px",
-  },
-  reviewCardTop:  { display: "flex", alignItems: "center", gap: "12px" },
-  reviewAvatar:   {
-    width: "42px", height: "42px", borderRadius: "50%", background: "#c41230",
-    color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-    fontWeight: "700", fontSize: "1rem", flexShrink: 0,
-  },
-  reviewerName:   { fontWeight: "700", color: "#1a1a1a", fontSize: "0.9rem", marginBottom: "3px" },
-  reviewMessage:  { color: "#555", fontSize: "0.88rem", lineHeight: "1.65", fontStyle: "italic", flex: 1 },
-  reviewDate:     { color: "#bbb", fontSize: "0.76rem" },
-  reviewsLoadingGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" },
-  reviewSkeleton: { height: "160px", background: "linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%)", borderRadius: "14px" },
-  reviewsEmpty:   { textAlign: "center", padding: "40px", color: "#999", fontSize: "0.9rem" },
-
-  // Features
-  featuresStrip: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", background: "#1a1a1a", padding: "28px 60px", gap: "0" },
-  feature: { display: "flex", alignItems: "flex-start", gap: "14px", padding: "8px 24px", borderRight: "1px solid #333" },
-  featureIcon: { fontSize: "1.8rem", flexShrink: 0 },
-  featureTitle: { color: "#fff", fontWeight: "700", fontSize: "0.88rem", marginBottom: "4px" },
-  featureDesc: { color: "#999", fontSize: "0.78rem", lineHeight: 1.5 },
-};

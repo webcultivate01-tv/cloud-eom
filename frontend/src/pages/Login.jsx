@@ -7,111 +7,74 @@ import { toast } from "react-toastify";
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user, loading, error } = useSelector((state) => state.auth);
+  const { user, loading, error } = useSelector((s) => s.auth);
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
 
-  useEffect(() => {
-    if (user) navigate(user.role === "admin" ? "/admin/dashboard" : "/");
-  }, [user, navigate]);
-
-  useEffect(() => {
-    if (error) { toast.error(error); dispatch(clearError()); }
-  }, [error, dispatch]);
+  useEffect(() => { if (user) navigate(user.role === "admin" ? "/admin/dashboard" : "/"); }, [user, navigate]);
+  useEffect(() => { if (error) { toast.error(error); dispatch(clearError()); } }, [error, dispatch]);
 
   return (
-    <div style={s.page}>
-      <div style={s.left}>
-        <div style={s.brand}>
-          <span style={{ fontSize: "2rem" }}>🖨️</span>
+    <div className="flex min-h-[calc(100vh-120px)] bg-white">
+      {/* Left panel */}
+      <div className="hidden md:flex flex-1 bg-gradient-to-br from-red-700 to-red-900 px-12 py-16 flex-col justify-center">
+        <div className="flex items-center gap-3 mb-10">
+          <span className="text-4xl">🖨️</span>
           <div>
-            <p style={s.brandName}>CLOUD GRAPHICS</p>
-            <p style={s.brandSub}>AMRAVATI</p>
+            <p className="text-white font-black text-lg tracking-widest m-0">CLOUD GRAPHICS</p>
+            <p className="text-white/60 text-[10px] tracking-[4px] m-0">AMRAVATI</p>
           </div>
         </div>
-        <h2 style={s.tagline}>Custom Gift Printing<br />Made Easy</h2>
-        <p style={s.desc}>Login to browse, order and track your personalized gifts and merchandise.</p>
-        <div style={s.features}>
+        <h2 className="text-white text-4xl font-black leading-tight mb-4">Custom Gift Printing<br />Made Easy</h2>
+        <p className="text-white/80 text-base leading-relaxed mb-8">Login to browse, order and track your personalized gifts and merchandise.</p>
+        <div className="flex flex-col gap-3">
           {["🎨 Upload your design", "🚚 Fast delivery", "💯 Premium quality"].map((f) => (
-            <div key={f} style={s.feat}>{f}</div>
+            <div key={f} className="text-white/90 text-sm font-semibold">{f}</div>
           ))}
         </div>
       </div>
 
-      <div style={s.right}>
-        <div style={s.card}>
-          <h1 style={s.title}>Welcome Back</h1>
-          <p style={s.subtitle}>Sign in to your account</p>
+      {/* Right panel */}
+      <div className="flex-1 flex items-center justify-center px-6 py-10">
+        <div className="w-full max-w-md">
+          <h1 className="text-3xl font-black text-gray-900 mb-1">Welcome Back</h1>
+          <p className="text-gray-400 text-sm mb-8">Sign in to your account</p>
 
           <form onSubmit={(e) => { e.preventDefault(); dispatch(loginUser(form)); }}>
-            <div style={s.formGroup}>
-              <label style={s.label}>Email Address</label>
-              <input
-                style={s.input}
-                type="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-              />
+            <div className="mb-5">
+              <label className="block text-gray-600 font-semibold text-xs mb-1.5">Email Address</label>
+              <input type="email" placeholder="you@example.com" required
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:border-red-700 transition-colors box-border"
+                value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
-            <div style={s.formGroup}>
-              <label style={s.label}>Password</label>
-              <div style={s.passWrap}>
-                <input
-                  style={{ ...s.input, paddingRight: "48px" }}
-                  type={showPass ? "text" : "password"}
-                  placeholder="Your password"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
-                />
-                <button type="button" style={s.eyeBtn} onClick={() => setShowPass(!showPass)}>
-                  {showPass ? "🙈" : "👁️"}
-                </button>
+            <div className="mb-5">
+              <label className="block text-gray-600 font-semibold text-xs mb-1.5">Password</label>
+              <div className="relative">
+                <input type={showPass ? "text" : "password"} placeholder="Your password" required
+                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:border-red-700 transition-colors box-border"
+                  value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                <button type="button" onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-base">{showPass ? "🙈" : "👁️"}</button>
+              </div>
+              <div className="text-right mt-1.5">
+                <Link to="/forgot-password" className="text-red-700 text-xs font-semibold hover:underline">Forgot Password?</Link>
               </div>
             </div>
-
-            <button style={s.submitBtn} type="submit" disabled={loading}>
+            <button type="submit" disabled={loading}
+              className="w-full py-3.5 bg-red-700 hover:bg-red-800 text-white rounded-lg font-bold text-sm cursor-pointer border-none transition-colors disabled:opacity-60 mt-1">
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
-          <p style={s.switchText}>
+          <p className="text-center text-gray-500 text-sm mt-5">
             Don't have an account?{" "}
-            <Link to="/register" style={s.switchLink}>Create one</Link>
+            <Link to="/register" className="text-red-700 font-bold hover:underline">Create one</Link>
           </p>
-
-          <div style={s.divider}><span>or</span></div>
-          <Link to="/products" style={s.guestLink}>Continue as Guest →</Link>
+          <div className="border-t border-gray-200 mt-5 pt-4 text-center">
+            <Link to="/products" className="text-red-700 font-semibold text-sm hover:underline">Continue as Guest →</Link>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-const s = {
-  page: { display: "flex", minHeight: "calc(100vh - 120px)", background: "#fff" },
-  left: { flex: 1, background: "linear-gradient(135deg, #c41230 0%, #8b0a21 100%)", padding: "60px 48px", display: "flex", flexDirection: "column", justifyContent: "center" },
-  brand: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "40px" },
-  brandName: { color: "#fff", fontWeight: "800", fontSize: "1.2rem", letterSpacing: "1px" },
-  brandSub: { color: "rgba(255,255,255,0.7)", fontSize: "0.65rem", letterSpacing: "3px" },
-  tagline: { color: "#fff", fontSize: "2.2rem", fontWeight: "900", lineHeight: 1.2, marginBottom: "16px" },
-  desc: { color: "rgba(255,255,255,0.8)", fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "32px" },
-  features: { display: "flex", flexDirection: "column", gap: "12px" },
-  feat: { color: "rgba(255,255,255,0.9)", fontSize: "0.9rem", fontWeight: "600" },
-  right: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 32px" },
-  card: { width: "100%", maxWidth: "420px" },
-  title: { fontSize: "1.8rem", fontWeight: "800", color: "#1a1a1a", marginBottom: "6px" },
-  subtitle: { color: "#999", fontSize: "0.9rem", marginBottom: "32px" },
-  formGroup: { marginBottom: "18px" },
-  label: { display: "block", color: "#555", fontWeight: "600", fontSize: "0.82rem", marginBottom: "6px" },
-  input: { width: "100%", padding: "12px 14px", border: "1px solid #e0e0e0", borderRadius: "6px", fontSize: "0.95rem", background: "#fafafa", boxSizing: "border-box", transition: "border-color 0.2s" },
-  passWrap: { position: "relative" },
-  eyeBtn: { position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "1rem" },
-  submitBtn: { width: "100%", padding: "13px", background: "#c41230", color: "#fff", border: "none", borderRadius: "6px", fontWeight: "700", fontSize: "0.95rem", cursor: "pointer", marginTop: "8px", letterSpacing: "0.5px" },
-  switchText: { textAlign: "center", color: "#666", fontSize: "0.85rem", marginTop: "20px" },
-  switchLink: { color: "#c41230", fontWeight: "700" },
-  divider: { textAlign: "center", color: "#ccc", fontSize: "0.8rem", margin: "20px 0", position: "relative", borderTop: "1px solid #e0e0e0", paddingTop: "16px" },
-  guestLink: { display: "block", textAlign: "center", color: "#c41230", fontWeight: "600", fontSize: "0.88rem" },
-};

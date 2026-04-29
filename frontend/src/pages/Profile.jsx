@@ -6,13 +6,12 @@ import { toast } from "react-toastify";
 export default function Profile() {
   const dispatch = useDispatch();
   const { user, loading } = useSelector((s) => s.auth);
-
-  const [name, setName]                       = useState(user?.name || "");
-  const [phone, setPhone]                     = useState(user?.phone || "");
+  const [name, setName] = useState(user?.name || "");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword]         = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPwSection, setShowPwSection]     = useState(false);
+  const [showPwSection, setShowPwSection] = useState(false);
 
   useEffect(() => { setName(user?.name || ""); setPhone(user?.phone || ""); }, [user]);
 
@@ -32,79 +31,81 @@ export default function Profile() {
     if (!result.error) {
       toast.success("Profile updated successfully!");
       setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); setShowPwSection(false);
-    } else {
-      toast.error(result.payload || "Update failed");
-    }
+    } else { toast.error(result.payload || "Update failed"); }
   };
 
-  const initial = user?.name?.[0]?.toUpperCase() || "U";
+  const inputCls = "w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 outline-none focus:border-red-700 transition-colors box-border font-[inherit]";
 
   return (
-    <div style={s.page}>
-      <div style={s.card}>
-        <div style={s.avatarRow}>
-          <div style={s.avatar}>{initial}</div>
+    <div className="bg-gray-50 min-h-[80vh] px-4 py-10 pb-16">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-7 md:p-10">
+        {/* Avatar row */}
+        <div className="flex items-center gap-5 mb-8 pb-6 border-b border-gray-100">
+          <div className="w-16 h-16 rounded-full bg-red-700 text-white flex items-center justify-center text-2xl font-black shrink-0">
+            {user?.name?.[0]?.toUpperCase() || "U"}
+          </div>
           <div>
-            <h1 style={s.title}>My Profile</h1>
-            <p style={s.subtitle}>{user?.email}</p>
+            <h1 className="text-xl font-black text-gray-900 m-0">My Profile</h1>
+            <p className="text-gray-400 text-sm mt-1">{user?.email}</p>
           </div>
         </div>
 
-        <form onSubmit={handleSave} style={s.form}>
-          {/* Personal Information */}
-          <div style={s.section}>
-            <h2 style={s.sectionTitle}>Personal Information</h2>
-            <div style={s.fieldGroup}>
-              <label style={s.label}>Full Name *</label>
-              <input style={s.input} placeholder="Your full name" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div style={s.fieldGroup}>
-              <label style={s.label}>Email Address</label>
-              <input style={{ ...s.input, ...s.inputReadonly }} value={user?.email || ""} readOnly />
-              <p style={s.hint}>Email address cannot be changed.</p>
-            </div>
-            <div style={s.fieldGroup}>
-              <label style={s.label}>Phone Number</label>
-              <input style={s.input} placeholder="10-digit mobile number" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={10} />
+        <form onSubmit={handleSave}>
+          {/* Personal Info */}
+          <div className="mb-7 pb-6 border-b border-gray-100">
+            <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-5">Personal Information</h2>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Full Name *</label>
+                <input className={inputCls} placeholder="Your full name" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Email Address</label>
+                <input className={`${inputCls} bg-gray-100 text-gray-400 cursor-not-allowed`} value={user?.email || ""} readOnly />
+                <p className="text-gray-400 text-xs mt-1">Email address cannot be changed.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Phone Number</label>
+                <input className={inputCls} placeholder="10-digit mobile number" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={10} />
+              </div>
             </div>
           </div>
 
           {/* Password */}
-          <div style={s.section}>
-            <div style={s.pwHeader}>
-              <h2 style={s.sectionTitle}>Password</h2>
-              <button type="button" style={s.togglePwBtn} onClick={() => setShowPwSection((v) => !v)}>
+          <div className="mb-7">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest">Password</h2>
+              <button type="button" onClick={() => setShowPwSection((v) => !v)}
+                className="bg-transparent border border-red-700 text-red-700 rounded-lg px-4 py-1.5 text-xs font-semibold cursor-pointer hover:bg-red-50 transition-colors">
                 {showPwSection ? "Cancel" : "Change Password"}
               </button>
             </div>
             {showPwSection && (
-              <div style={s.pwFields}>
-                <div style={s.fieldGroup}>
-                  <label style={s.label}>Current Password *</label>
-                  <input style={s.input} type="password" placeholder="Enter current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Current Password *</label>
+                  <input type="password" className={inputCls} placeholder="Enter current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                 </div>
-                <div style={s.grid2}>
-                  <div style={s.fieldGroup}>
-                    <label style={s.label}>New Password *</label>
-                    <input style={s.input} type="password" placeholder="Min 6 characters" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">New Password *</label>
+                    <input type="password" className={inputCls} placeholder="Min 6 characters" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                   </div>
-                  <div style={s.fieldGroup}>
-                    <label style={s.label}>Confirm New Password *</label>
-                    <input
-                      style={{ ...s.input, borderColor: confirmPassword && confirmPassword !== newPassword ? "#e53935" : undefined }}
-                      type="password" placeholder="Repeat new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                    {confirmPassword && confirmPassword !== newPassword && (
-                      <p style={{ ...s.hint, color: "#e53935" }}>Passwords do not match</p>
-                    )}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Confirm New Password *</label>
+                    <input type="password"
+                      className={`${inputCls} ${confirmPassword && confirmPassword !== newPassword ? "border-red-500" : ""}`}
+                      placeholder="Repeat new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                    {confirmPassword && confirmPassword !== newPassword && <p className="text-red-500 text-xs mt-1">Passwords do not match</p>}
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          <div style={s.footer}>
-            <button type="submit" style={{ ...s.saveBtn, opacity: loading ? 0.7 : 1 }} disabled={loading}>
+          <div className="flex justify-end">
+            <button type="submit" disabled={loading}
+              className={`px-9 py-3.5 bg-red-700 hover:bg-red-800 text-white rounded-xl font-bold text-sm border-none cursor-pointer transition-colors ${loading ? "opacity-60 cursor-not-allowed" : ""}`}>
               {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
@@ -113,26 +114,3 @@ export default function Profile() {
     </div>
   );
 }
-
-const s = {
-  page:         { background: "#f7f7f7", minHeight: "80vh", padding: "40px 16px 60px", maxWidth: "760px", margin: "0 auto" },
-  card:         { background: "#fff", borderRadius: "14px", border: "1px solid #e0e0e0", padding: "36px 40px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" },
-  avatarRow:    { display: "flex", alignItems: "center", gap: "18px", marginBottom: "32px", paddingBottom: "24px", borderBottom: "1px solid #f0f0f0" },
-  avatar:       { width: "64px", height: "64px", borderRadius: "50%", background: "#c41230", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: "800", flexShrink: 0 },
-  title:        { fontSize: "1.4rem", fontWeight: "800", color: "#1a1a1a", margin: 0 },
-  subtitle:     { color: "#888", fontSize: "0.85rem", marginTop: "4px" },
-  form:         {},
-  section:      { marginBottom: "28px", paddingBottom: "24px", borderBottom: "1px solid #f5f5f5" },
-  sectionTitle: { fontSize: "0.85rem", fontWeight: "800", color: "#1a1a1a", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "18px" },
-  fieldGroup:   { marginBottom: "16px" },
-  label:        { display: "block", color: "#555", fontSize: "0.82rem", fontWeight: "600", marginBottom: "6px" },
-  input:        { width: "100%", padding: "11px 14px", border: "1px solid #e0e0e0", borderRadius: "8px", fontSize: "0.9rem", background: "#fafafa", boxSizing: "border-box", outline: "none", fontFamily: "inherit" },
-  inputReadonly:{ background: "#f0f0f0", color: "#999", cursor: "not-allowed" },
-  hint:         { color: "#aaa", fontSize: "0.76rem", marginTop: "4px" },
-  grid2:        { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" },
-  pwHeader:     { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" },
-  togglePwBtn:  { background: "none", border: "1px solid #c41230", color: "#c41230", borderRadius: "6px", padding: "6px 14px", cursor: "pointer", fontSize: "0.82rem", fontWeight: "600" },
-  pwFields:     { display: "flex", flexDirection: "column" },
-  footer:       { display: "flex", justifyContent: "flex-end", marginTop: "8px" },
-  saveBtn:      { background: "#c41230", color: "#fff", border: "none", borderRadius: "8px", padding: "13px 36px", fontWeight: "700", fontSize: "0.95rem", cursor: "pointer" },
-};
