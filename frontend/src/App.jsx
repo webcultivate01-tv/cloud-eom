@@ -34,6 +34,7 @@ import ManageCategories from "./pages/admin/ManageCategories";
 import ManageInquiries from "./pages/admin/ManageInquiries";
 import ManageReviews from "./pages/admin/ManageReviews";
 import ManageReplacements from "./pages/admin/ManageReplacements";
+import DataExport from "./pages/admin/DataExport";
 
 // Wraps any admin page with the sidebar layout + route guard
 const AdminPage = ({ children }) => (
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="/admin/inquiries"   element={<AdminPage><ManageInquiries /></AdminPage>} />
         <Route path="/admin/reviews"       element={<AdminPage><ManageReviews /></AdminPage>} />
         <Route path="/admin/replacements" element={<AdminPage><ManageReplacements /></AdminPage>} />
+        <Route path="/admin/export"       element={<AdminPage><DataExport /></AdminPage>} />
 
         {/* ── Public + User routes — use Navbar/Footer ── */}
         <Route path="/*" element={

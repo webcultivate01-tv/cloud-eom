@@ -28,6 +28,7 @@ app.use("/api/payment",    require("./routes/paymentRoutes"));
 app.use("/api/inquiry",   require("./routes/inquiryRoutes"));
 app.use("/api/review",       require("./routes/reviewRoutes"));
 app.use("/api/replacement",  require("./routes/replacementRoutes"));
+app.use("/api/export",       require("./routes/exportRoutes"));
 
 // Health check
 app.get("/", (req, res) => {
