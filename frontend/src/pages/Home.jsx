@@ -8,14 +8,16 @@ import ProductCard from "../components/ProductCard";
 import HeroSlider from "../components/HeroSlider";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Truck, Palette, Star, IndianRupee } from "lucide-react";
+import CTASection from "../components/CTA";
 
 const CAT_COLORS = ["bg-orange-50","bg-green-50","bg-blue-50","bg-pink-50","bg-purple-50","bg-cyan-50","bg-yellow-50","bg-gray-50"];
 const REVIEW_EMPTY = { name: "", email: "", rating: 0, message: "" };
 const FEATURES = [
-  { icon: "🚚", title: "Fast Delivery", desc: "Quick delivery across Amravati & Maharashtra" },
-  { icon: "🎨", title: "100% Custom Designs", desc: "Upload your photo or design — we print it" },
-  { icon: "⭐", title: "Premium Quality", desc: "Durable prints that last for years" },
-  { icon: "💰", title: "Best Prices", desc: "Affordable prices with bulk discounts" },
+  { icon: <Truck size={28} className="text-red-700" />, title: "Fast Delivery", desc: "Quick delivery across Amravati & Maharashtra" },
+  { icon: <Palette size={28} className="text-red-700" />, title: "100% Custom Designs", desc: "Upload your photo or design — we print it" },
+  { icon: <Star size={28} className="text-red-700" />, title: "Premium Quality", desc: "Durable prints that last for years" },
+  { icon: <IndianRupee size={28} className="text-red-700" />, title: "Best Prices", desc: "Affordable prices with bulk discounts" },
 ];
 
 function StarPicker({ value, onChange }) {
@@ -265,14 +267,16 @@ export default function Home() {
         </div>
       </section>
 
+      <CTASection/>
+
       {/* Features Strip */}
-      <div className="bg-[#1a1a1a] grid grid-cols-2 md:grid-cols-4">
+      <div className="bg-red-50 grid grid-cols-2 md:grid-cols-4 border-t border-red-100">
         {FEATURES.map((f, i) => (
-          <div key={f.title} className={`flex items-start gap-3 px-6 py-6 ${i < 3 ? "border-r border-gray-800" : ""}`}>
-            <span className="text-3xl shrink-0">{f.icon}</span>
+          <div key={f.title} className={`flex items-start gap-3 px-6 py-6 ${i < 3 ? "md:border-r border-red-200" : ""}`}>
+            <div className="shrink-0 mt-1">{f.icon}</div>
             <div>
-              <p className="text-white font-bold text-sm mb-1">{f.title}</p>
-              <p className="text-gray-500 text-xs leading-relaxed">{f.desc}</p>
+              <p className="text-gray-900 font-bold text-sm mb-1">{f.title}</p>
+              <p className="text-gray-600 text-xs leading-relaxed">{f.desc}</p>
             </div>
           </div>
         ))}

@@ -1,0 +1,32 @@
+# Server
+PORT=5000
+NODE_ENV=development
+
+# MongoDB
+MONGO_URI=mongodb://localhost:27017/cloud-graphics
+
+# JWT
+JWT_SECRET=cloud_graphics_secret_key_2024
+JWT_EXPIRE=7d
+
+# Shiprocket (register free at https://app.shiprocket.in)
+SHIPROCKET_EMAIL=your_shiprocket_email
+SHIPROCKET_PASSWORD=your_shiprocket_password
+# Must match EXACTLY the pickup location name in Shiprocket Dashboard → Settings → Manage Pickup Addresses
+SHIPROCKET_PICKUP_LOCATION=Primary
+
+# Cloudinary — replace with your actual Cloudinary credentials
+CLOUDINARY_CLOUD_NAME=duw0fnlqe
+CLOUDINARY_API_KEY=577292566145157
+CLOUDINARY_API_SECRET=at86006S-PE9arSIybC6cwPWSTI
+
+# Razorpay — replace with your actual Razorpay credentials
+RAZORPAY_KEY_ID=rzp_test_S0fQVzoEoU4kza
+RAZORPAY_KEY_SECRET=Jy7PvGuLvxICTDemV2lVx1mJ
+
+# Email (SMTP) — for OTP emails
+# For Gmail: enable "App Passwords" at myaccount.google.com/apppasswords
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=webcultivate01@gmail.com
+SMTP_PASS=xsli gbme kpze cgmk
