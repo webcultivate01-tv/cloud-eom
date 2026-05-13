@@ -9,6 +9,7 @@ import HeroSlider from "../components/HeroSlider";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Truck, Palette, Star, IndianRupee } from "lucide-react";
+import CTASection from "../components/CTA";
 
 const CAT_COLORS = ["bg-orange-50","bg-green-50","bg-blue-50","bg-pink-50","bg-purple-50","bg-cyan-50","bg-yellow-50","bg-gray-50"];
 const REVIEW_EMPTY = { name: "", email: "", rating: 0, message: "" };
@@ -265,6 +266,8 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      <CTASection/>
 
       {/* Features Strip */}
       <div className="bg-red-50 grid grid-cols-2 md:grid-cols-4 border-t border-red-100">
