@@ -9,7 +9,13 @@ if (!document.head.querySelector("[href*='Playfair+Display']")) document.head.ap
 
 const CATEGORIES = ["Cup", "T-Shirt", "Diary", "Pen", "ID Card", "Frame", "Keychain"];
 const QUICK_LINKS = [["Home", "/"], ["Products", "/products"], ["My Orders", "/orders"], ["Cart", "/cart"], ["Contact Us", "/contact"], ["Login", "/login"]];
-const INFO = ["About Us", "Privacy Policy", "Terms & Conditions", "Shipping Policy", "Return Policy"];
+const INFO = [
+  { label: "About Us", to: "/contact" },
+  { label: "Privacy Policy", to: "/contact" },
+  { label: "Terms & Conditions", to: "/terms" },
+  { label: "Shipping Policy", to: "/shipping-policy" },
+  { label: "Return Policy", to: "/return-policy" },
+];
 
 const IconMapPin = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B51D0F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
@@ -146,14 +152,14 @@ export default function Footer() {
             <h4 className="text-xs font-bold tracking-widest text-gray-900 uppercase pb-2.5 border-b border-gray-100 m-0">
               Information
             </h4>
-            {INFO.map((item) => (
-              <span key={item}
-                className="flex items-center gap-2 text-sm text-gray-500 cursor-default no-underline group transition-colors"
+            {INFO.map(({ label, to }) => (
+              <Link key={to} to={to}
+                className="flex items-center gap-2 text-sm text-gray-500 no-underline group transition-colors"
                 onMouseEnter={e => e.currentTarget.style.color = '#B51D0F'}
                 onMouseLeave={e => e.currentTarget.style.color = ''}>
                 <span className="text-gray-300"><IconArrow /></span>
-                {item}
-              </span>
+                {label}
+              </Link>
             ))}
           </div>
 
