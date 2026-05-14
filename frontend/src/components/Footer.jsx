@@ -55,7 +55,7 @@ const IconWhatsapp = () => (
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-200 mt-auto">
+    <footer style={{ background: "#f8f5f2", borderTop: "1px solid #e8e2db" }} className="mt-auto">
 
       {/* ── Main Grid ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
@@ -99,9 +99,10 @@ export default function Footer() {
                 { icon: <IconWhatsapp />, label: "WhatsApp" },
               ].map(({ icon, label }) => (
                 <button key={label} aria-label={label}
-                  className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 transition-all"
-                  onMouseEnter={e=>{e.currentTarget.style.color='#B51D0F'; e.currentTarget.style.borderColor='#B51D0F'; e.currentTarget.style.background='#fff5f5';}}
-                  onMouseLeave={e=>{e.currentTarget.style.color=''; e.currentTarget.style.borderColor=''; e.currentTarget.style.background='';}}>
+                  className="w-8 h-8 rounded-lg border flex items-center justify-center transition-all"
+                  style={{ borderColor: '#B51D0F', color: '#B51D0F', background: '#fff5f5' }}
+                  onMouseEnter={e=>{e.currentTarget.style.background='#B51D0F'; e.currentTarget.style.color='#fff';}}
+                  onMouseLeave={e=>{e.currentTarget.style.background='#fff5f5'; e.currentTarget.style.color='#B51D0F';}}>
                   {icon}
                 </button>
               ))}
@@ -176,7 +177,7 @@ export default function Footer() {
       </div>
 
       {/* ── Bottom Bar ── */}
-      <div className="border-t border-gray-100 bg-gray-50">
+      <div className="border-t" style={{ borderColor: "#e8e2db", background: "#ede8e2" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-400 text-center sm:text-left m-0">
             © {new Date().getFullYear()} <span className="font-semibold text-gray-600">Cloud Graphics Amravati</span>. All rights reserved.

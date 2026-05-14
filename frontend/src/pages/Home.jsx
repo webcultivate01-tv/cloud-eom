@@ -9,7 +9,6 @@ import HeroSlider from "../components/HeroSlider";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Truck, Palette, Star, IndianRupee } from "lucide-react";
-import CTASection from "../components/CTA";
 
 const CAT_COLORS = ["bg-orange-50","bg-green-50","bg-blue-50","bg-pink-50","bg-purple-50","bg-cyan-50","bg-yellow-50","bg-gray-50"];
 const REVIEW_EMPTY = { name: "", email: "", rating: 0, message: "" };
@@ -267,7 +266,65 @@ export default function Home() {
         </div>
       </section>
 
-      <CTASection/>
+      {/* CTA Section */}
+      <section className="w-full relative overflow-hidden" style={{ background: "#1a0a08" }}>
+
+        {/* Background collage */}
+        <div className="absolute inset-0 grid grid-cols-3 opacity-75">
+          <div className="bg-cover bg-center" style={{ backgroundImage: "url('/hero_mug.png')" }} />
+          <div className="bg-cover bg-center" style={{ backgroundImage: "url('/hero_shirt.png')" }} />
+          <div className="bg-cover bg-center" style={{ backgroundImage: "url('/hero_diary.png')" }} />
+        </div>
+        <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.38)" }} />
+
+        <div className="relative max-w-4xl mx-auto py-16 px-4 sm:py-20 text-center" style={{ zIndex: 2 }}>
+          <div className="inline-flex items-end justify-center w-full mb-8">
+            {[
+              "https://randomuser.me/api/portraits/men/47.jpg",
+              "https://randomuser.me/api/portraits/women/46.jpg",
+              "https://randomuser.me/api/portraits/women/43.jpg",
+              "https://randomuser.me/api/portraits/men/48.jpg",
+              "https://randomuser.me/api/portraits/men/49.jpg",
+            ].map((src, i) => {
+              const offsets = ["-translate-x-8", "-translate-x-4", "", "translate-x-4", "translate-x-8"];
+              const sizes = ["w-10 h-10", "w-12 h-12", "w-14 h-14", "w-12 h-12", "w-10 h-10"];
+              return (
+                <img key={i} src={src} alt="customer"
+                  className={`absolute rounded-full border-4 border-white object-cover ${sizes[i]} transform ${offsets[i]}`}
+                />
+              );
+            })}
+          </div>
+          <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#B51D0F", fontFamily: "'Montserrat', sans-serif" }}>
+            500+ Happy Customers in Amravati
+          </p>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4" style={{ fontFamily: "'Playfair Display', serif", textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
+            Print Your Memories,<br />
+            <span style={{ color: "#B51D0F" }}>Gift Something Special</span>
+          </h2>
+          <p className="text-white text-base max-w-xl mx-auto mb-8" style={{ opacity: 0.85, fontFamily: "'Montserrat', sans-serif" }}>
+            Custom mugs, t-shirts, diaries & more — personalized with your photos and designs. Order today, delivered fast.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+            <Link to="/products"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-200 no-underline"
+              style={{ background: "#fff", color: "#B51D0F", fontFamily: "'Montserrat', sans-serif", boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}
+              onMouseOver={e => e.currentTarget.style.background = "#fef2f2"}
+              onMouseOut={e => e.currentTarget.style.background = "#fff"}
+            >
+              Shop Now →
+            </Link>
+            <Link to="/contact"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-200 no-underline"
+              style={{ border: "2px solid rgba(255,255,255,0.7)", color: "#fff", fontFamily: "'Montserrat', sans-serif", background: "transparent" }}
+              onMouseOver={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+              onMouseOut={e => e.currentTarget.style.background = "transparent"}
+            >
+              Contact Us
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Features Strip */}
       <div className="bg-red-50 grid grid-cols-2 md:grid-cols-4 border-t border-red-100">
