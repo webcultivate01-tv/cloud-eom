@@ -17,15 +17,18 @@ const seed = async () => {
 
   await User.create({
     name: "Cloud Graphics Admin",
-    email: "admin@cloudgraphics.com",
-    password: "admin123",   // hashed automatically by the User model
+    email: "admin@gmail.com",
+    password: "admin123", // hashed automatically by the User model
     role: "admin",
     adminRole: "superAdmin",
   });
 
-  console.log("✅ Admin created: admin@cloudgraphics.com / admin123");
+  console.log("✅ Admin created: admin@gmail.com / admin123");
   console.log("⚠️  Change the password after first login!");
   process.exit(0);
 };
 
-seed().catch((err) => { console.error(err); process.exit(1); });
+seed().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
