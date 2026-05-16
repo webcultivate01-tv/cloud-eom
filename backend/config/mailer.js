@@ -79,6 +79,12 @@ const sendOrderConfirmation = async ({ toEmail, toName, order }) => {
           <p style="color:#c41230;font-size:1.5rem;font-weight:900;letter-spacing:4px;margin:0;">#${shortId}</p>
           <p style="color:#888;font-size:0.72rem;margin:4px 0 0;">Use this ID to track your order</p>
         </div>
+        <div style="margin-top:14px;">
+          <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/admin/orders"
+             style="display:inline-block;background:#c41230;color:#fff;padding:10px 28px;border-radius:8px;font-weight:700;font-size:0.85rem;text-decoration:none;letter-spacing:0.5px;">
+            View Order in Admin Panel →
+          </a>
+        </div>
       </div>
 
       <h3 style="color:#1a1a1a;font-size:0.9rem;margin:20px 0 8px;">📦 Order Details</h3>

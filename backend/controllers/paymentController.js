@@ -74,12 +74,21 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       if (!product) return res.status(404).json({ message: `Product ${item.product} not found` });
       if (!product.isAvailable) return res.status(400).json({ message: `${product.name} is unavailable` });
 
+      // Validate size if product has sizes configured
+      if (product.sizes?.length > 0) {
+        if (!item.size) return res.status(400).json({ message: `Please select a size for "${product.name}"` });
+        if (!product.sizes.includes(item.size)) {
+          return res.status(400).json({ message: `Invalid size "${item.size}" for "${product.name}"` });
+        }
+      }
+
       totalPrice += product.price * item.quantity;
       orderItems.push({
         product: product._id,
         name: product.name,
         price: product.price,
         quantity: item.quantity,
+        size: item.size || "",
         uploadedImage: item.uploadedImage || "",
       });
     }
@@ -115,6 +124,48 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     res.status(201).json(order);
   } catch (err) {
     res.status(500).json({ message: err.message || "Payment verification failed" });
+  }
+};
+
+// @route  GET /api/payment/all
+// @desc   List all payments (Razorpay paid orders + COD orders) for admin
+// @access Admin
+const getAllPayments = async (req, res) => {
+  try {
+    const { method, status, from, to } = req.query;
+    const query = {};
+
+    if (method === "razorpay" || method === "cod") query.paymentMethod = method;
+    if (status) query.paymentStatus = status;
+
+    if (from || to) {
+      query.createdAt = {};
+      if (from) query.createdAt.$gte = new Date(from);
+      if (to) {
+        const toDate = new Date(to);
+        toDate.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = toDate;
+      }
+    }
+
+    // By default, show only orders where money actually moved or is owed
+    if (!method && !status) {
+      query.$or = [
+        { paymentMethod: "razorpay", paymentStatus: { $in: ["paid", "refunded"] } },
+        { paymentMethod: "cod" },
+      ];
+    }
+
+    const orders = await Order.find(query)
+      .populate("user", "name email phone")
+      .sort({ paidAt: -1, createdAt: -1 })
+      .select(
+        "user totalPrice paymentMethod paymentStatus razorpayOrderId razorpayPaymentId razorpaySignature paidAt status createdAt shippingAddress"
+      );
+
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -168,6 +219,7 @@ const markRefunded = async (req, res) => {
 module.exports = {
   createRazorpayOrder,
   verifyPaymentAndCreateOrder,
+  getAllPayments,
   getPaymentStats,
   markRefunded,
 };

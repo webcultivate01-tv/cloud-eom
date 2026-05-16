@@ -4,6 +4,7 @@ import { fetchAllOrders, updateOrderStatus } from "../../features/orders/orderSl
 import { markOrderRefunded } from "../../features/payment/paymentSlice";
 import { toast } from "react-toastify";
 import api from "../../utils/api";
+import { ChevronDown, ChevronUp, Eye, MapPin, Phone, Mail, Package } from "lucide-react";
 
 const STATUSES = ["Pending", "Processing", "Printing", "Shipped", "Delivered", "Cancelled"];
 
@@ -40,6 +41,7 @@ export default function ManageOrders() {
   const [trackingModal, setTrackingModal] = useState(null);
   const [trackingData, setTrackingData] = useState(null);
   const [loadingTracking, setLoadingTracking] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   const loadOrders = () => {
     const params = {};
@@ -344,40 +346,134 @@ export default function ManageOrders() {
           <p className="text-slate-500 font-medium">No orders found for this filter.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {orders.map((order) => {
             const cfg = STATUS_CFG[order.status] || { cls: "bg-slate-100 text-slate-600", dot: "bg-slate-400" };
+            const isExpanded = expandedOrderId === order._id;
+            const itemCount = order.items.reduce((sum, it) => sum + it.quantity, 0);
             return (
-              <div key={order._id} className="admin-card hover:shadow-card-hover transition-shadow duration-200">
-                {/* Card top stripe by status */}
-                <div className={`h-1 w-full ${cfg.dot} rounded-t-2xl`} />
-
-                <div className="p-5">
-                  {/* Header row */}
-                  <div className="flex justify-between flex-wrap gap-2 mb-4">
-                    <div>
-                      <p className="text-xs font-medium text-slate-400 mb-0.5">Order ID</p>
-                      <p className="font-mono text-sm text-slate-700 font-semibold">{order._id}</p>
+              <div key={order._id} className="admin-card hover:shadow-card-hover transition-shadow duration-200 overflow-hidden">
+                {/* ── Compact row — always visible ─────────────────── */}
+                <div
+                  onClick={() => setExpandedOrderId(isExpanded ? null : order._id)}
+                  className={`cursor-pointer transition-colors ${isExpanded ? "bg-indigo-50/40" : "hover:bg-slate-50"}`}
+                >
+                  <div className="grid grid-cols-12 gap-3 items-center px-4 py-3">
+                    {/* Status dot + Order ID */}
+                    <div className="col-span-12 sm:col-span-2 flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${cfg.dot} shrink-0`} />
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400 font-medium leading-none mb-0.5">Order</p>
+                        <p className="font-mono text-xs text-slate-700 font-bold truncate">
+                          #{order._id.slice(-8).toUpperCase()}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-400 mb-0.5">
-                        {new Date(order.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+
+                    {/* Customer */}
+                    <div className="col-span-7 sm:col-span-3 min-w-0">
+                      <p className="text-[10px] text-slate-400 font-medium leading-none mb-0.5">Customer</p>
+                      <p className="text-sm font-semibold text-slate-800 truncate">{order.user?.name || order.shippingAddress?.fullName}</p>
+                      <p className="text-[11px] text-slate-400 truncate">
+                        {order.shippingAddress?.city}{order.shippingAddress?.state ? `, ${order.shippingAddress.state}` : ""}
                       </p>
-                      <p className="font-black text-slate-900 text-lg">₹{order.totalPrice.toLocaleString()}</p>
+                    </div>
+
+                    {/* Items */}
+                    <div className="hidden sm:block sm:col-span-1">
+                      <p className="text-[10px] text-slate-400 font-medium leading-none mb-0.5">Items</p>
+                      <p className="text-sm font-bold text-slate-700">{itemCount}</p>
+                    </div>
+
+                    {/* Total */}
+                    <div className="col-span-5 sm:col-span-2">
+                      <p className="text-[10px] text-slate-400 font-medium leading-none mb-0.5">Total</p>
+                      <p className="text-sm font-black text-slate-900">₹{order.totalPrice.toLocaleString()}</p>
+                    </div>
+
+                    {/* Payment + Status badges */}
+                    <div className="col-span-12 sm:col-span-3 flex items-center flex-wrap gap-1.5">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        order.paymentStatus === "paid"     ? "bg-emerald-100 text-emerald-700" :
+                        order.paymentStatus === "refunded" ? "bg-red-100 text-red-600"         :
+                                                             "bg-amber-100 text-amber-700"
+                      }`}>
+                        {order.paymentMethod === "razorpay" ? "💳" : "💵"} {order.paymentStatus?.toUpperCase()}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.cls}`}>
+                        {order.status}
+                      </span>
+                      <span className="text-[10px] text-slate-400 ml-auto sm:ml-0">
+                        {new Date(order.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                      </span>
+                    </div>
+
+                    {/* View Details button */}
+                    <div className="col-span-12 sm:col-span-1 flex justify-end">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setExpandedOrderId(isExpanded ? null : order._id); }}
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                          isExpanded
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                        }`}
+                      >
+                        <Eye size={12} />
+                        {isExpanded ? "Hide" : "View"}
+                        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      </button>
                     </div>
                   </div>
+                </div>
+
+                {/* ── Expanded details ─────────────────────────────── */}
+                {isExpanded && (
+                  <div className="border-t border-slate-100 p-5 bg-white animate-in fade-in slide-in-from-top-1 duration-200">
+                    {/* Full Order ID strip */}
+                    <div className="flex justify-between flex-wrap gap-2 mb-4 pb-3 border-b border-slate-100">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Full Order ID</p>
+                        <p className="font-mono text-sm text-slate-700 font-semibold">{order._id}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Placed On</p>
+                        <p className="text-sm text-slate-700 font-semibold">
+                          {new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                        </p>
+                      </div>
+                    </div>
 
                   {/* Customer info */}
-                  <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl mb-4">
-                    <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                      {order.user?.name?.[0]?.toUpperCase() ?? "?"}
+                  <div className="p-3 bg-slate-50 rounded-xl mb-4">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                        {order.user?.name?.[0]?.toUpperCase() ?? "?"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-800 text-sm">{order.user?.name}</p>
+                        <p className="text-xs text-slate-500 truncate flex items-center gap-1"><Mail size={11} /> {order.user?.email}</p>
+                        {order.user?.phone && <p className="text-xs text-slate-400 flex items-center gap-1"><Phone size={11} /> {order.user.phone}</p>}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-slate-800 text-sm">{order.user?.name}</p>
-                      <p className="text-xs text-slate-500 truncate">{order.user?.email}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        📞 {order.shippingAddress?.phone} &nbsp;·&nbsp;
-                        📍 {order.shippingAddress?.address}, {order.shippingAddress?.city} — {order.shippingAddress?.pincode}
+                    <div className="border-t border-slate-200 pt-2 mt-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                        <MapPin size={11} /> Shipping Address
+                        {order.shippingAddress?.addressType && (
+                          <span className="ml-2 normal-case bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-semibold">
+                            {order.shippingAddress.addressType}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-slate-700 font-semibold">{order.shippingAddress?.fullName}</p>
+                      <p className="text-xs text-slate-500">📞 {order.shippingAddress?.phone}</p>
+                      <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                        {order.shippingAddress?.address}
+                        {order.shippingAddress?.addressLine2 ? `, ${order.shippingAddress.addressLine2}` : ""}
+                        {order.shippingAddress?.landmark ? ` (Near: ${order.shippingAddress.landmark})` : ""}
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        {order.shippingAddress?.city}
+                        {order.shippingAddress?.state ? `, ${order.shippingAddress.state}` : ""} — {order.shippingAddress?.pincode}
                       </p>
                     </div>
                   </div>
@@ -401,10 +497,20 @@ export default function ManageOrders() {
 
                   {/* Items */}
                   <div className="border-t border-slate-100 pt-3 flex flex-col gap-2 mb-4">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <Package size={11} /> Items ({order.items.length})
+                    </p>
                     {order.items.map((item, i) => (
                       <div key={i} className="flex justify-between items-center flex-wrap gap-2">
                         <div>
-                          <p className="text-sm font-semibold text-slate-800">{item.name}</p>
+                          <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 flex-wrap">
+                            {item.name}
+                            {item.size && (
+                              <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                Size: {item.size}
+                              </span>
+                            )}
+                          </p>
                           <p className="text-xs text-slate-400">Qty: {item.quantity} × ₹{item.price}</p>
                         </div>
                         {item.uploadedImage ? (
@@ -508,20 +614,72 @@ export default function ManageOrders() {
                     {/* Shiprocket */}
                     {!order.shipment?.trackingId && order.status !== "Cancelled" && (
                       shippingOrderId === order._id ? (
-                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 w-full mt-1">
-                          <p className="text-xs font-bold text-indigo-700 mb-2 flex items-center gap-1.5">
-                            📦 Shipment Details (Shiprocket)
+                        <div className="bg-white border-2 border-indigo-200 rounded-xl p-4 w-full mt-1 shadow-sm">
+                          <p className="text-sm font-black text-indigo-700 mb-3 flex items-center gap-1.5">
+                            📦 Confirm Shipment via Shiprocket
                           </p>
-                          <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3 text-xs text-amber-700 leading-relaxed">
-                            ⚠️ <strong>Important:</strong> Ensure your pickup address is configured in Shiprocket Dashboard → Settings → Manage Pickup Addresses. The delivery boy will come to collect the parcel from this address.
-                          </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-                            <div>
-                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">State *</label>
-                              <input type="text" placeholder="Maharashtra" value={shipForm.state}
-                                onChange={(e) => setShipForm({ ...shipForm, state: e.target.value })}
-                                className="admin-input !py-1.5 !text-xs" />
+
+                          {/* Customer details summary — admin sees exactly what's being sent */}
+                          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-3">
+                            <p className="text-[10px] font-black text-emerald-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                              ✅ Customer Details — Will Be Sent to Shiprocket
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
+                              <div className="flex gap-1.5">
+                                <span className="text-slate-500 font-semibold shrink-0 w-14">Name:</span>
+                                <span className="text-slate-800 font-bold">{order.shippingAddress?.fullName || "—"}</span>
+                              </div>
+                              <div className="flex gap-1.5">
+                                <span className="text-slate-500 font-semibold shrink-0 w-14">Phone:</span>
+                                <span className="text-slate-800 font-bold">{order.shippingAddress?.phone || "—"}</span>
+                              </div>
+                              <div className="flex gap-1.5">
+                                <span className="text-slate-500 font-semibold shrink-0 w-14">Email:</span>
+                                <span className="text-slate-800 font-bold truncate">{order.user?.email || "—"}</span>
+                              </div>
+                              {order.user?.phone && order.user.phone !== order.shippingAddress?.phone && (
+                                <div className="flex gap-1.5">
+                                  <span className="text-slate-500 font-semibold shrink-0 w-14">Alt Phone:</span>
+                                  <span className="text-slate-800 font-bold">{order.user.phone}</span>
+                                </div>
+                              )}
+                              <div className="flex gap-1.5 sm:col-span-2">
+                                <span className="text-slate-500 font-semibold shrink-0 w-14">Address:</span>
+                                <span className="text-slate-800">
+                                  {order.shippingAddress?.address}
+                                  {order.shippingAddress?.addressLine2 ? `, ${order.shippingAddress.addressLine2}` : ""}
+                                  {order.shippingAddress?.landmark ? ` (Landmark: ${order.shippingAddress.landmark})` : ""}
+                                </span>
+                              </div>
+                              <div className="flex gap-1.5 sm:col-span-2">
+                                <span className="text-slate-500 font-semibold shrink-0 w-14">Area:</span>
+                                <span className="text-slate-800 font-bold">
+                                  {order.shippingAddress?.city}
+                                  {order.shippingAddress?.state ? `, ${order.shippingAddress.state}` : ""}
+                                  {" — "}{order.shippingAddress?.pincode}
+                                </span>
+                              </div>
+                              <div className="flex gap-1.5">
+                                <span className="text-slate-500 font-semibold shrink-0 w-14">Payment:</span>
+                                <span className={`font-bold ${order.paymentStatus === "paid" ? "text-emerald-700" : "text-amber-700"}`}>
+                                  {order.paymentMethod === "razorpay" && order.paymentStatus === "paid"
+                                    ? "Prepaid ✓"
+                                    : `COD — Collect ₹${order.totalPrice.toLocaleString()}`}
+                                </span>
+                              </div>
+                              <div className="flex gap-1.5">
+                                <span className="text-slate-500 font-semibold shrink-0 w-14">Items:</span>
+                                <span className="text-slate-800 font-bold">{order.items.length} item(s)</span>
+                              </div>
                             </div>
+                          </div>
+
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3 text-[11px] text-amber-700 leading-relaxed">
+                            ⚠️ <strong>Pickup address:</strong> The delivery boy will collect the parcel from your <strong>Shiprocket Pickup Address</strong> (configured at Shiprocket → Settings → Manage Pickup Addresses).
+                          </div>
+
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">📐 Package Dimensions</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
                             <div>
                               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Length (cm) *</label>
                               <input type="number" placeholder="10" value={shipForm.length}
@@ -546,15 +704,31 @@ export default function ManageOrders() {
                                 onChange={(e) => setShipForm({ ...shipForm, weight: e.target.value })}
                                 className="admin-input !py-1.5 !text-xs" />
                             </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Pickup State</label>
+                              <input type="text" placeholder="Maharashtra" value={shipForm.state}
+                                onChange={(e) => setShipForm({ ...shipForm, state: e.target.value })}
+                                className="admin-input !py-1.5 !text-xs" />
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => handleShipOrder(order._id)} className="admin-btn admin-btn-success !py-2 !text-xs">
-                              ✅ Confirm & Ship — Schedule Pickup
+
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <button
+                              onClick={() => handleShipOrder(order._id)}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-3 px-4 rounded-xl border-none cursor-pointer transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                            >
+                              🚚 Confirm & Ship Now — Schedule Pickup
                             </button>
-                            <button onClick={() => setShippingOrderId(null)} className="admin-btn admin-btn-ghost !py-2 !text-xs">
+                            <button
+                              onClick={() => setShippingOrderId(null)}
+                              className="bg-white border-2 border-slate-200 text-slate-600 font-bold text-sm py-3 px-5 rounded-xl cursor-pointer hover:bg-slate-50 hover:border-slate-300 transition-all"
+                            >
                               Cancel
                             </button>
                           </div>
+                          <p className="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                            On confirm: Shiprocket order created → AWB assigned → delivery boy pickup scheduled → customer notified by email.
+                          </p>
                         </div>
                       ) : (
                         <button
@@ -566,7 +740,8 @@ export default function ManageOrders() {
                       )
                     )}
                   </div>
-                </div>
+                  </div>
+                )}
               </div>
             );
           })}

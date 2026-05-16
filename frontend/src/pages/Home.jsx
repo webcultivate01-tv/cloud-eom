@@ -94,7 +94,7 @@ export default function Home() {
     <div className="bg-white">
       <HeroSlider />
 
-      {/* Events Banner */}
+      {/* Events ticker (compact) */}
       {events.length > 0 && (
         <div className="bg-red-50 border-b border-pink-100">
           <div className="max-w-7xl mx-auto flex overflow-x-auto">
@@ -119,12 +119,89 @@ export default function Home() {
           {categories.map((cat, i) => (
             <Link key={cat._id} to={`/products?category=${cat.name}`}
               className={`flex flex-col items-center gap-2 py-5 px-2 rounded-xl border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${CAT_COLORS[i % CAT_COLORS.length]}`}>
-              <span className="text-3xl">{cat.icon || "🏷️"}</span>
+              {cat.image ? (
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm"
+                />
+              ) : (
+                <span className="text-3xl">{cat.icon || "🏷️"}</span>
+              )}
               <p className="text-gray-900 text-xs font-bold text-center">{cat.name}</p>
             </Link>
           ))}
         </div>
       </section>
+
+      {/* Events Showcase — visible on website */}
+      {events.length > 0 && (
+        <section className="bg-gradient-to-b from-red-50/40 to-white px-4 md:px-12 py-12 md:py-16 border-y border-red-100/60">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <span className="inline-block text-xs font-bold uppercase tracking-[0.3em] text-red-700 mb-3">
+                Latest Updates
+              </span>
+              <h2 className="text-2xl md:text-4xl font-black text-gray-900 -tracking-wide mb-3"
+                  style={{ fontFamily: "'Playfair Display', serif" }}>
+                Offers & Announcements
+              </h2>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Stay up to date with our latest offers, flash sales, and important announcements.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {events.slice(0, 6).map((ev) => {
+                const Card = ev.link ? Link : "div";
+                const cardProps = ev.link ? { to: ev.link } : {};
+                return (
+                  <Card
+                    key={ev._id}
+                    {...cardProps}
+                    className="group bg-white rounded-2xl overflow-hidden border border-red-100/60 hover:border-red-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col no-underline"
+                  >
+                    {ev.image ? (
+                      <div className="aspect-[16/9] overflow-hidden bg-gray-100">
+                        <img
+                          src={ev.image}
+                          alt={ev.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-[16/9] bg-gradient-to-br from-red-50 via-pink-50 to-amber-50 flex items-center justify-center">
+                        <span className="text-5xl opacity-30">📣</span>
+                      </div>
+                    )}
+                    <div className="p-5 flex flex-col flex-1">
+                      <span className="inline-flex items-center w-fit bg-red-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-3">
+                        {ev.badge || "Announcement"}
+                      </span>
+                      <h3 className="font-black text-gray-900 text-lg leading-snug mb-2 group-hover:text-red-700 transition-colors">
+                        {ev.title}
+                      </h3>
+                      <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 flex-1">
+                        {ev.description}
+                      </p>
+                      {ev.expiresAt && (
+                        <p className="text-xs text-amber-600 mt-3 flex items-center gap-1 font-semibold">
+                          ⏳ Valid till {new Date(ev.expiresAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                        </p>
+                      )}
+                      {ev.link && (
+                        <p className="text-red-700 font-bold text-sm mt-3 flex items-center gap-1">
+                          Learn more <span className="group-hover:translate-x-1 transition-transform">→</span>
+                        </p>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Featured Products */}
       <section className="bg-gray-50 px-4 md:px-12 py-10 md:py-12">

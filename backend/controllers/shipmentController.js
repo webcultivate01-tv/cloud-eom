@@ -40,7 +40,7 @@ const shipOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.orderId)
       .populate("user", "name email phone")
-      .populate("items.product", "name");
+      .populate("items.product", "name sku");
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
@@ -59,44 +59,93 @@ const shipOrder = async (req, res) => {
       });
     }
 
+    /* ── Validate that all required customer details are present
+          (Shiprocket rejects the request if any of these are missing,
+           and the delivery boy needs them to find the address) ─── */
+    const addr = order.shippingAddress || {};
+    const missing = [];
+    if (!addr.fullName?.trim()) missing.push("Full Name");
+    if (!addr.phone?.trim())    missing.push("Phone");
+    if (!addr.address?.trim())  missing.push("Address");
+    if (!addr.city?.trim())     missing.push("City");
+    if (!addr.pincode?.trim())  missing.push("Pincode");
+    const stateForShipping = (addr.state || req.body.state || "").trim();
+    if (!stateForShipping)      missing.push("State");
+    if (!order.user?.email)     missing.push("Customer Email");
+
+    if (missing.length) {
+      return res.status(400).json({
+        message: `Cannot ship — customer details are incomplete: ${missing.join(", ")}. Please update the order before shipping.`,
+      });
+    }
+
     /* ── Step 1: Authenticate ─────────────────────── */
     const token  = await getShiprocketToken();
     const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
-    /* ── Step 2: Build Shiprocket order payload ───── */
+    /* ── Step 2: Build Shiprocket order payload ─────
+          Send the COMPLETE customer record so the courier
+          and the delivery boy have everything they need:
+          name, phone, alternate phone, full address,
+          landmark, email, item details, and any special
+          instructions the customer left. ─────────── */
     const orderDate = new Date(order.createdAt).toISOString().split("T")[0];
 
     // Shiprocket requires a unique order_id per request.
     // We append a timestamp suffix to avoid "duplicate order" errors on retries.
     const srOrderId = `${order._id.toString().slice(-10)}-${Date.now()}`;
 
+    // Combine address line 2 + landmark so the delivery boy sees both.
+    const addressLine2Combined = [
+      addr.addressLine2?.trim(),
+      addr.landmark?.trim() ? `Landmark: ${addr.landmark.trim()}` : "",
+    ].filter(Boolean).join(" — ");
+
+    // Customer's account phone may differ from shipping phone — pass as alternate.
+    const altPhone = (order.user?.phone && order.user.phone !== addr.phone)
+      ? order.user.phone
+      : "";
+
+    // Combine customer note + address-type so the delivery boy gets context.
+    const deliveryNote = [
+      addr.addressType ? `Address Type: ${addr.addressType}` : "",
+      order.customerNote?.trim() ? `Note: ${order.customerNote.trim()}` : "",
+    ].filter(Boolean).join(" | ");
+
     const srOrderPayload = {
       order_id:   srOrderId,
       order_date: orderDate,
+
+      // Customer-facing instructions to courier (visible on label / dashboard)
+      comment: deliveryNote || `Order #${order._id.toString().slice(-8).toUpperCase()}`,
 
       // "Primary" must match the pickup location name you set in
       // Shiprocket Dashboard → Settings → Manage Pickup Addresses
       pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || "Primary",
 
-      // Billing = customer's address
-      billing_customer_name: order.shippingAddress.fullName,
-      billing_last_name:     "",
-      billing_address:       order.shippingAddress.address,
-      billing_address_2:     order.shippingAddress.addressLine2 || "",
-      billing_city:          order.shippingAddress.city,
-      billing_pincode:       order.shippingAddress.pincode,
-      billing_state:         order.shippingAddress.state || req.body.state || "Maharashtra",
-      billing_country:       "India",
-      billing_email:         order.user.email,
-      billing_phone:         order.shippingAddress.phone,
+      // Billing = customer's address (Shiprocket uses this for the shipping label
+      // that the delivery boy reads off the package)
+      billing_customer_name:  addr.fullName,
+      billing_last_name:      "",
+      billing_address:        addr.address,
+      billing_address_2:      addressLine2Combined,
+      billing_city:           addr.city,
+      billing_pincode:        addr.pincode,
+      billing_state:          stateForShipping,
+      billing_country:        "India",
+      billing_email:          order.user.email,
+      billing_phone:          addr.phone,
+      billing_alternate_phone: altPhone,
 
       // Shipping = same as billing
       shipping_is_billing: true,
 
-      // Order items
+      // Order items — pass real product SKU when configured so the picker/packer
+      // and the courier label show correct line-item info. Size is appended to
+      // the item name so it's visible on the shipping label.
       order_items: order.items.map((item) => ({
-        name:          item.name,
-        sku:           item.product?._id?.toString() || `SKU-${Date.now()}`,
+        name:          item.size ? `${item.name} (Size: ${item.size})` : item.name,
+        sku:           item.product?.sku || item.product?._id?.toString() || `SKU-${Date.now()}`,
         units:         item.quantity,
         selling_price: item.price,
         discount:      0,

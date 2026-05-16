@@ -12,6 +12,11 @@ const eventSchema = new mongoose.Schema(
       type: String,
       required: [true, "Description is required"],
     },
+    // Optional image (Cloudinary URL) shown on website event card
+    image: {
+      type: String,
+      default: "",
+    },
     // Optional CTA link (e.g. /products?category=Cup)
     link: {
       type: String,

@@ -1,8 +1,13 @@
 const Product = require("../models/Product");
-const { cloudinary } = require("../config/cloudinary");
 
-const parseJSON = (val, fallback = []) => {
-  try { return val ? JSON.parse(val) : fallback; } catch { return fallback; }
+// Accept either a real array, or a JSON-stringified array (legacy multipart callers).
+const toArray = (val, fallback = []) => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try { const parsed = JSON.parse(val); return Array.isArray(parsed) ? parsed : fallback; }
+    catch { return fallback; }
+  }
+  return fallback;
 };
 
 // @desc    Get all available products
@@ -39,7 +44,10 @@ const getProductById = async (req, res) => {
   }
 };
 
-// @desc    Create a new product (admin uploads image via Cloudinary)
+// @desc    Create a new product
+//          Images come in as a URL array (`images: [url, url, ...]`).
+//          Each URL is either a Cloudinary URL produced by /api/upload,
+//          or any external URL the admin pasted directly.
 // @route   POST /api/products
 // @access  Admin
 const createProduct = async (req, res) => {
@@ -47,19 +55,15 @@ const createProduct = async (req, res) => {
     const {
       name, description, price, originalPrice,
       brand, sku, category, stock,
-      allowCustomImage, requiresCustomImage,
+      allowCustomImage, requiresCustomImage, allowCOD,
       weight, returnPolicy,
     } = req.body;
 
-    const uploadedImages = req.files?.length
-      ? req.files.map((f) => f.path)
-      : req.file
-      ? [req.file.path]
-      : [];
-
-    const highlights     = parseJSON(req.body.highlights, []);
-    const specifications = parseJSON(req.body.specifications, []);
-    const tags           = parseJSON(req.body.tags, []);
+    const images         = toArray(req.body.images, []);
+    const sizes          = toArray(req.body.sizes, []);
+    const highlights     = toArray(req.body.highlights, []);
+    const specifications = toArray(req.body.specifications, []);
+    const tags           = toArray(req.body.tags, []);
 
     const product = await Product.create({
       name,
@@ -72,8 +76,10 @@ const createProduct = async (req, res) => {
       stock,
       allowCustomImage,
       requiresCustomImage,
-      image: uploadedImages[0] || "",
-      images: uploadedImages,
+      allowCOD: allowCOD !== undefined ? allowCOD : true,
+      sizes,
+      image: images[0] || "",
+      images,
       highlights,
       specifications,
       tags,
@@ -100,17 +106,15 @@ const updateProduct = async (req, res) => {
     const {
       name, description, price, originalPrice,
       brand, sku, category, stock,
-      isAvailable, allowCustomImage, requiresCustomImage,
+      isAvailable, allowCustomImage, requiresCustomImage, allowCOD,
       weight, returnPolicy,
     } = req.body;
 
-    if (req.files?.length) {
-      const newImages = req.files.map((f) => f.path);
-      product.images = newImages;
-      product.image = newImages[0];
-    } else if (req.file) {
-      product.images = [req.file.path];
-      product.image = req.file.path;
+    // Replace the full images list when the client sends one.
+    if (req.body.images !== undefined) {
+      const images = toArray(req.body.images, []);
+      product.images = images;
+      product.image  = images[0] || "";
     }
 
     product.name               = name               ?? product.name;
@@ -124,15 +128,18 @@ const updateProduct = async (req, res) => {
     product.isAvailable        = isAvailable        ?? product.isAvailable;
     product.allowCustomImage   = allowCustomImage   ?? product.allowCustomImage;
     product.requiresCustomImage= requiresCustomImage?? product.requiresCustomImage;
+    product.allowCOD           = allowCOD           ?? product.allowCOD;
     product.weight             = weight             ?? product.weight;
     product.returnPolicy       = returnPolicy       ?? product.returnPolicy;
 
+    if (req.body.sizes !== undefined)
+      product.sizes = toArray(req.body.sizes, product.sizes);
     if (req.body.highlights !== undefined)
-      product.highlights = parseJSON(req.body.highlights, product.highlights);
+      product.highlights = toArray(req.body.highlights, product.highlights);
     if (req.body.specifications !== undefined)
-      product.specifications = parseJSON(req.body.specifications, product.specifications);
+      product.specifications = toArray(req.body.specifications, product.specifications);
     if (req.body.tags !== undefined)
-      product.tags = parseJSON(req.body.tags, product.tags);
+      product.tags = toArray(req.body.tags, product.tags);
 
     const updated = await product.save();
     res.json(updated);

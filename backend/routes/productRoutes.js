@@ -10,7 +10,6 @@ const {
 } = require("../controllers/productController");
 const { protect } = require("../middleware/authMiddleware");
 const { adminOnly } = require("../middleware/adminMiddleware");
-const { upload } = require("../config/cloudinary");
 
 // Public routes
 router.get("/", getProducts);
@@ -21,9 +20,10 @@ router.get("/admin/all", protect, adminOnly, getAllProductsAdmin);
 // Public route
 router.get("/:id", getProductById);
 
-// Admin routes (with optional multi-image upload — up to 10 images per product)
-router.post("/", protect, adminOnly, upload.array("images", 10), createProduct);
-router.put("/:id", protect, adminOnly, upload.array("images", 10), updateProduct);
+// Admin routes — JSON body with images as URL array.
+// Image URLs come either from /api/upload (Cloudinary) or from external URLs pasted by admin.
+router.post("/",    protect, adminOnly, createProduct);
+router.put("/:id",  protect, adminOnly, updateProduct);
 router.delete("/:id", protect, adminOnly, deleteProduct);
 
 module.exports = router;

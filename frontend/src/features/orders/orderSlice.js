@@ -94,6 +94,7 @@ const orderSlice = createSlice({
   name: "orders",
   initialState: {
     orders: [],
+    createdOrder: null,
     stats: null,
     loading: false,
     error: null,
@@ -103,12 +104,13 @@ const orderSlice = createSlice({
     resetOrderState: (state) => {
       state.success = false;
       state.error = null;
+      state.createdOrder = null;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(placeOrder.pending, (state) => { state.loading = true; state.error = null; state.success = false; })
-      .addCase(placeOrder.fulfilled, (state, action) => { state.loading = false; state.success = true; state.orders.unshift(action.payload); })
+      .addCase(placeOrder.fulfilled, (state, action) => { state.loading = false; state.success = true; state.createdOrder = action.payload; state.orders.unshift(action.payload); })
       .addCase(placeOrder.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
 
       .addCase(fetchMyOrders.pending, (state) => { state.loading = true; })

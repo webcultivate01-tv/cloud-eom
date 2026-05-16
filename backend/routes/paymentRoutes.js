@@ -5,6 +5,7 @@ const { adminOnly } = require("../middleware/adminMiddleware");
 const {
   createRazorpayOrder,
   verifyPaymentAndCreateOrder,
+  getAllPayments,
   getPaymentStats,
   markRefunded,
 } = require("../controllers/paymentController");
@@ -14,6 +15,7 @@ router.post("/create-order", protect, createRazorpayOrder);
 router.post("/verify", protect, verifyPaymentAndCreateOrder);
 
 // Admin routes
+router.get("/all",   protect, adminOnly, getAllPayments);
 router.get("/stats", protect, adminOnly, getPaymentStats);
 router.put("/:orderId/refund", protect, adminOnly, markRefunded);
 

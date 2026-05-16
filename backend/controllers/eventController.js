@@ -35,11 +35,12 @@ const getAllEventsAdmin = async (req, res) => {
 // @access  Admin
 const createEvent = async (req, res) => {
   try {
-    const { title, description, link, badge, expiresAt } = req.body;
+    const { title, description, image, link, badge, expiresAt } = req.body;
 
     const event = await Event.create({
       title,
       description,
+      image: image || "",
       link,
       badge,
       expiresAt: expiresAt || null,

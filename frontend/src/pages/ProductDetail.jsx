@@ -5,7 +5,7 @@ import { fetchProductById, clearSelectedProduct } from "../features/products/pro
 import { addToCart } from "../features/cart/cartSlice";
 import { toggleFavorite, selectFavoriteIds } from "../features/favorites/favoritesSlice";
 import { toast } from "react-toastify";
-import { Heart, HeartOff, Palette, Edit3, CheckCircle2, XCircle, Check, Minus, Plus, ShoppingCart, ShoppingBag, Printer, Package, Truck, RotateCcw, Scale, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
+import { Heart, HeartOff, Palette, Edit3, CheckCircle2, XCircle, Check, Minus, Plus, ShoppingCart, ShoppingBag, Printer, Package, Truck, RotateCcw, Scale, ChevronLeft, ChevronRight, Share2, AlertCircle } from "lucide-react";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -16,9 +16,10 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState("desc");
   const [activeIdx, setActiveIdx] = useState(0);
+  const [selectedSize, setSelectedSize] = useState("");
 
   useEffect(() => { dispatch(fetchProductById(id)); return () => dispatch(clearSelectedProduct()); }, [dispatch, id]);
-  useEffect(() => { setActiveIdx(0); }, [product?._id]);
+  useEffect(() => { setActiveIdx(0); setSelectedSize(""); }, [product?._id]);
 
   const images = product ? (product.images?.length ? product.images : product.image ? [product.image] : []) : [];
 
@@ -177,6 +178,51 @@ export default function ProductDetail() {
                 )}
               </div>
 
+              {/* Size picker — required when product has sizes */}
+              {product.sizes?.length > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-900 font-bold text-sm">
+                      Select Size <span className="text-red-700">*</span>
+                    </span>
+                    {selectedSize && (
+                      <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                        Selected: {selectedSize}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {product.sizes.map((s) => {
+                      const active = selectedSize === s;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setSelectedSize(s)}
+                          className={`min-w-[3rem] px-4 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
+                            active
+                              ? "border-red-700 bg-red-700 text-white shadow-md"
+                              : "border-gray-200 bg-white text-gray-700 hover:border-red-300 hover:bg-red-50/30"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* COD availability hint */}
+              {product.allowCOD === false && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2.5 mb-6">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-amber-800 text-xs font-medium leading-relaxed m-0">
+                    <strong>Online payment only</strong> — Cash on Delivery is not available for this product.
+                  </p>
+                </div>
+              )}
+
               {product.stock > 0 && (
                 <div className="flex items-center gap-5 mb-8 bg-gray-50 p-3 rounded-2xl w-fit border border-gray-100">
                   <span className="text-gray-600 font-bold text-sm ml-2">Quantity</span>
@@ -193,12 +239,26 @@ export default function ProductDetail() {
               )}
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8 mt-auto">
-                <button onClick={() => { dispatch(addToCart({ ...product, quantity: qty })); toast.success(`${product.name} added to cart!`); }}
+                <button onClick={() => {
+                  if (product.sizes?.length > 0 && !selectedSize) {
+                    toast.error("Please select a size first");
+                    return;
+                  }
+                  dispatch(addToCart({ ...product, size: selectedSize, quantity: qty }));
+                  toast.success(`${product.name}${selectedSize ? ` (${selectedSize})` : ""} added to cart!`);
+                }}
                   disabled={product.stock === 0}
                   className="flex-1 flex items-center justify-center gap-2 py-4 border-2 border-red-700 text-red-700 bg-white rounded-xl font-bold text-base cursor-pointer hover:bg-red-50 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
                   <ShoppingCart className="w-5 h-5" /> Add to Cart
                 </button>
-                <button onClick={() => { dispatch(addToCart({ ...product, quantity: qty })); navigate("/cart"); }}
+                <button onClick={() => {
+                  if (product.sizes?.length > 0 && !selectedSize) {
+                    toast.error("Please select a size first");
+                    return;
+                  }
+                  dispatch(addToCart({ ...product, size: selectedSize, quantity: qty }));
+                  navigate("/cart");
+                }}
                   disabled={product.stock === 0}
                   className="flex-1 flex items-center justify-center gap-2 py-4 border-2 border-red-700 bg-red-700 text-white rounded-xl font-bold text-base cursor-pointer hover:bg-red-800 hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                   <ShoppingBag className="w-5 h-5" /> Buy Now

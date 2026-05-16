@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, ShieldCheck,
   CalendarDays, Tag, Mail, Star, RefreshCw, Download, Bell,
-  Home, LogOut, Menu, X, ChevronRight, Zap,
+  Home, LogOut, Menu, X, ChevronRight, Zap, CreditCard,
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -17,6 +17,7 @@ const NAV_SECTIONS = [
     items: [
       { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
       { to: "/admin/orders",    icon: ShoppingCart,    label: "Orders" },
+      { to: "/admin/payments",  icon: CreditCard,      label: "Payments" },
     ],
   },
   {
