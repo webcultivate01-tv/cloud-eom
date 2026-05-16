@@ -10,9 +10,10 @@ import {
   deleteSubcategory,
 } from "../../features/categories/categorySlice";
 import { toast } from "react-toastify";
+import { ImageIcon } from "lucide-react";
+import ImageInput from "../../components/ImageInput";
 
-const ICONS = ["🏷️","👕","☕","📓","✏️","🪪","🖼️","🔑","🎁","🛍️","📦","🎨","🧢","📱","💎","🎀","🌟","🏠","🌈","🚀"];
-const EMPTY_CAT = { name: "", description: "", icon: "🏷️", sortOrder: "0" };
+const EMPTY_CAT = { name: "", image: "", sortOrder: "0" };
 
 const ChevronDown = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -42,7 +43,7 @@ export default function ManageCategories() {
 
   const handleEdit = (cat) => {
     setEditId(cat._id);
-    setForm({ name: cat.name, description: cat.description || "", icon: cat.icon || "🏷️", sortOrder: String(cat.sortOrder ?? 0) });
+    setForm({ name: cat.name, image: cat.image || "", sortOrder: String(cat.sortOrder ?? 0) });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -120,25 +121,14 @@ export default function ManageCategories() {
           </h2>
 
           <div className="flex flex-wrap gap-5 mb-5">
-            {/* Icon picker */}
+            {/* Image — upload or URL */}
             <div className="shrink-0">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Icon</p>
-              <div className="grid grid-cols-5 gap-1.5">
-                {ICONS.map((ic) => (
-                  <button
-                    key={ic}
-                    type="button"
-                    onClick={() => setForm({ ...form, icon: ic })}
-                    className={`w-9 h-9 flex items-center justify-center text-lg rounded-lg border-2 transition-all ${
-                      form.icon === ic
-                        ? "border-indigo-500 bg-indigo-50 shadow-sm scale-110"
-                        : "border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/30"
-                    }`}
-                  >
-                    {ic}
-                  </button>
-                ))}
-              </div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Category Image *</p>
+              <ImageInput
+                value={form.image}
+                onChange={(url) => setForm((f) => ({ ...f, image: url }))}
+                previewSize="square"
+              />
             </div>
 
             {/* Fields */}
@@ -154,15 +144,6 @@ export default function ManageCategories() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Description</label>
-                <input
-                  className="admin-input"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Short description (optional)"
-                />
-              </div>
-              <div>
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Sort Order <span className="normal-case font-normal">(lower = first)</span></label>
                 <input
                   className="admin-input !w-28"
@@ -171,17 +152,20 @@ export default function ManageCategories() {
                   onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
                 />
               </div>
-            </div>
-          </div>
 
-          {/* Preview */}
-          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 mb-5">
-            <span className="text-2xl">{form.icon}</span>
-            <div>
-              <p className="font-semibold text-slate-800 text-sm">{form.name || "Category Name"}</p>
-              {form.description && <p className="text-xs text-slate-400">{form.description}</p>}
+              {/* Preview */}
+              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 mt-2">
+                {form.image ? (
+                  <img src={form.image} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center text-slate-400">
+                    <ImageIcon size={18} />
+                  </div>
+                )}
+                <p className="font-semibold text-slate-800 text-sm">{form.name || "Category Name"}</p>
+                <span className="ml-auto text-xs text-slate-400 bg-white border border-slate-200 px-2 py-1 rounded-lg">Preview</span>
+              </div>
             </div>
-            <span className="ml-auto text-xs text-slate-400 bg-white border border-slate-200 px-2 py-1 rounded-lg">Preview</span>
           </div>
 
           <button type="submit" disabled={loading} className="admin-btn admin-btn-primary disabled:opacity-60">
@@ -214,9 +198,17 @@ export default function ManageCategories() {
                 {/* Category row */}
                 <div className="flex items-center justify-between flex-wrap gap-3 p-4 sm:p-5">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center text-2xl shadow-sm">
-                      {cat.icon || "🏷️"}
-                    </div>
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt={cat.name}
+                        className="w-14 h-14 shrink-0 rounded-2xl object-cover border border-slate-200 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center text-slate-300 shadow-sm">
+                        <ImageIcon size={22} strokeWidth={1.5} />
+                      </div>
+                    )}
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-bold text-slate-800">{cat.name}</p>
@@ -227,9 +219,6 @@ export default function ManageCategories() {
                           <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Order: {cat.sortOrder}</span>
                         )}
                       </div>
-                      {cat.description && (
-                        <p className="text-xs text-slate-400 mt-0.5">{cat.description}</p>
-                      )}
                       <p className="text-xs text-slate-400 mt-0.5">
                         <span className="font-medium text-indigo-500">{subCount}</span> subcategor{subCount !== 1 ? "ies" : "y"}
                       </p>

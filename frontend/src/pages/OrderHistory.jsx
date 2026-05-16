@@ -179,7 +179,14 @@ export default function OrderHistory() {
                         <img src={item.product?.image || "https://placehold.co/64x64/f5f5f5/999?text=Item"} alt={item.name}
                           className="w-20 h-20 object-cover rounded-2xl border border-gray-100 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 text-base truncate mb-1">{item.name}</p>
+                          <p className="font-bold text-gray-900 text-base truncate mb-1 flex items-center gap-2 flex-wrap">
+                            {item.name}
+                            {item.size && (
+                              <span className="bg-red-50 text-red-700 border border-red-100 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                                Size: {item.size}
+                              </span>
+                            )}
+                          </p>
                           <p className="text-gray-500 text-sm font-medium mb-2">Qty: {item.quantity} × ₹{item.price.toLocaleString()}</p>
                           {item.uploadedImage && (
                             <a href={item.uploadedImage} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-red-700 text-xs font-bold bg-red-50 px-2.5 py-1 rounded-md hover:bg-red-100 transition-colors w-fit">

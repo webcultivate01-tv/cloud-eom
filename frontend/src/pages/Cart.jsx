@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { removeFromCart, updateQuantity, selectCartTotal } from "../features/cart/cartSlice";
+import { removeFromCart, updateQuantity, selectCartTotal, makeCartKey } from "../features/cart/cartSlice";
 import { useNavigate, Link } from "react-router-dom";
 import { ShoppingCart, AlertCircle, CheckCircle2, Minus, Plus, X, ArrowRight, ArrowLeft } from "lucide-react";
 
@@ -48,17 +48,26 @@ export default function Cart() {
             </div>
             
             <div className="flex flex-col divide-y divide-gray-100">
-              {items.map((item) => (
-                <div key={item._id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 hover:bg-gray-50 transition-colors rounded-2xl">
+              {items.map((item) => {
+                const key = makeCartKey(item._id, item.size);
+                return (
+                <div key={key} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 hover:bg-gray-50 transition-colors rounded-2xl">
                   <div className="flex gap-4 flex-[2] min-w-0 w-full sm:w-auto">
                     <img src={item.image || "https://placehold.co/100x100/f5f5f5/999?text=Item"} alt={item.name}
                       className="w-24 h-24 object-cover rounded-2xl bg-gray-100 cursor-pointer shrink-0 border border-gray-200"
                       onClick={() => navigate(`/products/${item._id}`)} />
                     <div className="min-w-0 flex flex-col justify-center">
                       <p className="text-gray-900 font-bold text-base cursor-pointer mb-1 truncate hover:text-red-700 transition-colors" onClick={() => navigate(`/products/${item._id}`)}>{item.name}</p>
-                      <p className="text-gray-500 text-sm mb-1.5 font-medium">{item.category}</p>
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <p className="text-gray-500 text-sm font-medium m-0">{item.category}</p>
+                        {item.size && (
+                          <span className="bg-red-50 text-red-700 border border-red-100 text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                            Size: {item.size}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-gray-600 text-sm font-semibold">₹{item.price.toLocaleString()} <span className="text-gray-400 font-normal">each</span></p>
-                      
+
                       {item.requiresCustomImage && !item.uploadedImage && (
                         <div className="flex items-center gap-1.5 mt-2 text-orange-600 bg-orange-50 px-2 py-1 rounded text-xs font-bold w-fit border border-orange-100">
                           <AlertCircle className="w-3 h-3" /> Custom image required
@@ -71,31 +80,32 @@ export default function Cart() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-6 sm:gap-0 mt-2 sm:mt-0">
                     <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden w-32 bg-white shadow-sm">
                       <button className="bg-gray-50 border-r border-gray-200 w-10 h-10 flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-100 hover:text-red-700 transition-colors active:bg-gray-200"
-                        onClick={() => dispatch(updateQuantity({ id: item._id, quantity: Math.max(1, item.quantity - 1) }))}>
+                        onClick={() => dispatch(updateQuantity({ key, quantity: Math.max(1, item.quantity - 1) }))}>
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="flex-1 text-center font-bold text-sm text-gray-900">{item.quantity}</span>
                       <button className="bg-gray-50 border-l border-gray-200 w-10 h-10 flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-100 hover:text-red-700 transition-colors active:bg-gray-200"
-                        onClick={() => dispatch(updateQuantity({ id: item._id, quantity: item.quantity + 1 }))}>
+                        onClick={() => dispatch(updateQuantity({ key, quantity: item.quantity + 1 }))}>
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
-                    
+
                     <p className="sm:w-28 sm:text-right font-black text-gray-900 text-lg sm:text-base">
                       ₹{(item.price * item.quantity).toLocaleString()}
                     </p>
-                    
+
                     <button className="sm:w-12 flex justify-end text-gray-400 hover:text-red-700 bg-transparent border-none cursor-pointer transition-colors p-2"
-                      onClick={() => dispatch(removeFromCart(item._id))} title="Remove item">
+                      onClick={() => dispatch(removeFromCart(key))} title="Remove item">
                       <X className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import {
   deleteEvent,
 } from "../../features/events/eventSlice";
 import { toast } from "react-toastify";
+import ImageInput from "../../components/ImageInput";
 
 const BADGE_OPTIONS = ["Announcement", "New Offer", "Flash Sale", "Order Update", "Holiday", "Info"];
 
@@ -19,7 +20,7 @@ const BADGE_CFG = {
   "Info":         { cls: "bg-slate-100 text-slate-600",   icon: "ℹ️" },
 };
 
-const EMPTY_FORM = { title: "", description: "", link: "", badge: "Announcement", isActive: true, expiresAt: "" };
+const EMPTY_FORM = { title: "", description: "", image: "", link: "", badge: "Announcement", isActive: true, expiresAt: "" };
 
 const isExpired = (expiresAt) => expiresAt && new Date(expiresAt) < new Date();
 
@@ -40,6 +41,7 @@ export default function ManageEvents() {
     setForm({
       title:       event.title,
       description: event.description,
+      image:       event.image || "",
       link:        event.link || "",
       badge:       event.badge || "Announcement",
       isActive:    event.isActive,
@@ -116,6 +118,19 @@ export default function ManageEvents() {
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 required
               />
+            </div>
+
+            {/* Image — upload from device OR paste URL */}
+            <div>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Event Image <span className="normal-case font-normal">(optional — shown on website)</span></label>
+              <ImageInput
+                value={form.image}
+                onChange={(url) => setForm((f) => ({ ...f, image: url }))}
+                previewSize="wide"
+              />
+              <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
+                Recommended 16:9 — banners, offer posters, event photos. You can upload from device or paste an image URL.
+              </p>
             </div>
 
             {/* Badge, Link, Expiry row */}
@@ -202,10 +217,21 @@ export default function ManageEvents() {
             return (
               <div
                 key={event._id}
-                className={`admin-card flex flex-col hover:shadow-card-hover transition-all duration-200 ${inactive ? "opacity-60" : ""}`}
+                className={`admin-card flex flex-col hover:shadow-card-hover transition-all duration-200 overflow-hidden ${inactive ? "opacity-60" : ""}`}
               >
-                {/* Top accent bar by badge color */}
-                <div className={`h-1 w-full rounded-t-2xl ${badgeCfg.cls.split(" ")[0].replace("bg-", "bg-")}`} />
+                {/* Event image (if any) */}
+                {event.image ? (
+                  <div className="relative h-40 w-full bg-slate-100 overflow-hidden">
+                    <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
+                    <div className="absolute top-2 left-2 flex gap-1.5">
+                      <span className={`status-badge ${badgeCfg.cls} shadow`}>
+                        {badgeCfg.icon} {event.badge}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`h-1 w-full rounded-t-2xl ${badgeCfg.cls.split(" ")[0].replace("bg-", "bg-")}`} />
+                )}
 
                 <div className="p-5 flex flex-col flex-1">
                   {/* Badge row */}

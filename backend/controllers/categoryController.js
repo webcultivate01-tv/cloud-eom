@@ -25,14 +25,14 @@ const getAllCategoriesAdmin = async (req, res) => {
 // @route POST /api/categories  (admin)
 const createCategory = async (req, res) => {
   try {
-    const { name, description, icon, sortOrder } = req.body;
+    const { name, image, icon, sortOrder } = req.body;
     if (!name) return res.status(400).json({ message: "Name is required" });
 
     const slug = toSlug(name);
     const exists = await Category.findOne({ slug });
     if (exists) return res.status(400).json({ message: "Category already exists" });
 
-    const cat = await Category.create({ name, slug, description, icon, sortOrder });
+    const cat = await Category.create({ name, slug, image, icon, sortOrder });
     res.status(201).json(cat);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -42,12 +42,12 @@ const createCategory = async (req, res) => {
 // @route PUT /api/categories/:id  (admin)
 const updateCategory = async (req, res) => {
   try {
-    const { name, description, icon, isActive, sortOrder } = req.body;
+    const { name, image, icon, isActive, sortOrder } = req.body;
     const cat = await Category.findById(req.params.id);
     if (!cat) return res.status(404).json({ message: "Category not found" });
 
     if (name) { cat.name = name; cat.slug = toSlug(name); }
-    if (description !== undefined) cat.description = description;
+    if (image !== undefined) cat.image = image;
     if (icon !== undefined) cat.icon = icon;
     if (isActive !== undefined) cat.isActive = isActive;
     if (sortOrder !== undefined) cat.sortOrder = sortOrder;

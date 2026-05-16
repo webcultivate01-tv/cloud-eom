@@ -24,6 +24,7 @@ const createOrder = async (req, res) => {
     // Build order items with current prices from DB
     let totalPrice = 0;
     const orderItems = [];
+    const codBlockers = []; // products that don't allow COD
 
     for (const item of items) {
       const product = await Product.findById(item.product);
@@ -34,6 +35,19 @@ const createOrder = async (req, res) => {
         return res.status(400).json({ message: `${product.name} is currently unavailable` });
       }
 
+      // Size validation — if product offers sizes, customer must pick one
+      if (product.sizes?.length > 0) {
+        if (!item.size) {
+          return res.status(400).json({ message: `Please select a size for "${product.name}"` });
+        }
+        if (!product.sizes.includes(item.size)) {
+          return res.status(400).json({ message: `Invalid size "${item.size}" for "${product.name}"` });
+        }
+      }
+
+      // Track products that disallow COD — used after the loop
+      if (product.allowCOD === false) codBlockers.push(product.name);
+
       const lineTotal = product.price * item.quantity;
       totalPrice += lineTotal;
 
@@ -42,7 +56,15 @@ const createOrder = async (req, res) => {
         name: product.name,
         price: product.price,
         quantity: item.quantity,
+        size: item.size || "",
         uploadedImage: item.uploadedImage || "", // Cloudinary URL from frontend upload
+      });
+    }
+
+    // Block COD if any item disallows it
+    if (paymentMethod === "cod" && codBlockers.length > 0) {
+      return res.status(400).json({
+        message: `Cash on Delivery is not available for: ${codBlockers.join(", ")}. Please pay online to place this order.`,
       });
     }
 

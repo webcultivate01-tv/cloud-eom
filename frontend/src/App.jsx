@@ -22,6 +22,7 @@ import Favorites from "./pages/Favorites";
 import Contact from "./pages/Contact";
 import Replacements from "./pages/Replacements";
 import ForgotPassword from "./pages/ForgotPassword";
+import OrderSuccess from "./pages/OrderSuccess";
 
 import TermsConditions from "./pages/TermsConditions";
 import ShippingPolicy from "./pages/ShippingPolicy";
@@ -29,6 +30,7 @@ import ReturnPolicy from "./pages/ReturnPolicy";
 import Dashboard from "./pages/admin/Dashboard";
 import ManageProducts from "./pages/admin/ManageProducts";
 import ManageOrders from "./pages/admin/ManageOrders";
+import ManagePayments from "./pages/admin/ManagePayments";
 import ManageUsers from "./pages/admin/ManageUsers";
 import ManageAdmins from "./pages/admin/ManageAdmins";
 import ManageEvents from "./pages/admin/ManageEvents";
@@ -53,6 +55,7 @@ export default function App() {
         <Route path="/admin/dashboard"  element={<AdminPage><Dashboard /></AdminPage>} />
         <Route path="/admin/products"   element={<AdminPage><ManageProducts /></AdminPage>} />
         <Route path="/admin/orders"     element={<AdminPage><ManageOrders /></AdminPage>} />
+        <Route path="/admin/payments"   element={<AdminPage><ManagePayments /></AdminPage>} />
         <Route path="/admin/users"      element={<AdminPage><ManageUsers /></AdminPage>} />
         <Route path="/admin/admins"     element={<AdminPage><ManageAdmins /></AdminPage>} />
         <Route path="/admin/events"      element={<AdminPage><ManageEvents /></AdminPage>} />
@@ -75,8 +78,9 @@ export default function App() {
                 <Route path="/products"  element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/cart"      element={<Cart />} />
-                <Route path="/checkout"  element={<PrivateRoute><Checkout /></PrivateRoute>} />
-                <Route path="/orders"    element={<PrivateRoute><OrderHistory /></PrivateRoute>} />
+                <Route path="/checkout"      element={<PrivateRoute><Checkout /></PrivateRoute>} />
+                <Route path="/order-success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
+                <Route path="/orders"        element={<PrivateRoute><OrderHistory /></PrivateRoute>} />
                 <Route path="/profile"   element={<PrivateRoute><Profile /></PrivateRoute>} />
                 <Route path="/favorites"     element={<Favorites />} />
                 <Route path="/replacements"  element={<PrivateRoute><Replacements /></PrivateRoute>} />

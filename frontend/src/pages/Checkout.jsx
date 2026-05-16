@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { placeOrder, resetOrderState } from "../features/orders/orderSlice";
 import { createRazorpayOrder, verifyAndPlaceOrder, resetPayment } from "../features/payment/paymentSlice";
-import { clearCart, selectCartTotal, setItemImage } from "../features/cart/cartSlice";
+import { clearCart, selectCartTotal, setItemImage, makeCartKey } from "../features/cart/cartSlice";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../utils/api";
@@ -17,8 +17,8 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { items } = useSelector((s) => s.cart);
   const total = useSelector(selectCartTotal);
-  const { loading: orderLoading, success: orderSuccess, error: orderError } = useSelector((s) => s.orders);
-  const { loading: payLoading, success: paySuccess, error: payError } = useSelector((s) => s.payment);
+  const { loading: orderLoading, success: orderSuccess, error: orderError, createdOrder: codCreatedOrder } = useSelector((s) => s.orders);
+  const { loading: payLoading, success: paySuccess, error: payError, createdOrder: payCreatedOrder } = useSelector((s) => s.payment);
   const { user } = useSelector((s) => s.auth);
 
   const [shipping, setShipping] = useState({ fullName: "", phone: "", address: "", addressLine2: "", landmark: "", city: "", state: "", pincode: "", addressType: "Home" });
@@ -31,11 +31,18 @@ export default function Checkout() {
 
   useEffect(() => {
     if (orderSuccess || paySuccess) {
-      toast.success("🎉 Order placed successfully!");
+      const order = payCreatedOrder || codCreatedOrder;
       dispatch(clearCart()); dispatch(resetOrderState()); dispatch(resetPayment());
-      navigate("/orders");
+      navigate("/order-success", {
+        state: {
+          orderId: order?._id || "",
+          paymentMethod: order?.paymentMethod || paymentMethod,
+          totalPrice: order?.totalPrice,
+        },
+        replace: true,
+      });
     }
-  }, [orderSuccess, paySuccess, dispatch, navigate]);
+  }, [orderSuccess, paySuccess]);
 
   useEffect(() => {
     if (orderError) toast.error(orderError);
@@ -44,19 +51,34 @@ export default function Checkout() {
 
   const missingImages = items.filter((i) => i.requiresCustomImage && !i.uploadedImage);
 
-  const handleImageUpload = async (e, itemId) => {
+  // Default payment method based on cart contents — if any item disallows COD, force razorpay.
+  const codBlockedItems = items.filter((i) => i.allowCOD === false);
+  const codAllowed = codBlockedItems.length === 0;
+
+  useEffect(() => {
+    if (!codAllowed && paymentMethod === "cod") {
+      setPaymentMethod("razorpay");
+    }
+  }, [codAllowed, paymentMethod]);
+
+  const handleImageUpload = async (e, itemKey) => {
     const file = e.target.files[0]; if (!file) return;
-    setUploadingFor(itemId);
+    setUploadingFor(itemKey);
     try {
       const fd = new FormData(); fd.append("image", file);
       const { data } = await api.post("/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      dispatch(setItemImage({ id: itemId, imageUrl: data.imageUrl }));
+      dispatch(setItemImage({ key: itemKey, imageUrl: data.imageUrl }));
       toast.success("Image uploaded successfully");
     } catch { toast.error("Upload failed. Try again."); }
     finally { setUploadingFor(null); }
   };
 
-  const buildOrderItems = () => items.map((item) => ({ product: item._id, quantity: item.quantity, uploadedImage: item.uploadedImage || "" }));
+  const buildOrderItems = () => items.map((item) => ({
+    product: item._id,
+    quantity: item.quantity,
+    size: item.size || "",
+    uploadedImage: item.uploadedImage || "",
+  }));
 
   const validateShipping = () => {
     if (!shipping.fullName.trim()) { toast.error("Enter your full name"); return false; }
@@ -187,13 +209,16 @@ export default function Checkout() {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  {items.map((item) => (
-                    <div key={item._id} className="flex gap-5 p-5 border border-gray-100 bg-gray-50/50 rounded-2xl items-start sm:items-center flex-col sm:flex-row">
+                  {items.map((item) => {
+                    const itemKey = makeCartKey(item._id, item.size);
+                    return (
+                    <div key={itemKey} className="flex gap-5 p-5 border border-gray-100 bg-gray-50/50 rounded-2xl items-start sm:items-center flex-col sm:flex-row">
                       <div className="flex items-center gap-4 w-full sm:w-auto flex-1">
                         <img src={item.image || "https://placehold.co/60x60/f5f5f5/999"} alt={item.name} className="w-16 h-16 object-cover rounded-xl bg-white border border-gray-200 shrink-0 shadow-sm" />
                         <div className="flex-1">
                           <p className="font-bold text-gray-900 text-sm mb-1.5 flex items-center gap-2 flex-wrap">
                             {item.name}
+                            {item.size && <span className="bg-gray-100 text-gray-700 border border-gray-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Size: {item.size}</span>}
                             {item.requiresCustomImage && <span className="bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Required</span>}
                           </p>
                           <p className="text-gray-500 text-xs font-medium">Qty: {item.quantity}</p>
@@ -203,9 +228,9 @@ export default function Checkout() {
                       <div className="w-full sm:w-auto">
                         {item.requiresCustomImage || item.allowCustomImage ? (
                           <div className="flex flex-col gap-3 sm:items-end">
-                            <input type="file" accept="image/*" id={`upload-${item._id}`} className="hidden" onChange={(e) => handleImageUpload(e, item._id)} />
-                            <label htmlFor={`upload-${item._id}`} className={`inline-flex items-center justify-center gap-2 border-2 rounded-xl px-5 py-2.5 cursor-pointer text-sm font-bold w-full sm:w-auto transition-all ${item.uploadedImage ? "bg-white border-gray-200 text-gray-700 hover:border-gray-300" : "bg-red-50 border-red-200 text-red-700 hover:bg-red-100"}`}>
-                              {uploadingFor === item._id ? (
+                            <input type="file" accept="image/*" id={`upload-${itemKey}`} className="hidden" onChange={(e) => handleImageUpload(e, itemKey)} />
+                            <label htmlFor={`upload-${itemKey}`} className={`inline-flex items-center justify-center gap-2 border-2 rounded-xl px-5 py-2.5 cursor-pointer text-sm font-bold w-full sm:w-auto transition-all ${item.uploadedImage ? "bg-white border-gray-200 text-gray-700 hover:border-gray-300" : "bg-red-50 border-red-200 text-red-700 hover:bg-red-100"}`}>
+                              {uploadingFor === itemKey ? (
                                 <><div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> Uploading...</>
                               ) : item.uploadedImage ? (
                                 <><ImageIcon className="w-4 h-4" /> Change Image</>
@@ -233,7 +258,8 @@ export default function Checkout() {
                         )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {missingImages.length > 0 && (
@@ -285,10 +311,13 @@ export default function Checkout() {
                   <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5">
                     <div className="flex flex-col divide-y divide-gray-200">
                       {items.map((item) => (
-                        <div key={item._id} className="flex justify-between items-center py-3 first:pt-0 last:pb-0">
-                          <div className="flex items-center gap-3">
+                        <div key={makeCartKey(item._id, item.size)} className="flex justify-between items-center py-3 first:pt-0 last:pb-0">
+                          <div className="flex items-center gap-3 flex-wrap">
                             <span className="bg-white border border-gray-200 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold text-gray-600">{item.quantity}x</span>
                             <span className="text-gray-700 font-medium">{item.name}</span>
+                            {item.size && (
+                              <span className="bg-red-50 text-red-700 border border-red-100 text-[10px] font-bold px-2 py-0.5 rounded uppercase">{item.size}</span>
+                            )}
                           </div>
                           <span className="font-bold text-gray-900">₹{(item.price * item.quantity).toLocaleString()}</span>
                         </div>
@@ -322,11 +351,23 @@ export default function Checkout() {
                   <CreditCard className="w-6 h-6 text-red-700" /> Choose Payment Method
                 </h2>
                 
+                {!codAllowed && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3 mb-5 items-start">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-amber-800 font-bold text-sm mb-1">Cash on Delivery not available</p>
+                      <p className="text-amber-700 text-sm m-0">
+                        The following customisable item{codBlockedItems.length > 1 ? "s" : ""} require online payment: <strong>{codBlockedItems.map((i) => i.name).join(", ")}</strong>.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-4 mb-6">
                   {[
-                    { value: "razorpay", icon: CreditCard, name: "Pay Online Securely", desc: "UPI, Credit/Debit Cards, Net Banking, Wallets", activeCls: "border-red-700 bg-red-50 shadow-md", iconColor: "text-red-700" },
-                    { value: "cod", icon: Banknote, name: "Cash on Delivery", desc: "Pay in cash when your order arrives", activeCls: "border-emerald-600 bg-emerald-50 shadow-md", iconColor: "text-emerald-600" },
-                  ].map((opt) => (
+                    { value: "razorpay", icon: CreditCard, name: "Pay Online Securely", desc: "UPI, Credit/Debit Cards, Net Banking, Wallets", activeCls: "border-red-700 bg-red-50 shadow-md", iconColor: "text-red-700", available: true },
+                    { value: "cod", icon: Banknote, name: "Cash on Delivery", desc: "Pay in cash when your order arrives", activeCls: "border-emerald-600 bg-emerald-50 shadow-md", iconColor: "text-emerald-600", available: codAllowed },
+                  ].filter((opt) => opt.available).map((opt) => (
                     <label key={opt.value} className={`flex items-center gap-5 border-2 rounded-2xl p-5 cursor-pointer transition-all hover:-translate-y-0.5 ${paymentMethod === opt.value ? opt.activeCls : "border-gray-200 hover:border-gray-300 bg-white"}`}>
                       <input type="radio" name="payment" value={opt.value} checked={paymentMethod === opt.value} onChange={() => setPaymentMethod(opt.value)} className="hidden" />
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white shadow-sm border border-gray-100 shrink-0 ${paymentMethod === opt.value ? "" : "opacity-70"}`}>
@@ -394,10 +435,10 @@ export default function Checkout() {
             
             <div className="flex flex-col gap-3 mb-5 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
               {items.map((item) => (
-                <div key={item._id} className="flex justify-between items-start gap-3">
+                <div key={makeCartKey(item._id, item.size)} className="flex justify-between items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-gray-800 text-sm font-semibold truncate m-0">{item.name}</p>
-                    <p className="text-gray-500 text-xs mt-0.5">Qty: {item.quantity}</p>
+                    <p className="text-gray-500 text-xs mt-0.5">Qty: {item.quantity}{item.size ? ` · Size ${item.size}` : ""}</p>
                   </div>
                   <span className="text-gray-900 font-bold text-sm shrink-0">₹{(item.price * item.quantity).toLocaleString()}</span>
                 </div>

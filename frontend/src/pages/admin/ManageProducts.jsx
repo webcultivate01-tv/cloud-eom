@@ -13,6 +13,7 @@ import {
   Image, Box, Tag, IndianRupee, BarChart3, ChevronDown, Filter,
   LayoutGrid, List, PackageX, Layers,
 } from "lucide-react";
+import MultiImageInput from "../../components/MultiImageInput";
 
 /* ── Product type options ─────────────────────────────── */
 const TYPE_OPTIONS = [
@@ -53,14 +54,16 @@ export default function ManageProducts() {
     name: "", description: "", price: "", originalPrice: "", brand: "", sku: "",
     category: CATEGORIES[0] || "", stock: "100",
     allowCustomImage: false, requiresCustomImage: false, isAvailable: true,
+    allowCOD: true,
     weight: "", returnPolicy: "",
   };
 
-  const [showForm, setShowForm]             = useState(false);
-  const [editId, setEditId]                 = useState(null);
-  const [form, setForm]                     = useState(EMPTY_FORM);
-  const [imageFiles, setImageFiles]         = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId]     = useState(null);
+  const [form, setForm]         = useState(EMPTY_FORM);
+  const [images, setImages]     = useState([]); // single URL array — covers both uploads and URLs
+  const [sizes, setSizes]       = useState([]); // size variants e.g. ["S","M","L"]
+  const [sizeInput, setSizeInput] = useState("");
 
   /* Filters */
   const [searchTerm, setSearchTerm]     = useState("");
@@ -82,7 +85,7 @@ export default function ManageProducts() {
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
-    setImageFiles([]); setExistingImages([]); setEditId(null); setShowForm(false);
+    setImages([]); setSizes([]); setSizeInput(""); setEditId(null); setShowForm(false);
     setHighlights([]); setHlInput("");
     setSpecifications([]); setSpecKey(""); setSpecVal("");
   };
@@ -95,14 +98,28 @@ export default function ManageProducts() {
       category: p.category, stock: p.stock,
       allowCustomImage: p.allowCustomImage,
       requiresCustomImage: p.requiresCustomImage || false, isAvailable: p.isAvailable,
+      allowCOD: p.allowCOD !== undefined ? p.allowCOD : true,
       weight: p.weight || "", returnPolicy: p.returnPolicy || "",
     });
-    setExistingImages(p.images?.length ? p.images : p.image ? [p.image] : []);
+    setImages(p.images?.length ? p.images : p.image ? [p.image] : []);
+    setSizes(p.sizes || []);
     setHighlights(p.highlights || []);
     setSpecifications(p.specifications || []);
-    setImageFiles([]);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const addSize = () => {
+    const s = sizeInput.trim().toUpperCase();
+    if (!s) return;
+    if (sizes.includes(s)) { setSizeInput(""); return; }
+    setSizes((p) => [...p, s]);
+    setSizeInput("");
+  };
+
+  const addSizePreset = (s) => {
+    if (sizes.includes(s)) return;
+    setSizes((p) => [...p, s]);
   };
 
   const handleDelete = async (id, name) => {
@@ -134,14 +151,10 @@ export default function ManageProducts() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const fd = new FormData();
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v));
-    fd.append("highlights", JSON.stringify(highlights));
-    fd.append("specifications", JSON.stringify(specifications));
-    imageFiles.forEach((f) => fd.append("images", f));
+    const payload = { ...form, images, sizes, highlights, specifications };
     const result = editId
-      ? await dispatch(updateProduct({ id: editId, formData: fd }))
-      : await dispatch(createProduct(fd));
+      ? await dispatch(updateProduct({ id: editId, payload }))
+      : await dispatch(createProduct(payload));
     if (!result.error) { toast.success(editId ? "Product updated!" : "Product created!"); resetForm(); }
     else toast.error(result.payload || "Operation failed");
   };
@@ -392,71 +405,91 @@ export default function ManageProducts() {
             onChange={(e) => setForm({ ...form, returnPolicy: e.target.value })}
           />
 
-          {/* Availability */}
-          <label className="flex items-center gap-2.5 text-sm text-slate-600 mb-5 cursor-pointer select-none w-fit group">
-            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all
-                             ${form.isAvailable ? "bg-indigo-600 border-indigo-600" : "border-slate-300 bg-white"}`}>
-              {form.isAvailable && <Check size={10} className="text-white" strokeWidth={3} />}
-            </div>
-            <input
-              type="checkbox"
-              className="hidden"
-              checked={form.isAvailable}
-              onChange={(e) => setForm({ ...form, isAvailable: e.target.checked })}
-            />
-            Available to customers
-          </label>
-
-          {/* Image Upload */}
-          <div className="mb-6">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Product Images (up to 10)</p>
-            <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed
-                              border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer
-                              transition-all text-sm text-slate-500 hover:text-indigo-600">
-              <Image size={18} />
-              <span>Choose images</span>
-              <input type="file" accept="image/*" multiple className="hidden"
-                onChange={(e) => setImageFiles(Array.from(e.target.files))} />
+          {/* Availability + COD */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-5">
+            <label className="flex items-center gap-2.5 text-sm text-slate-600 cursor-pointer select-none w-fit group">
+              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all
+                               ${form.isAvailable ? "bg-indigo-600 border-indigo-600" : "border-slate-300 bg-white"}`}>
+                {form.isAvailable && <Check size={10} className="text-white" strokeWidth={3} />}
+              </div>
+              <input
+                type="checkbox"
+                className="hidden"
+                checked={form.isAvailable}
+                onChange={(e) => setForm({ ...form, isAvailable: e.target.checked })}
+              />
+              Available to customers
             </label>
 
-            {imageFiles.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {imageFiles.map((file, i) => (
-                  <div key={i} className="relative group">
-                    <img src={URL.createObjectURL(file)} alt=""
-                      className="w-20 h-20 object-cover rounded-xl border border-slate-200" />
-                    <button
-                      type="button"
-                      onClick={() => setImageFiles((p) => p.filter((_, j) => j !== i))}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full
-                                 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={10} />
-                    </button>
-                    {i === 0 && (
-                      <span className="absolute bottom-0 inset-x-0 bg-indigo-600/85 text-white text-[10px]
-                                       text-center py-0.5 rounded-b-xl font-semibold">Main</span>
-                    )}
-                  </div>
-                ))}
+            <label className="flex items-center gap-2.5 text-sm text-slate-600 cursor-pointer select-none w-fit group">
+              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all
+                               ${form.allowCOD ? "bg-emerald-600 border-emerald-600" : "border-slate-300 bg-white"}`}>
+                {form.allowCOD && <Check size={10} className="text-white" strokeWidth={3} />}
               </div>
-            )}
-            {editId && imageFiles.length === 0 && existingImages.length > 0 && (
-              <div className="mt-3">
-                <p className="text-xs text-slate-500 mb-2">Current images:</p>
-                <div className="flex flex-wrap gap-2">
-                  {existingImages.map((url, i) => (
-                    <div key={i} className="relative">
-                      <img src={url} alt="" className="w-20 h-20 object-cover rounded-xl border border-slate-200" />
-                      {i === 0 && (
-                        <span className="absolute bottom-0 inset-x-0 bg-indigo-600/85 text-white text-[10px]
-                                         text-center py-0.5 rounded-b-xl">Main</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              <input
+                type="checkbox"
+                className="hidden"
+                checked={form.allowCOD}
+                onChange={(e) => setForm({ ...form, allowCOD: e.target.checked })}
+              />
+              💵 Allow Cash on Delivery
+              <span className="text-[11px] text-slate-400 font-normal">(uncheck for customisable items)</span>
+            </label>
+          </div>
+
+          {/* Sizes — only relevant for sized products like clothing */}
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 mt-2">Available Sizes <span className="normal-case font-normal text-slate-400">(optional — e.g. T-shirts)</span></p>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {["XS", "S", "M", "L", "XL", "XXL", "XXXL"].map((s) => {
+              const active = sizes.includes(s);
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => active ? setSizes((p) => p.filter((x) => x !== s)) : addSizePreset(s)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
+                    active
+                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"
+                  }`}
+                >
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex gap-2 mb-2">
+            <input
+              className="admin-input flex-1 max-w-xs"
+              placeholder="Add custom size (e.g. 32, 34, Free Size)"
+              value={sizeInput}
+              onChange={(e) => setSizeInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSize(); } }}
+            />
+            <button type="button" onClick={addSize}
+              className="admin-btn admin-btn-primary !py-1.5 !px-4 !text-sm flex-shrink-0">Add</button>
+          </div>
+          {sizes.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-5">
+              {sizes.map((s) => (
+                <span key={s} className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-bold px-2.5 py-1 rounded-full">
+                  {s}
+                  <button type="button"
+                    onClick={() => setSizes((p) => p.filter((x) => x !== s))}
+                    className="text-indigo-400 hover:text-red-600 transition-colors">
+                    <X size={11} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Images — upload from device OR paste URL (up to 10) */}
+          <div className="mb-6">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
+              Product Images <span className="normal-case font-normal text-slate-400">(up to 10 — upload or paste URLs)</span>
+            </p>
+            <MultiImageInput value={images} onChange={setImages} max={10} />
           </div>
 
           <div className="flex gap-3">

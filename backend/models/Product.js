@@ -67,6 +67,17 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Allow Cash on Delivery for this product. Customisable items are usually
+    // online-payment only (no COD), so admin can disable it per product.
+    allowCOD: {
+      type: Boolean,
+      default: true,
+    },
+    // Available sizes (e.g. ["S", "M", "L", "XL"]). Empty array = no size choice.
+    sizes: {
+      type: [String],
+      default: [],
+    },
     // Bullet-point feature highlights shown on product page
     highlights: {
       type: [String],

@@ -40,6 +40,20 @@ export const fetchPaymentStats = createAsyncThunk(
   }
 );
 
+// Admin: list all payments
+export const fetchAllPayments = createAsyncThunk(
+  "payment/fetchAll",
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const query = new URLSearchParams(params).toString();
+      const { data } = await api.get(`/payment/all${query ? `?${query}` : ""}`);
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch payments");
+    }
+  }
+);
+
 // Admin: mark order refunded
 export const markOrderRefunded = createAsyncThunk(
   "payment/refund",
@@ -57,7 +71,9 @@ const paymentSlice = createSlice({
   name: "payment",
   initialState: {
     razorpayOrder: null,
+    createdOrder: null,
     stats: null,
+    payments: [],
     loading: false,
     error: null,
     success: false,
@@ -65,6 +81,7 @@ const paymentSlice = createSlice({
   reducers: {
     resetPayment: (state) => {
       state.razorpayOrder = null;
+      state.createdOrder = null;
       state.error = null;
       state.success = false;
       state.loading = false;
@@ -77,12 +94,16 @@ const paymentSlice = createSlice({
       .addCase(createRazorpayOrder.rejected,  (s, a) => { s.loading = false; s.error = a.payload; })
 
       .addCase(verifyAndPlaceOrder.pending,   (s) => { s.loading = true; s.error = null; s.success = false; })
-      .addCase(verifyAndPlaceOrder.fulfilled, (s) => { s.loading = false; s.success = true; })
+      .addCase(verifyAndPlaceOrder.fulfilled, (s, a) => { s.loading = false; s.success = true; s.createdOrder = a.payload; })
       .addCase(verifyAndPlaceOrder.rejected,  (s, a) => { s.loading = false; s.error = a.payload; })
 
       .addCase(fetchPaymentStats.pending,   (s) => { s.loading = true; })
       .addCase(fetchPaymentStats.fulfilled, (s, a) => { s.loading = false; s.stats = a.payload; })
       .addCase(fetchPaymentStats.rejected,  (s, a) => { s.loading = false; s.error = a.payload; })
+
+      .addCase(fetchAllPayments.pending,   (s) => { s.loading = true; s.error = null; })
+      .addCase(fetchAllPayments.fulfilled, (s, a) => { s.loading = false; s.payments = a.payload; })
+      .addCase(fetchAllPayments.rejected,  (s, a) => { s.loading = false; s.error = a.payload; })
 
       .addCase(markOrderRefunded.fulfilled, (s) => { s.loading = false; });
   },
