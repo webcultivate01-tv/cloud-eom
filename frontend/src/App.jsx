@@ -23,7 +23,9 @@ import Contact from "./pages/Contact";
 import Replacements from "./pages/Replacements";
 import ForgotPassword from "./pages/ForgotPassword";
 
-// ── Admin Pages ──────────────────────────────────────────────
+import TermsConditions from "./pages/TermsConditions";
+import ShippingPolicy from "./pages/ShippingPolicy";
+import ReturnPolicy from "./pages/ReturnPolicy";
 import Dashboard from "./pages/admin/Dashboard";
 import ManageProducts from "./pages/admin/ManageProducts";
 import ManageOrders from "./pages/admin/ManageOrders";
@@ -79,6 +81,9 @@ export default function App() {
                 <Route path="/favorites"     element={<Favorites />} />
                 <Route path="/replacements"  element={<PrivateRoute><Replacements /></PrivateRoute>} />
                 <Route path="/contact"       element={<Contact />} />
+                <Route path="/terms"         element={<TermsConditions />} />
+                <Route path="/shipping-policy" element={<ShippingPolicy />} />
+                <Route path="/return-policy"   element={<ReturnPolicy />} />
                 <Route path="*" element={
                   <div style={{ textAlign: "center", padding: "100px", color: "#fff", background: "#0f3460", minHeight: "80vh" }}>
                     <h1>404 — Page Not Found</h1>

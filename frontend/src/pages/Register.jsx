@@ -3,74 +3,263 @@ import { useDispatch, useSelector } from "react-redux";
 import { registerUser, clearError } from "../features/auth/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import logoImg from "../assets/Cloud Graphics Logo New White.png";
+
+const PERKS = [
+  { icon: "📦", text: "Track orders in real-time" },
+  { icon: "🎨", text: "Save & reuse custom designs" },
+  { icon: "🏷️", text: "Exclusive member discounts" },
+  { icon: "🚀", text: "Priority delivery on orders" },
+];
+
+const EyeBtn = ({ show, onToggle }) => (
+  <button type="button" onClick={onToggle}
+    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+    aria-label="Toggle password">
+    {show
+      ? <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+      : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    }
+  </button>
+);
 
 export default function Register() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, loading, error } = useSelector((s) => s.auth);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [form, setForm]           = useState({ name: "", email: "", phone: "", password: "" });
+  const [showPass, setShowPass]   = useState(false);
+  const [confirmPass, setConfirmPass] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => { if (user) navigate("/"); }, [user, navigate]);
-  useEffect(() => { if (error) { toast.error(error); dispatch(clearError()); } }, [error, dispatch]);
+  useEffect(() => {
+    if (error) { toast.error(error); dispatch(clearError()); }
+  }, [error, dispatch]);
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (form.password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    if (form.password !== confirmPass) { toast.error("Passwords do not match"); return; }
+    if (form.phone && !/^[6-9]\d{9}$/.test(form.phone.replace(/\s+/g, ""))) {
+      toast.error("Enter a valid 10-digit Indian mobile number"); return;
+    }
     dispatch(registerUser(form));
   };
 
+  const inp = (extra = "") =>
+    `w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:border-red-600 focus:bg-white focus:ring-2 focus:ring-red-100 transition-all ${extra}`;
+
   return (
-    <div className="flex min-h-[calc(100vh-120px)] bg-white">
-      {/* Left panel */}
-      <div className="hidden md:flex flex-1 bg-gradient-to-br from-[#1a1a2e] to-red-700 px-12 py-16 flex-col justify-center">
-        <div className="flex items-center gap-3 mb-8">
-          <span className="text-4xl">🖨️</span>
-          <div>
-            <p className="text-white font-black text-lg tracking-widest m-0">CLOUD GRAPHICS</p>
-            <p className="text-white/60 text-[10px] tracking-[4px] m-0">AMRAVATI</p>
+    <div className="flex min-h-[calc(100vh-64px)]">
+
+      {/* ════════════════════════════════
+          LEFT PANEL — desktop only
+      ════════════════════════════════ */}
+      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden flex-shrink-0">
+
+        {/* Background — colorful gift wrapping / celebration */}
+        <img
+          src="https://images.pexels.com/photos/5632399/pexels-photo-5632399.jpeg?auto=compress&cs=tinysrgb&w=1260"
+          alt="Gift printing"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        {/* Fallback solid bg in case image fails */}
+        <div className="absolute inset-0 bg-red-950" style={{ zIndex: -1 }} />
+
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
+        <div className="absolute inset-0 bg-gradient-to-r from-red-950/55 to-transparent" />
+
+        {/* ── Top bar ── */}
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-10 pt-9 z-10">
+          <div className="flex items-center gap-3">
+            <img src={logoImg} alt="Cloud Graphics" className="h-10 w-auto object-contain drop-shadow-lg" />
+          </div>
+          <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 py-1">
+            <span className="text-yellow-400 text-xs">🎁</span>
+            <span className="text-white/80 text-[10px] font-semibold">Free Account</span>
           </div>
         </div>
-        <h2 className="text-white text-4xl font-black leading-tight mb-4">Join Cloud Graphics<br />Today</h2>
-        <p className="text-white/80 text-sm leading-relaxed mb-8">Create your free account and start ordering personalized gifts, merchandise, and more.</p>
-        <div className="flex flex-col gap-2.5">
-          {["📦 Track all your orders", "🎨 Upload custom designs", "🏷️ Exclusive member offers", "🚚 Free delivery on orders"].map((p) => (
-            <div key={p} className="text-white/90 text-sm"><span className="text-yellow-400">✓</span> {p}</div>
-          ))}
+
+        {/* ── Floating product cards ── */}
+        <div className="absolute top-24 right-8 z-10">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/25 rounded-2xl p-2 shadow-2xl -rotate-2 hover:rotate-0 transition-transform duration-500">
+            <img
+              src="https://images.pexels.com/photos/5632399/pexels-photo-5632399.jpeg?auto=compress&cs=tinysrgb&w=200"
+              alt="Custom gift"
+              className="w-20 h-20 rounded-xl object-cover"
+            />
+            <p className="text-white text-[10px] font-bold text-center mt-1.5 tracking-wide">Gift Box</p>
+          </div>
+        </div>
+        <div className="absolute top-56 right-4 z-10">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/25 rounded-2xl p-2 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
+            <img
+              src="https://images.pexels.com/photos/1566308/pexels-photo-1566308.jpeg?auto=compress&cs=tinysrgb&w=200"
+              alt="Custom mug"
+              className="w-14 h-14 rounded-xl object-cover"
+            />
+            <p className="text-white text-[10px] font-bold text-center mt-1.5 tracking-wide">Mug</p>
+          </div>
+        </div>
+
+        {/* ── Bottom content ── */}
+          <div className="absolute bottom-0 left-0 right-0 px-10 pb-10 z-10 -translate-y-24">
+          <h2 className="text-white text-4xl font-black leading-[1.15] mb-3 drop-shadow-lg">
+            Join Cloud<br />
+            <span className="text-red-300">Graphics</span><br />
+            — It's Free!
+          </h2>
+          <p className="text-white/65 text-sm leading-relaxed mb-7 max-w-sm">
+            Create your account and start ordering personalized gifts from Amravati's #1 print shop.
+          </p>
+
+          {/* Perks */}
+          <div className="grid grid-cols-2 gap-2">
+            {PERKS.map(({ icon, text }) => (
+              <div key={text} className="flex items-center gap-2 bg-white/8 backdrop-blur-md border border-white/15 rounded-xl px-3 py-2">
+                <span className="text-base">{icon}</span>
+                <span className="text-white/80 text-xs font-medium leading-tight">{text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats */}
+          <div className="flex items-center gap-6 mt-6 pt-5 border-t border-white/15">
+            {[["500+", "Customers"], ["50+", "Products"], ["5.0★", "Rating"]].map(([val, lbl]) => (
+              <div key={lbl}>
+                <p className="text-white font-black text-xl leading-none">{val}</p>
+                <p className="text-white/45 text-[10px] mt-0.5 tracking-wide">{lbl}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center px-6 py-10">
-        <div className="w-full max-w-md">
-          <h1 className="text-3xl font-black text-gray-900 mb-1">Create Account</h1>
-          <p className="text-gray-400 text-sm mb-7">It's free and takes only a minute</p>
+      {/* ════════════════════════════════
+          RIGHT PANEL — form (all screens)
+      ════════════════════════════════ */}
+<div className="flex-1 flex items-center justify-center bg-white px-5 py-8 sm:px-8 overflow-y-auto -translate-y-6">       
+   <div className="w-full max-w-[360px]">
 
-          <form onSubmit={handleSubmit}>
-            {[
-              { key: "name", label: "Full Name", type: "text", ph: "Your full name", req: true },
-              { key: "email", label: "Email Address", type: "email", ph: "you@example.com", req: true },
-              { key: "phone", label: "Phone Number (optional)", type: "tel", ph: "+91 00000 00000", req: false },
-              { key: "password", label: "Password (min 6 chars)", type: "password", ph: "Create a strong password", req: true },
-            ].map(({ key, label, type, ph, req }) => (
-              <div key={key} className="mb-4">
-                <label className="block text-gray-600 font-semibold text-xs mb-1.5">{label}</label>
-                <input type={type} placeholder={ph} required={req}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:border-red-700 transition-colors box-border"
-                  value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+          {/* Logo — mobile only (desktop logo is in left panel top bar) */}
+          <div className="flex lg:hidden justify-center mb-7">
+            <div className="bg-red-800 rounded-2xl px-5 py-3 shadow-md">
+              <img src={logoImg} alt="Cloud Graphics" className="h-10 w-auto object-contain" />
+            </div>
+          </div>
+
+          {/* Heading */}
+          <div className="mb-6">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-100 px-3 py-1 rounded-full mb-4">
+              🎁 Free — no credit card needed
+            </span>
+            <h1 className="text-2xl font-black text-gray-900 leading-tight">Create account ✨</h1>
+            <p className="text-gray-400 text-sm mt-1">Takes less than a minute</p>
+          </div>
+
+          <form onSubmit={handleSubmit} noValidate className="space-y-3.5">
+
+            {/* Full Name */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Full Name</label>
+              <div className="relative">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+                <input type="text" name="name" placeholder="Your full name" required
+                  value={form.name} onChange={handleChange} className={inp()} />
               </div>
-            ))}
-            <button type="submit" disabled={loading}
-              className="w-full py-3.5 bg-red-700 hover:bg-red-800 text-white rounded-lg font-bold text-sm cursor-pointer border-none transition-colors disabled:opacity-60 mt-2">
-              {loading ? "Creating account..." : "Create Account"}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Email Address</label>
+              <div className="relative">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                <input type="email" name="email" placeholder="you@example.com" required
+                  value={form.email} onChange={handleChange} className={inp()} />
+              </div>
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
+                Phone <span className="normal-case font-normal text-gray-400">(optional)</span>
+              </label>
+              <div className="relative">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                </svg>
+                <input type="tel" name="phone" placeholder="+91 98765 43210"
+                  value={form.phone} onChange={handleChange} className={inp()} />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Password</label>
+              <div className="relative">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <input type={showPass ? "text" : "password"} name="password"
+                  placeholder="Min 6 characters" required
+                  value={form.password} onChange={handleChange} className={inp("pr-11")} />
+                <EyeBtn show={showPass} onToggle={() => setShowPass(!showPass)} />
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Confirm Password</label>
+              <div className="relative">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Re-enter password" required
+                  value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)}
+                  className={inp(`pr-11 ${confirmPass && form.password !== confirmPass ? "!border-red-400 !bg-red-50" : ""}`)}
+                />
+                <EyeBtn show={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />
+              </div>
+              {confirmPass && form.password !== confirmPass && (
+                <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
+                  Passwords do not match
+                </p>
+              )}
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit" disabled={loading}
+              className="w-full py-3.5 rounded-xl bg-red-800 hover:bg-red-900 active:scale-[0.98] text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-200 !mt-5"
+            >
+              {loading
+                ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Creating account...</>
+                : "Create Account →"
+              }
             </button>
           </form>
 
-          <p className="text-gray-400 text-xs text-center mt-4 leading-relaxed">
-            By registering, you agree to our <span className="text-red-700">Terms & Conditions</span> and <span className="text-red-700">Privacy Policy</span>
+          {/* Terms */}
+          <p className="text-gray-400 text-xs text-center mt-3 leading-relaxed">
+            By registering you agree to our{" "}
+            <Link to="/terms" className="text-red-700 hover:underline">Terms</Link> &{" "}
+            <Link to="/privacy" className="text-red-700 hover:underline">Privacy Policy</Link>
           </p>
+
           <p className="text-center text-gray-500 text-sm mt-4">
             Already have an account?{" "}
-            <Link to="/login" className="text-red-700 font-bold hover:underline">Sign in</Link>
+            <Link to="/login" className="text-red-800 font-bold hover:underline">Sign in</Link>
           </p>
         </div>
       </div>
