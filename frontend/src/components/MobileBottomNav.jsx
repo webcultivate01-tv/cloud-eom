@@ -26,10 +26,10 @@ function Badge({ count }) {
   );
 }
 
-function Tab({ icon: Icon, label, active, badge, to, onClick, fillActive }) {
+function Tab({ icon: Icon, label, active, badge, to, onClick, fillActive, cartTarget }) {
   const inner = (
     <>
-      <span className="relative flex items-center justify-center">
+      <span className="relative flex items-center justify-center" {...(cartTarget ? { "data-cart-target": "" } : {})}>
         <Icon size={21} strokeWidth={active ? 2.4 : 1.9} fill={active && fillActive ? BRAND : "none"} />
         <Badge count={badge} />
       </span>
@@ -78,7 +78,7 @@ export default function MobileBottomNav() {
       : { key: "home", icon: Home, label: "Home", to: "/", active: pathname === "/" },
     { key: "shop", icon: Store, label: "Shop", to: "/products", active: pathname.startsWith("/products") },
     { key: "wishlist", icon: Heart, label: "Wishlist", to: "/favorites", badge: favCount, fillActive: true, active: pathname === "/favorites" },
-    { key: "cart", icon: ShoppingCart, label: "Cart", to: "/cart", badge: cartCount, active: pathname === "/cart" },
+    { key: "cart", icon: ShoppingCart, label: "Cart", to: "/cart", badge: cartCount, cartTarget: true, active: pathname === "/cart" },
     /* Signed in: open the account sheet (full details + admin shortcuts).
        Signed out: straight to login. */
     user

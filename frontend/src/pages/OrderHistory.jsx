@@ -59,8 +59,30 @@ export default function OrderHistory() {
   );
 
   return (
-    <div className="bg-gray-50 min-h-[80vh]">
-      <div className="w-full mx-auto px-4 md:px-12 py-10 pb-16">
+    <div className="bg-[#FAFAF9] min-h-[80vh]">
+      {/* ── Header ── */}
+      <header className="bg-white border-b border-stone-200/70">
+        <div className="w-full mx-auto px-4 md:px-12 py-4 md:py-5 flex items-center justify-between gap-4">
+          <div className="flex items-baseline gap-3 min-w-0">
+            <h1 className="font-display text-[21px] md:text-[25px] font-black text-stone-900 tracking-[-0.02em] leading-none m-0">
+              Orders
+            </h1>
+            {orders.length > 0 && (
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                {orders.length} {orders.length === 1 ? "order" : "orders"}
+              </span>
+            )}
+          </div>
+
+          <Link to="/products"
+            className="hidden sm:inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-stone-500 no-underline transition-colors hover:text-red-700">
+            <ShoppingBag className="w-3.5 h-3.5" />
+            Continue Shopping
+          </Link>
+        </div>
+      </header>
+
+      <div className="w-full mx-auto px-4 md:px-12 py-6 md:py-8 pb-16">
 
         {/* OTP Modal */}
         {otpModal && (
@@ -121,17 +143,6 @@ export default function OrderHistory() {
             </div>
           </div>
         )}
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 pb-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <Package className="w-8 h-8 text-red-700" />
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900 m-0">My Orders</h1>
-          </div>
-          <Link to="/products" className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all shadow-sm active:scale-95 w-fit">
-            <ShoppingBag className="w-4 h-4" />
-            Continue Shopping
-          </Link>
-        </div>
 
         {orders.length === 0 ? (
           <div className="bg-transparent p-16 text-center flex flex-col items-center w-full mx-auto">

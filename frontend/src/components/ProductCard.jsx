@@ -1,8 +1,10 @@
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../features/cart/cartSlice";
 import { toggleFavorite, selectFavoriteIds } from "../features/favorites/favoritesSlice";
 import { toast } from "react-toastify";
+import { flyToCart } from "../utils/flyToCart";
 
 const Chevron = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
@@ -21,6 +23,7 @@ const Heart = ({ filled }) => (
 export default function ProductCard({ product, badge }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const imgRef = useRef(null);
   const favoriteIds = useSelector(selectFavoriteIds);
   const isFav = favoriteIds.has(product._id);
   const cardImage = product.images?.[0] || product.image || null;
@@ -30,7 +33,7 @@ export default function ProductCard({ product, badge }) {
   const handleAddToCart = (e) => {
     e.stopPropagation();
     dispatch(addToCart({ ...product, quantity: 1 }));
-    toast.success(`${product.name} added to cart!`);
+    flyToCart(imgRef.current);
   };
 
   const handleFav = (e) => {
@@ -47,6 +50,7 @@ export default function ProductCard({ product, badge }) {
       {/* ── Image ── */}
       <div className="relative overflow-hidden aspect-[4/5] bg-[#F4F3F0]">
         <img
+          ref={imgRef}
           src={cardImage || "https://placehold.co/400x500/f4f4f2/999?text=No+Image"}
           alt={product.name}
           loading="lazy"

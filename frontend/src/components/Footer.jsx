@@ -228,8 +228,19 @@ export default function Footer() {
           <p className="text-xs text-center sm:text-left m-0" style={{ color: "#a39d95" }}>
             © {new Date().getFullYear()} <span className="font-semibold" style={{ color: "#fff" }}>Cloud Graphics Amravati</span>. All rights reserved.
           </p>
-          <p className="text-xs text-center m-0" style={{ color: "#a39d95" }}>
-            Designed &amp; Developed by <span className="font-semibold" style={{ color: "#fff" }}>Webcultivate Software Solution</span>
+          <p className="text-xs text-center sm:text-right m-0" style={{ color: "#a39d95" }}>
+            Developed &amp; Manage By{" "}
+            <a
+              href="https://tejasmehar.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold no-underline transition-colors"
+              style={{ color: "#fff" }}
+              onMouseEnter={e => e.currentTarget.style.color = '#B51D0F'}
+              onMouseLeave={e => e.currentTarget.style.color = '#fff'}
+            >
+              Tejas Mehar
+            </a>
           </p>
         </div>
       </div>

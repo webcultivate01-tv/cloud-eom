@@ -435,7 +435,7 @@ export default function Navbar() {
             </Link>
 
             {/* Cart */}
-            <Link to="/cart" className="icon-btn desktop-icon" aria-label="Cart">
+            <Link to="/cart" className="icon-btn desktop-icon" aria-label="Cart" data-cart-target>
               <IconCart />
               {cartCount > 0 && <span className="badge">{cartCount}</span>}
             </Link>
