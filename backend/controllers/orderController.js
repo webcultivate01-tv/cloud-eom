@@ -57,7 +57,7 @@ const createOrder = async (req, res) => {
         price: product.price,
         quantity: item.quantity,
         size: item.size || "",
-        uploadedImage: item.uploadedImage || "", // Cloudinary URL from frontend upload
+        uploadedImage: item.uploadedImage || "", // local /uploads URL from frontend upload
       });
     }
 

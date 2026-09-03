@@ -2,6 +2,7 @@ const Replacement = require("../models/Replacement");
 const Order       = require("../models/Order");
 const User        = require("../models/User");
 const { sendReplacementStatusUpdate } = require("../config/mailer");
+const { cleanupUnusedImages } = require("../config/imageCleanup");
 
 const REPLACEMENT_WINDOW_DAYS = 7;
 
@@ -168,6 +169,8 @@ const deleteReplacement = async (req, res) => {
   try {
     const replacement = await Replacement.findByIdAndDelete(req.params.id);
     if (!replacement) return res.status(404).json({ message: "Replacement request not found" });
+    // The evidence photos exist only for this request — nothing else shows them
+    await cleanupUnusedImages(replacement.images);
     res.json({ message: "Replacement request deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message || "Server error" });

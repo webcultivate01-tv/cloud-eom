@@ -66,7 +66,7 @@ export default function Checkout() {
     setUploadingFor(itemKey);
     try {
       const fd = new FormData(); fd.append("image", file);
-      const { data } = await api.post("/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      const { data } = await api.post("/upload?folder=orders", fd, { headers: { "Content-Type": "multipart/form-data" } });
       dispatch(setItemImage({ key: itemKey, imageUrl: data.imageUrl }));
       toast.success("Image uploaded successfully");
     } catch { toast.error("Upload failed. Try again."); }

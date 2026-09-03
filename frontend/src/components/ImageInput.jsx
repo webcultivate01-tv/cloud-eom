@@ -3,7 +3,7 @@ import { Upload, ImageIcon, X, Link2 } from "lucide-react";
 import { toast } from "react-toastify";
 import api from "../utils/api";
 
-export default function ImageInput({ value, onChange, previewSize = "square" }) {
+export default function ImageInput({ value, onChange, previewSize = "square", folder = "misc" }) {
   const [uploading, setUploading] = useState(false);
   const [mode, setMode]           = useState("upload");
   const [urlInput, setUrlInput]   = useState("");
@@ -20,7 +20,7 @@ export default function ImageInput({ value, onChange, previewSize = "square" }) 
     try {
       const fd = new FormData();
       fd.append("image", file);
-      const { data } = await api.post("/upload", fd, {
+      const { data } = await api.post(`/upload?folder=${folder}`, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       onChange(data.imageUrl);

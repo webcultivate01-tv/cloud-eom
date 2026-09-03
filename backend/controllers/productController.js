@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const { cleanupUnusedImages } = require("../config/imageCleanup");
 
 // Accept either a real array, or a JSON-stringified array (legacy multipart callers).
 const toArray = (val, fallback = []) => {
@@ -46,7 +47,7 @@ const getProductById = async (req, res) => {
 
 // @desc    Create a new product
 //          Images come in as a URL array (`images: [url, url, ...]`).
-//          Each URL is either a Cloudinary URL produced by /api/upload,
+//          Each URL is either a local /uploads URL produced by /api/upload,
 //          or any external URL the admin pasted directly.
 // @route   POST /api/products
 // @access  Admin
@@ -103,6 +104,11 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
+    // Snapshot every image the product currently holds, before any of the
+    // fields below are overwritten. Whatever the admin drops from the gallery
+    // is swept from uploads/ once the save succeeds.
+    const previousImages = [product.image, ...product.images];
+
     const {
       name, description, price, originalPrice,
       brand, sku, category, stock,
@@ -142,6 +148,12 @@ const updateProduct = async (req, res) => {
       product.tags = toArray(req.body.tags, product.tags);
 
     const updated = await product.save();
+
+    // Only the URLs the product no longer holds are candidates; cleanup then
+    // re-checks each one against every other document before unlinking it.
+    const stillUsed = new Set([updated.image, ...updated.images]);
+    await cleanupUnusedImages(previousImages.filter((url) => !stillUsed.has(url)));
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -157,6 +169,7 @@ const deleteProduct = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
+    await cleanupUnusedImages([product.image, ...product.images]);
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });

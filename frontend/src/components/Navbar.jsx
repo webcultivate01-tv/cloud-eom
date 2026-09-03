@@ -14,7 +14,9 @@ import { clearCart, selectCartCount } from "../features/cart/cartSlice";
 import { selectFavoriteCount } from "../features/favorites/favoritesSlice";
 import { toast } from "react-toastify";
 
-const CATEGORIES = ["Sale", "New Arrivals", "Cup", "T-Shirt", "Diary", "Pen", "ID Card", "Frame", "Keychain"];
+const PROMO_CATEGORIES = ["Sale", "New Arrivals"];
+const PRODUCT_CATEGORIES = ["Cup", "T-Shirt", "Diary", "Pen", "ID Card", "Frame", "Keychain", "Banner"].sort((a, b) => a.localeCompare(b));
+const CATEGORIES = [...PROMO_CATEGORIES, ...PRODUCT_CATEGORIES];
 
 const OFFERS = [
   "Get EXTRA 10% OFF On Orders Above ₹1299 | Code: MEGA10",
@@ -162,13 +164,6 @@ const styles = `
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
   }
 
-  .search-expand {
-    animation: searchIn 0.2s ease forwards;
-  }
-  @keyframes searchIn {
-    from { opacity: 0; width: 0; }
-    to   { opacity: 1; width: 240px; }
-  }
 `;
 
 export default function Navbar() {
@@ -179,7 +174,6 @@ export default function Navbar() {
   const cartCount = useSelector(selectCartCount);
   const favCount = useSelector(selectFavoriteCount);
 
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileDrawer, setMobileDrawer] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
@@ -187,7 +181,6 @@ export default function Navbar() {
   const [offerIndex, setOfferIndex] = useState(0);
   const [offerVisible, setOfferVisible] = useState(true);
 
-  const searchRef = useRef(null);
   const drawerRef = useRef(null);
   const userMenuRef = useRef(null);
 
@@ -211,13 +204,8 @@ export default function Navbar() {
 
   useEffect(() => {
     setMobileDrawer(false);
-    setSearchOpen(false);
     setUserMenu(false);
   }, [location.pathname, location.search]);
-
-  useEffect(() => {
-    if (searchOpen) searchRef.current?.focus();
-  }, [searchOpen]);
 
   useEffect(() => {
     document.body.style.overflow = mobileDrawer ? "hidden" : "";
@@ -244,7 +232,6 @@ export default function Navbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchOpen(false);
       setSearchQuery("");
     }
   };
@@ -324,66 +311,53 @@ export default function Navbar() {
               <IconMenu />
             </button>
 
-            {/* Search — desktop */}
-            <div
-              style={{ display: "none" }}
+            {/* Search — desktop: persistent compact box + button */}
+            <form
+              onSubmit={handleSearch}
               className="desktop-search"
+              style={{ display: "none", alignItems: "center", gap: "6px" }}
             >
-              {!searchOpen ? (
-                <button
-                  className="icon-btn"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label="Search"
-                >
-                  <IconSearch />
-                </button>
-              ) : (
-                <form
-                  onSubmit={handleSearch}
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                >
-                  <input
-                    ref={searchRef}
-                    className="search-expand"
-                    style={{
-                      border: "2px solid #B51D0F",
-                      borderRadius: "24px",
-                      padding: "6px 16px",
-                      fontSize: "13px",
-                      outline: "none",
-                      fontFamily: "'Montserrat', sans-serif",
-                    }}
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    style={{
-                      background: "#B51D0F",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "20px",
-                      padding: "6px 16px",
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      fontFamily: "'Montserrat', sans-serif",
-                    }}
-                  >
-                    Go
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                    style={{ width: 32, height: 32 }}
-                  >
-                    <IconX />
-                  </button>
-                </form>
-              )}
-            </div>
+              <input
+                className="desktop-search-input"
+                style={{
+                  width: 170,
+                  border: "1.5px solid #e5e7eb",
+                  borderRadius: "20px",
+                  padding: "7px 14px",
+                  fontSize: "12.5px",
+                  outline: "none",
+                  fontFamily: "'Montserrat', sans-serif",
+                  transition: "width 0.2s ease, border-color 0.2s ease",
+                }}
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={(e) => { e.target.style.borderColor = "#B51D0F"; e.target.style.width = "230px"; }}
+                onBlur={(e) => { e.target.style.borderColor = "#e5e7eb"; e.target.style.width = "170px"; }}
+              />
+              <button
+                type="submit"
+                aria-label="Search"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 34,
+                  height: 34,
+                  borderRadius: "50%",
+                  background: "#B51D0F",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#8f1709"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#B51D0F"; }}
+              >
+                <IconSearch />
+              </button>
+            </form>
           </div>
 
           {/* CENTER — Logo (absolutely centered) */}

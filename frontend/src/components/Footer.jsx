@@ -7,7 +7,7 @@ fontLink.href = "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@
 fontLink.rel = "stylesheet";
 if (!document.head.querySelector("[href*='Playfair+Display']")) document.head.appendChild(fontLink);
 
-const CATEGORIES = ["Cup", "T-Shirt", "Diary", "Pen", "ID Card", "Frame", "Keychain"];
+const CATEGORIES = ["Cup", "T-Shirt", "Diary", "Pen", "ID Card", "Frame", "Keychain", "Banner"];
 const QUICK_LINKS = [["Home", "/"], ["Products", "/products"], ["My Orders", "/orders"], ["Cart", "/cart"], ["Contact Us", "/contact"], ["Login", "/login"]];
 const INFO = [
   { label: "About Us", to: "/contact" },
@@ -62,6 +62,44 @@ const IconWhatsapp = () => (
 export default function Footer() {
   return (
     <footer style={{ background: "#f8f5f2", borderTop: "1px solid #e8e2db" }} className="mt-auto">
+
+      {/* ── CTA Strip ── */}
+      <div style={{ background: "linear-gradient(120deg, #B51D0F, #7a1208)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="flex items-center gap-3.5">
+            <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 46, height: 46, background: "rgba(255,255,255,0.16)" }}>
+              <IconPrinter />
+            </div>
+            <div>
+              <p className="m-0" style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 800, fontSize: 15, color: "#fff" }}>
+                Got a design in mind?
+              </p>
+              <p className="m-0 mt-0.5" style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.8)" }}>
+                Custom printing on cups, tees, banners &amp; more — start today.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/products"
+            className="no-underline flex-shrink-0"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "#fff",
+              color: "#B51D0F",
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 700,
+              fontSize: 13,
+              padding: "9px 20px",
+              borderRadius: 24,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Start Customizing <IconArrow />
+          </Link>
+        </div>
+      </div>
 
       {/* ── Main Grid ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
@@ -183,13 +221,13 @@ export default function Footer() {
       </div>
 
       {/* ── Bottom Bar ── */}
-      <div className="border-t" style={{ borderColor: "#e8e2db", background: "#ede8e2" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-gray-400 text-center sm:text-left m-0">
-            © {new Date().getFullYear()} <span className="font-semibold text-gray-600">Cloud Graphics Amravati</span>. All rights reserved.
+      <div style={{ borderTop: "3px solid #B51D0F", background: "#231f1c" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2">
+          <p className="text-xs text-center sm:text-left m-0" style={{ color: "#a39d95" }}>
+            © {new Date().getFullYear()} <span className="font-semibold" style={{ color: "#fff" }}>Cloud Graphics Amravati</span>. All rights reserved.
           </p>
-          <p className="text-xs text-gray-400 m-0">
-            Designed & Developed by <span className="font-semibold text-gray-500">Webcultivate Software Solution</span>
+          <p className="text-xs text-center m-0" style={{ color: "#a39d95" }}>
+            Designed &amp; Developed by <span className="font-semibold" style={{ color: "#fff" }}>Webcultivate Software Solution</span>
           </p>
         </div>
       </div>

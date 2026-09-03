@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 import { ImageIcon } from "lucide-react";
 import ImageInput from "../../components/ImageInput";
 
-const EMPTY_CAT = { name: "", image: "", sortOrder: "0" };
+const EMPTY_CAT = { name: "", image: "", description: "", sortOrder: "0" };
 
 const ChevronDown = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -43,7 +43,7 @@ export default function ManageCategories() {
 
   const handleEdit = (cat) => {
     setEditId(cat._id);
-    setForm({ name: cat.name, image: cat.image || "", sortOrder: String(cat.sortOrder ?? 0) });
+    setForm({ name: cat.name, image: cat.image || "", description: cat.description || "", sortOrder: String(cat.sortOrder ?? 0) });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -128,6 +128,7 @@ export default function ManageCategories() {
                 value={form.image}
                 onChange={(url) => setForm((f) => ({ ...f, image: url }))}
                 previewSize="square"
+                folder="categories"
               />
             </div>
 
@@ -141,6 +142,18 @@ export default function ManageCategories() {
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="e.g. T-Shirts"
                   required
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1.5">
+                  Tagline <span className="normal-case font-normal">(shown under the name on the homepage card)</span>
+                </label>
+                <input
+                  className="admin-input"
+                  value={form.description}
+                  maxLength={80}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="e.g. Custom prints for every occasion"
                 />
               </div>
               <div>
@@ -162,7 +175,10 @@ export default function ManageCategories() {
                     <ImageIcon size={18} />
                   </div>
                 )}
-                <p className="font-semibold text-slate-800 text-sm">{form.name || "Category Name"}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-800 text-sm">{form.name || "Category Name"}</p>
+                  {form.description && <p className="text-xs text-slate-400 truncate">{form.description}</p>}
+                </div>
                 <span className="ml-auto text-xs text-slate-400 bg-white border border-slate-200 px-2 py-1 rounded-lg">Preview</span>
               </div>
             </div>
@@ -219,6 +235,9 @@ export default function ManageCategories() {
                           <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Order: {cat.sortOrder}</span>
                         )}
                       </div>
+                      {cat.description && (
+                        <p className="text-xs text-slate-400 mt-0.5">{cat.description}</p>
+                      )}
                       <p className="text-xs text-slate-400 mt-0.5">
                         <span className="font-medium text-indigo-500">{subCount}</span> subcategor{subCount !== 1 ? "ies" : "y"}
                       </p>

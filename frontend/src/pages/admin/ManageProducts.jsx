@@ -489,7 +489,7 @@ export default function ManageProducts() {
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
               Product Images <span className="normal-case font-normal text-slate-400">(up to 10 — upload or paste URLs)</span>
             </p>
-            <MultiImageInput value={images} onChange={setImages} max={10} />
+            <MultiImageInput value={images} onChange={setImages} max={10} folder="products" />
           </div>
 
           <div className="flex gap-3">

@@ -23,7 +23,7 @@ const replacementSchema = new mongoose.Schema(
     reason:      { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
 
-    // Cloudinary URLs (min 1, max 5)
+    // Image URLs stored in backend/uploads/replacements (min 1, max 5)
     images: {
       type: [String],
       validate: {

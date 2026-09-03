@@ -127,6 +127,7 @@ export default function ManageEvents() {
                 value={form.image}
                 onChange={(url) => setForm((f) => ({ ...f, image: url }))}
                 previewSize="wide"
+                folder="events"
               />
               <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
                 Recommended 16:9 — banners, offer posters, event photos. You can upload from device or paste an image URL.
