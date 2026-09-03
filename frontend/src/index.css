@@ -119,3 +119,30 @@
     background-clip: text;
   }
 }
+
+/* ─── Mobile overlays (bottom-nav account sheet + filters drawer) ──────
+   Deliberately unhurried: the panel glides in on an iOS-style ease-out and
+   glides back out again, so tapping Filters / My Account never feels like a
+   snap. Exit durations are kept a touch shorter than the entrances, and the
+   whole thing collapses to a plain fade when the user asks for less motion. */
+@keyframes cgOverlayIn  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes cgOverlayOut { from { opacity: 1 } to { opacity: 0 } }
+@keyframes cgSheetUp    { from { transform: translateY(100%) } to { transform: translateY(0) } }
+@keyframes cgSheetDown  { from { transform: translateY(0) } to { transform: translateY(100%) } }
+@keyframes cgDrawerIn   { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+@keyframes cgDrawerOut  { from { transform: translateX(0) } to { transform: translateX(-100%) } }
+
+.cg-overlay-in  { animation: cgOverlayIn  380ms ease both; }
+.cg-overlay-out { animation: cgOverlayOut 280ms ease both; }
+.cg-sheet-in    { animation: cgSheetUp    420ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.cg-sheet-out   { animation: cgSheetDown  300ms cubic-bezier(0.4, 0, 0.7, 0.2) both; }
+.cg-drawer-in   { animation: cgDrawerIn   420ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.cg-drawer-out  { animation: cgDrawerOut  300ms cubic-bezier(0.4, 0, 0.7, 0.2) both; }
+
+/* Panels animate transform only — hint the compositor so it stays at 60fps */
+.cg-sheet-in, .cg-sheet-out, .cg-drawer-in, .cg-drawer-out { will-change: transform; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cg-sheet-in,  .cg-drawer-in  { animation: cgOverlayIn  160ms ease both; }
+  .cg-sheet-out, .cg-drawer-out { animation: cgOverlayOut 140ms ease both; }
+}

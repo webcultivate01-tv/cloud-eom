@@ -94,6 +94,27 @@ const IconInfo = () => (
     <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
   </svg>
 );
+const IconHome = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+  </svg>
+);
+const IconGrid = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+    <rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
+  </svg>
+);
+const IconMailSm = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,7 12,13 2,7"/>
+  </svg>
+);
+const IconArrowRight = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+  </svg>
+);
 
 /* ── Inline styles ── */
 const styles = `
@@ -408,13 +429,13 @@ export default function Navbar() {
             </button>
 
             {/* Wishlist */}
-            <Link to="/favorites" className="icon-btn" aria-label="Wishlist">
+            <Link to="/favorites" className="icon-btn desktop-icon" aria-label="Wishlist">
               <IconHeart filled={favCount > 0} />
               {favCount > 0 && <span className="badge">{favCount}</span>}
             </Link>
 
             {/* Cart */}
-            <Link to="/cart" className="icon-btn" aria-label="Cart">
+            <Link to="/cart" className="icon-btn desktop-icon" aria-label="Cart">
               <IconCart />
               {cartCount > 0 && <span className="badge">{cartCount}</span>}
             </Link>
@@ -640,6 +661,8 @@ export default function Navbar() {
           .desktop-user { display: none !important; }
           .desktop-auth { display: none !important; }
           .desktop-categories { display: none !important; }
+          /* Wishlist + Cart live in the mobile bottom tab bar instead */
+          .desktop-icon { display: none !important; }
         }
       `}</style>
 
@@ -726,7 +749,7 @@ export default function Navbar() {
           </button>
         </form>
 
-        {/* Categories */}
+        {/* Pages */}
         <div style={{ borderBottom: "1px solid #f0f0f0" }}>
           <p style={{
             margin: 0,
@@ -738,19 +761,25 @@ export default function Navbar() {
             textTransform: "uppercase",
             fontFamily: "'Montserrat', sans-serif",
           }}>
-            Categories
+            Pages
           </p>
-          {[...CATEGORIES, "Contact Us"].map((cat, i) => {
-            const isLast = i === CATEGORIES.length;
-            const to = isLast ? "/contact" : `/products${catQuery(cat)}`;
-            const active = isLast ? location.pathname === "/contact" : catActive(cat);
+          {[
+            { to: "/", icon: <IconHome />, label: "Home" },
+            { to: "/products", icon: <IconGrid />, label: "Products" },
+            { to: "/about", icon: <IconInfo />, label: "About" },
+            { to: "/contact", icon: <IconMailSm />, label: "Contact" },
+          ].map((item) => {
+            const active = item.to === "/"
+              ? location.pathname === "/"
+              : location.pathname.startsWith(item.to);
             return (
               <Link
-                key={cat}
-                to={to}
+                key={item.to}
+                to={item.to}
                 style={{
                   display: "flex",
                   alignItems: "center",
+                  gap: 12,
                   padding: "12px 18px",
                   textDecoration: "none",
                   fontSize: 13,
@@ -761,9 +790,9 @@ export default function Navbar() {
                   transition: "background 0.15s, color 0.15s",
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#B51D0F"; }}
-                onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = ""; e.currentTarget.style.color = "#333"; } }}
+                onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#333"; } }}
               >
-                {cat}
+                {item.icon} {item.label}
               </Link>
             );
           })}
@@ -771,19 +800,6 @@ export default function Navbar() {
 
         {/* Account section */}
         <div style={{ flex: 1 }}>
-          {!user && (<p style={{
-            margin: 0,
-            padding: "12px 18px 6px",
-            fontSize: 10,
-            fontWeight: 700,
-            color: "#aaa",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            fontFamily: "'Montserrat', sans-serif",
-          }}>
-            Account
-          </p>)}
-
           {user ? (
             <>
               <div style={{
@@ -884,27 +900,6 @@ export default function Navbar() {
                 </div>
               )}
 
-              {/* About */}
-              <Link
-                to="/contact"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "11px 18px",
-                  textDecoration: "none",
-                  color: "#333",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  fontFamily: "'Montserrat', sans-serif",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#B51D0F"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "#333"; }}
-              >
-                <IconInfo /> About
-              </Link>
-
               <div style={{ borderTop: "1px solid #f0f0f0", marginTop: 4 }}>
                 <button
                   onClick={handleLogout}
@@ -931,42 +926,92 @@ export default function Navbar() {
               </div>
             </>
           ) : (
-            <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-              <Link
-                to="/login"
-                style={{
-                  textAlign: "center",
-                  padding: "10px",
-                  border: "2px solid #B51D0F",
-                  borderRadius: 12,
-                  color: "#B51D0F",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  textDecoration: "none",
-                  fontFamily: "'Montserrat', sans-serif",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = ""; }}
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/register"
-                style={{
-                  textAlign: "center",
-                  padding: "10px",
+            /* Guest — sign in card */
+            <div style={{
+              margin: "14px",
+              borderRadius: 16,
+              overflow: "hidden",
+              border: "1px solid #f5dcd9",
+              background: "linear-gradient(160deg, #fff5f4 0%, #ffffff 70%)",
+            }}>
+              <div style={{ padding: "18px 16px 16px", textAlign: "center" }}>
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  margin: "0 auto 10px",
+                  borderRadius: "50%",
                   background: "#B51D0F",
-                  borderRadius: 12,
                   color: "#fff",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 4px 14px rgba(181,29,15,0.32)",
+                }}>
+                  <IconUser />
+                </div>
+                <p style={{
+                  margin: 0,
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color: "#111",
                   fontFamily: "'Montserrat', sans-serif",
-                }}
-              >
-                Create Account
-              </Link>
+                }}>
+                  Welcome to Cloud Graphics
+                </p>
+                <p style={{
+                  margin: "5px 0 14px",
+                  fontSize: 11.5,
+                  lineHeight: 1.5,
+                  color: "#8a8a8a",
+                  fontFamily: "'Montserrat', sans-serif",
+                }}>
+                  Sign in to track orders, save favourites and reorder in a tap.
+                </p>
+
+                <Link
+                  to="/login"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    padding: "12px",
+                    background: "#B51D0F",
+                    borderRadius: 12,
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    fontFamily: "'Montserrat', sans-serif",
+                    boxShadow: "0 4px 14px rgba(181,29,15,0.3)",
+                  }}
+                >
+                  Sign In <IconArrowRight />
+                </Link>
+              </div>
+
+              <div style={{
+                borderTop: "1px solid #f5dcd9",
+                padding: "11px 16px",
+                textAlign: "center",
+                background: "rgba(255,255,255,0.6)",
+              }}>
+                <span style={{ fontSize: 11.5, color: "#8a8a8a", fontFamily: "'Montserrat', sans-serif" }}>
+                  New here?{" "}
+                </span>
+                <Link
+                  to="/register"
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    color: "#B51D0F",
+                    textDecoration: "none",
+                    fontFamily: "'Montserrat', sans-serif",
+                  }}
+                >
+                  Create an account
+                </Link>
+              </div>
             </div>
           )}
         </div>

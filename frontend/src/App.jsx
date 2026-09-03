@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import MobileBottomNav from "./components/MobileBottomNav";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import AdminLayout from "./components/AdminLayout";
@@ -20,6 +21,7 @@ import OrderHistory from "./pages/OrderHistory";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import Contact from "./pages/Contact";
+import About from "./pages/About";
 import Replacements from "./pages/Replacements";
 import ForgotPassword from "./pages/ForgotPassword";
 import OrderSuccess from "./pages/OrderSuccess";
@@ -85,6 +87,7 @@ export default function App() {
                 <Route path="/favorites"     element={<Favorites />} />
                 <Route path="/replacements"  element={<PrivateRoute><Replacements /></PrivateRoute>} />
                 <Route path="/contact"       element={<Contact />} />
+                <Route path="/about"         element={<About />} />
                 <Route path="/terms"         element={<TermsConditions />} />
                 <Route path="/shipping-policy" element={<ShippingPolicy />} />
                 <Route path="/return-policy"   element={<ReturnPolicy />} />
@@ -96,6 +99,9 @@ export default function App() {
               </Routes>
             </main>
             <Footer />
+            {/* Spacer so the fixed mobile tab bar never covers page content */}
+            <div className="lg:hidden" style={{ height: "calc(64px + env(safe-area-inset-bottom))" }} aria-hidden="true" />
+            <MobileBottomNav />
           </div>
         } />
       </Routes>
