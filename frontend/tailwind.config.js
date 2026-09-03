@@ -39,10 +39,19 @@ export default {
         ping2: {
           "75%, 100%": { transform: "scale(2)", opacity: "0" },
         },
+        slideInLeft: {
+          from: { transform: "translateX(-100%)" },
+          to:   { transform: "translateX(0)" },
+        },
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
-        "fade-in-up": "fadeInUp 0.25s ease-out",
-        "ping2":      "ping2 1.5s cubic-bezier(0,0,0.2,1) infinite",
+        "fade-in-up":    "fadeInUp 0.25s ease-out",
+        "ping2":         "ping2 1.5s cubic-bezier(0,0,0.2,1) infinite",
+        "slide-in-left": "slideInLeft 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
+        "shimmer":       "shimmer 1.6s infinite",
       },
     },
   },

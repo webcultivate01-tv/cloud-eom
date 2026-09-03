@@ -41,11 +41,11 @@ export default function ProductCard({ product, badge }) {
 
   return (
     <div
-      className="group flex flex-col bg-white rounded-2xl overflow-hidden cursor-pointer shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-1"
+      className="group flex flex-col h-full bg-white rounded-[20px] overflow-hidden cursor-pointer ring-1 ring-stone-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:ring-stone-300 hover:shadow-[0_22px_44px_-22px_rgba(0,0,0,0.28)] hover:-translate-y-1.5"
       onClick={() => navigate(`/products/${product._id}`)}
     >
       {/* ── Image ── */}
-      <div className="relative overflow-hidden aspect-[4/5] bg-[#f4f4f2]">
+      <div className="relative overflow-hidden aspect-[4/5] bg-[#F4F3F0]">
         <img
           src={cardImage || "https://placehold.co/400x500/f4f4f2/999?text=No+Image"}
           alt={product.name}
@@ -56,17 +56,17 @@ export default function ProductCard({ product, badge }) {
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5">
           {badge && (
-            <span className="bg-red-700 text-white text-[9px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-md">
+            <span className="bg-red-700 text-white text-[9px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-full shadow-sm">
               {badge}
             </span>
           )}
           {isCustom && (
-            <span className="bg-white/95 backdrop-blur-sm border border-red-700/60 text-red-700 text-[9px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-md">
+            <span className="bg-white/90 backdrop-blur-md text-red-700 text-[9px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-full shadow-sm">
               Custom Print
             </span>
           )}
           {soldOut && (
-            <span className="bg-gray-500/95 text-white text-[9px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-md">
+            <span className="bg-stone-900/85 backdrop-blur-md text-white text-[9px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-full shadow-sm">
               Out of Stock
             </span>
           )}
@@ -76,8 +76,8 @@ export default function ProductCard({ product, badge }) {
         <button
           onClick={handleFav}
           title={isFav ? "Remove from favourites" : "Add to favourites"}
-          className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] flex items-center justify-center border-none cursor-pointer transition-all duration-200 hover:scale-110 ${
-            isFav ? "text-red-600" : "text-gray-400 hover:text-red-600"
+          className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.10)] flex items-center justify-center border-none cursor-pointer transition-all duration-200 hover:scale-110 ${
+            isFav ? "text-red-600" : "text-stone-400 hover:text-red-600"
           }`}
         >
           <Heart filled={isFav} />
@@ -86,10 +86,10 @@ export default function ProductCard({ product, badge }) {
 
       {/* ── Info ── */}
       <div className="flex flex-col flex-1 px-4 pt-4 pb-4 md:px-5 md:pt-5 md:pb-5">
-        <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-[0.14em] mb-1.5">
+        <p className="text-stone-400 text-[10px] font-semibold uppercase tracking-[0.16em] mb-2">
           {product.category}
         </p>
-        <h3 className="font-display text-gray-900 text-[15px] md:text-[17px] font-bold leading-snug line-clamp-2 mb-4">
+        <h3 className="font-display text-stone-900 text-[15px] md:text-[17px] font-bold leading-snug tracking-[-0.01em] line-clamp-2 mb-4">
           {product.name}
         </h3>
 
@@ -99,13 +99,13 @@ export default function ProductCard({ product, badge }) {
           </span>
 
           {soldOut ? (
-            <span className="border border-gray-300 text-gray-400 text-[11px] md:text-xs font-semibold px-3 py-2 rounded-lg whitespace-nowrap">
+            <span className="border border-stone-200 text-stone-400 text-[11px] md:text-xs font-semibold px-3.5 py-2 rounded-full whitespace-nowrap">
               Sold Out
             </span>
           ) : (
             <button
               onClick={isCustom ? (e) => { e.stopPropagation(); navigate(`/products/${product._id}`); } : handleAddToCart}
-              className="inline-flex items-center gap-1.5 border border-red-700 text-red-700 bg-white text-[11px] md:text-xs font-semibold px-3 md:px-3.5 py-2 rounded-lg whitespace-nowrap cursor-pointer transition-colors duration-200 hover:bg-red-700 hover:text-white"
+              className="inline-flex items-center gap-1.5 border border-stone-900 text-stone-900 bg-white text-[11px] md:text-xs font-semibold px-3.5 md:px-4 py-2 rounded-full whitespace-nowrap cursor-pointer transition-all duration-200 hover:bg-stone-900 hover:text-white"
             >
               {isCustom ? "Upload Design" : "Add to Cart"}
               <Chevron />

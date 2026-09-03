@@ -84,6 +84,16 @@ const IconDashboard = () => (
     <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
   </svg>
 );
+const IconChevronDown = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+);
+const IconInfo = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+  </svg>
+);
 
 /* ── Inline styles ── */
 const styles = `
@@ -176,6 +186,7 @@ export default function Navbar() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileDrawer, setMobileDrawer] = useState(false);
+  const [drawerAccountOpen, setDrawerAccountOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [offerIndex, setOfferIndex] = useState(0);
@@ -246,6 +257,7 @@ export default function Navbar() {
       <style>{styles}</style>
 
       <header
+        data-site-nav
         style={{
           position: "sticky",
           top: 0,
@@ -305,7 +317,7 @@ export default function Navbar() {
             <button
               className="icon-btn hamburger-btn"
               style={{ borderRadius: "8px", width: 38, height: 38 }}
-              onClick={() => setMobileDrawer(true)}
+              onClick={() => { setDrawerAccountOpen(false); setMobileDrawer(true); }}
               aria-label="Open menu"
             >
               <IconMenu />
@@ -386,6 +398,7 @@ export default function Navbar() {
             <button
               className="icon-btn mobile-search-btn"
               onClick={() => {
+                setDrawerAccountOpen(false);
                 setMobileDrawer(true);
                 // Open drawer, focus search
               }}
@@ -758,7 +771,7 @@ export default function Navbar() {
 
         {/* Account section */}
         <div style={{ flex: 1 }}>
-          <p style={{
+          {!user && (<p style={{
             margin: 0,
             padding: "12px 18px 6px",
             fontSize: 10,
@@ -769,7 +782,7 @@ export default function Navbar() {
             fontFamily: "'Montserrat', sans-serif",
           }}>
             Account
-          </p>
+          </p>)}
 
           {user ? (
             <>
@@ -803,33 +816,94 @@ export default function Navbar() {
                 </div>
               </div>
 
-              {[
-                user.role === "admin" && { to: "/admin/dashboard", icon: <IconDashboard />, label: "Admin Panel" },
-                { to: "/profile", icon: <IconUser />, label: "My Profile" },
-                { to: "/orders", icon: <IconPackage />, label: "My Orders" },
-                { to: "/favorites", icon: <IconHeart />, label: "My Favourites" },
-                { to: "/replacements", icon: <IconRefresh />, label: "My Replacements" },
-              ].filter(Boolean).map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "11px 18px",
-                    textDecoration: "none",
-                    color: "#333",
-                    fontSize: 13,
-                    fontFamily: "'Montserrat', sans-serif",
-                    transition: "background 0.15s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#B51D0F"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "#333"; }}
-                >
-                  {item.icon} {item.label}
-                </Link>
-              ))}
+              {/* Account — collapsible group */}
+              <button
+                onClick={() => setDrawerAccountOpen((v) => !v)}
+                aria-expanded={drawerAccountOpen}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "11px 18px",
+                  border: "none",
+                  background: drawerAccountOpen ? "#fef2f2" : "none",
+                  color: drawerAccountOpen ? "#B51D0F" : "#333",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "'Montserrat', sans-serif",
+                  transition: "background 0.15s, color 0.15s",
+                }}
+              >
+                <IconUser />
+                <span style={{ flex: 1 }}>Account</span>
+                <span style={{
+                  display: "flex",
+                  transform: drawerAccountOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }}>
+                  <IconChevronDown />
+                </span>
+              </button>
+
+              {drawerAccountOpen && (
+                <div style={{ background: "#fafafa", borderTop: "1px solid #f0f0f0", borderBottom: "1px solid #f0f0f0" }}>
+                  {[
+                    user.role === "admin" && { to: "/admin/dashboard", icon: <IconDashboard />, label: "Admin Panel" },
+                    { to: "/profile", icon: <IconUser />, label: "My Profile" },
+                    { to: "/orders", icon: <IconPackage />, label: "My Orders" },
+                    { to: "/favorites", icon: <IconHeart />, label: "My Favourites" },
+                    { to: "/replacements", icon: <IconRefresh />, label: "My Replacements" },
+                  ].filter(Boolean).map((item) => {
+                    const active = location.pathname === item.to;
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "11px 18px 11px 32px",
+                          textDecoration: "none",
+                          color: active ? "#B51D0F" : "#333",
+                          background: active ? "#fef2f2" : "transparent",
+                          fontSize: 13,
+                          fontFamily: "'Montserrat', sans-serif",
+                          transition: "background 0.15s, color 0.15s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#B51D0F"; }}
+                        onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#333"; } }}
+                      >
+                        {item.icon} {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* About */}
+              <Link
+                to="/contact"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "11px 18px",
+                  textDecoration: "none",
+                  color: "#333",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: "'Montserrat', sans-serif",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#B51D0F"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "#333"; }}
+              >
+                <IconInfo /> About
+              </Link>
 
               <div style={{ borderTop: "1px solid #f0f0f0", marginTop: 4 }}>
                 <button
