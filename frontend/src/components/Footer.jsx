@@ -10,7 +10,7 @@ if (!document.head.querySelector("[href*='Playfair+Display']")) document.head.ap
 const CATEGORIES = ["Cup", "T-Shirt", "Diary", "Pen", "ID Card", "Frame", "Keychain", "Banner"];
 const QUICK_LINKS = [["Home", "/"], ["Products", "/products"], ["My Orders", "/orders"], ["Cart", "/cart"], ["Contact Us", "/contact"], ["Login", "/login"]];
 const INFO = [
-  { label: "About Us", to: "/contact" },
+  { label: "About Us", to: "/about" },
   { label: "Privacy Policy", to: "/contact" },
   { label: "Terms & Conditions", to: "/terms" },
   { label: "Shipping Policy", to: "/shipping-policy" },
@@ -103,10 +103,10 @@ export default function Footer() {
 
       {/* ── Main Grid ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-x-5 gap-y-7 sm:gap-8 lg:gap-10">
 
           {/* ── 1. Brand Column ── */}
-          <div className="sm:col-span-2 lg:col-span-1 flex flex-col gap-5">
+          <div className="col-span-2 lg:col-span-1 flex flex-col gap-5">
             <Link to="/" className="flex items-center gap-3 w-fit no-underline">
               <img src={logoImg} alt="Cloud Graphics" style={{ height: 48, width: "auto" }} />
               <div>
@@ -186,10 +186,11 @@ export default function Footer() {
           </div>
 
           {/* ── 4. Information ── */}
-          <div className="flex flex-col gap-3">
+          <div className="col-span-2 sm:col-span-1 flex flex-col gap-3">
             <h4 className="text-xs font-bold tracking-widest text-gray-900 uppercase pb-2.5 border-b border-gray-100 m-0">
               Information
             </h4>
+            <div className="grid grid-cols-2 gap-x-5 gap-y-3 sm:flex sm:flex-col sm:gap-3">
             {INFO.map(({ label, to }) => (
               <Link key={to} to={to}
                 className="flex items-center gap-2 text-sm text-gray-500 no-underline group transition-colors"
@@ -199,10 +200,11 @@ export default function Footer() {
                 {label}
               </Link>
             ))}
+            </div>
           </div>
 
           {/* ── 5. Find Us ── */}
-          <div className="sm:col-span-2 lg:col-span-1 flex flex-col gap-4">
+          <div className="col-span-2 lg:col-span-1 flex flex-col gap-4">
             {/* Google Map */}
             <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm w-full" style={{ height: 180 }}>
               <iframe

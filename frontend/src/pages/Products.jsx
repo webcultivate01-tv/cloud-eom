@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, X, SlidersHorizontal, ChevronDown, Package } from "lucide-react";
+import { Search, X, SlidersHorizontal, ChevronDown, ChevronRight, Package } from "lucide-react";
 import { fetchProducts } from "../features/products/productSlice";
 import { fetchCategories } from "../features/categories/categorySlice";
 import ProductCard from "../components/ProductCard";
+import { OPEN_FILTERS_EVENT } from "../components/MobileBottomNav";
+
+const BRAND = "#B51D0F";
+
+/* Kept in step with .cg-drawer-out / .cg-overlay-out in index.css */
+const DRAWER_EXIT_MS = 300;
 
 const SORT_OPTIONS = [
   { label: "Newest First", value: "newest" },
@@ -80,6 +87,8 @@ export default function Products() {
   // Explicit open/closed overrides; a category with no entry follows the active filter.
   const [catToggles, setCatToggles] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [drawerMounted, setDrawerMounted] = useState(false);
+  const [drawerClosing, setDrawerClosing] = useState(false);
 
   const updateParams = useCallback((updates, replace = false) => {
     setSearchParams((prev) => {
@@ -111,11 +120,27 @@ export default function Products() {
     return () => clearTimeout(t);
   }, [draft, activeSearch, updateParams]);
 
-  // Lock page scroll while the mobile filter drawer is open
+  // The mobile bottom tab bar's Filters tab opens this page's drawer
   useEffect(() => {
-    document.body.style.overflow = sidebarOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    const open = () => setSidebarOpen(true);
+    window.addEventListener(OPEN_FILTERS_EVENT, open);
+    return () => window.removeEventListener(OPEN_FILTERS_EVENT, open);
+  }, []);
+
+  // Keep the drawer mounted through its slide-out so closing glides rather
+  // than snapping; `drawerClosing` swaps in the reverse animation.
+  useEffect(() => {
+    if (sidebarOpen) { setDrawerMounted(true); setDrawerClosing(false); return; }
+    setDrawerClosing(true);
+    const t = setTimeout(() => { setDrawerMounted(false); setDrawerClosing(false); }, DRAWER_EXIT_MS);
+    return () => clearTimeout(t);
   }, [sidebarOpen]);
+
+  // Lock page scroll for as long as the drawer is on screen, exit included
+  useEffect(() => {
+    document.body.style.overflow = drawerMounted ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [drawerMounted]);
 
   const isCatOpen = (name) => catToggles[name] ?? activeCategory === name;
   const toggleCat = (name) => setCatToggles((prev) => ({ ...prev, [name]: !isCatOpen(name) }));
@@ -159,43 +184,76 @@ export default function Products() {
         : "border-stone-200 text-stone-500 font-medium hover:border-stone-400 hover:text-stone-900"
     }`;
 
-  // A value, not a component — keeps the search box from remounting on every keystroke
-  const filterPanel = (
+  // A plain render function, not a component — keeps the search box from remounting
+  // on every keystroke. `mobile` swaps the category rows to a compact, image-free
+  // list with a chevron before each name, sized to scroll inside the drawer.
+  const renderFilterPanel = (mobile = false) => (
     <div className="flex flex-col gap-6">
-      {/* Search */}
+      {/* Search — desktop only; on mobile the navbar already carries a search icon */}
+      {!mobile && (
+        <div>
+          <SectionLabel>Search</SectionLabel>
+          <div className="relative">
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+            <input
+              className="w-full pl-9 pr-8 py-2 rounded-full border border-stone-200 bg-white text-[12.5px] text-stone-800 placeholder-stone-400 outline-none transition-all duration-200 focus:border-stone-900 focus:ring-4 focus:ring-stone-900/5"
+              placeholder="Search products..."
+              value={searchInput}
+              onChange={(e) => setDraft(e.target.value)}
+            />
+            {searchInput && (
+              <button
+                aria-label="Clear search"
+                onClick={() => setDraft("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-red-700 bg-transparent border-none cursor-pointer p-0.5 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Product type — the drawer shows only the two real types, each a toggle, and
+          stays open so a category can be picked straight after */}
       <div>
-        <SectionLabel>Search</SectionLabel>
-        <div className="relative">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
-          <input
-            className="w-full pl-9 pr-8 py-2 rounded-full border border-stone-200 bg-white text-[12.5px] text-stone-800 placeholder-stone-400 outline-none transition-all duration-200 focus:border-stone-900 focus:ring-4 focus:ring-stone-900/5"
-            placeholder="Search products..."
-            value={searchInput}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-          {searchInput && (
+        <SectionLabel>Product Type</SectionLabel>
+        <div className="flex flex-wrap gap-2">
+          {(mobile ? TYPE_OPTIONS.filter((o) => o.value) : TYPE_OPTIONS).map((opt) => (
             <button
-              aria-label="Clear search"
-              onClick={() => setDraft("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-red-700 bg-transparent border-none cursor-pointer p-0.5 transition-colors"
+              key={opt.value || "all"}
+              onClick={() => {
+                updateParams({ type: activeType === opt.value ? null : opt.value || null });
+                if (!mobile) setSidebarOpen(false);
+              }}
+              className={pill(activeType === opt.value)}
             >
-              <X size={14} />
+              {opt.label}
             </button>
-          )}
+          ))}
         </div>
       </div>
 
       {/* Categories */}
       <div>
         <SectionLabel>Categories</SectionLabel>
-        <div className="flex flex-col gap-1">
+        {/* A long category list scrolls inside the drawer, with no visible scrollbar */}
+        <div
+          className={`flex flex-col gap-1 ${
+            mobile ? "max-h-[46vh] overflow-y-auto overscroll-contain scrollbar-hide pr-0.5" : ""
+          }`}
+        >
           <button
             className={navRow(!activeCategory)}
             onClick={() => { updateParams({ category: null, subcategory: null }); setSidebarOpen(false); }}
           >
-            <span className="w-7 h-7 shrink-0 rounded-lg bg-stone-100 flex items-center justify-center">
-              <Package size={13} className={!activeCategory ? "text-stone-900" : "text-stone-400"} />
-            </span>
+            {mobile ? (
+              <ChevronRight size={14} className={`shrink-0 ${!activeCategory ? "text-stone-900" : "text-stone-300"}`} />
+            ) : (
+              <span className="w-7 h-7 shrink-0 rounded-lg bg-stone-100 flex items-center justify-center">
+                <Package size={13} className={!activeCategory ? "text-stone-900" : "text-stone-400"} />
+              </span>
+            )}
             All Products
           </button>
 
@@ -216,11 +274,15 @@ export default function Products() {
                       else setSidebarOpen(false);
                     }}
                   >
-                    <span className="w-7 h-7 shrink-0 rounded-lg bg-stone-100 overflow-hidden flex items-center justify-center text-[12px]">
-                      {cat.image
-                        ? <img src={cat.image} alt="" loading="lazy" className="w-full h-full object-contain p-0.5" />
-                        : (cat.icon || "\u{1F3F7}\u{FE0F}")}
-                    </span>
+                    {mobile ? (
+                      <ChevronRight size={14} className={`shrink-0 ${isCatActive ? "text-stone-900" : "text-stone-300"}`} />
+                    ) : (
+                      <span className="w-7 h-7 shrink-0 rounded-lg bg-stone-100 overflow-hidden flex items-center justify-center text-[12px]">
+                        {cat.image
+                          ? <img src={cat.image} alt="" loading="lazy" className="w-full h-full object-contain p-0.5" />
+                          : (cat.icon || "\u{1F3F7}\u{FE0F}")}
+                      </span>
+                    )}
                     <span className="truncate">{cat.name}</span>
                   </button>
 
@@ -238,7 +300,7 @@ export default function Products() {
                 </div>
 
                 {isOpen && subs.length > 0 && (
-                  <div className="ml-[22px] pl-3 mt-1 mb-1.5 border-l border-stone-200 flex flex-col items-start gap-0.5">
+                  <div className={`${mobile ? "ml-[14px]" : "ml-[22px]"} pl-3 mt-1 mb-1.5 border-l border-stone-200 flex flex-col items-start gap-0.5`}>
                     {subs.map((sub) => {
                       const isSubActive = activeCategory === cat.name && activeSubcategory === sub.name;
                       return (
@@ -263,21 +325,6 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Product type */}
-      <div>
-        <SectionLabel>Product Type</SectionLabel>
-        <div className="flex flex-wrap gap-2">
-          {TYPE_OPTIONS.map((opt) => (
-            <button
-              key={opt.value || "all"}
-              onClick={() => { updateParams({ type: opt.value || null }); setSidebarOpen(false); }}
-              className={pill(activeType === opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {chips.length > 0 && (
         <button
@@ -365,41 +412,70 @@ export default function Products() {
         {/* ── Sidebar (desktop) ── */}
         <aside className="hidden lg:block w-56 shrink-0">
           <div className="sticky top-[var(--nav-h)] max-h-[calc(100vh_-_var(--nav-h))] overflow-y-auto scrollbar-hide py-6 pr-1">
-            {filterPanel}
+            {renderFilterPanel()}
           </div>
         </aside>
 
-        {/* ── Sidebar (mobile drawer) ── */}
-        {sidebarOpen && (
-          <div className="fixed inset-0 z-[200] lg:hidden" onClick={() => setSidebarOpen(false)}>
-            <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" />
+        {/* ── Sidebar (mobile drawer) ──
+             Portalled so the fixed panel is never clipped by the page's flex row,
+             and themed to match the mobile account sheet (brand red on stone). */}
+        {drawerMounted && createPortal(
+          <div
+            className="lg:hidden fixed inset-0 z-[300]"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filters"
+          >
             <div
-              className="absolute top-0 left-0 bottom-0 w-[86%] max-w-xs bg-[#FAFAF9] shadow-2xl rounded-r-[2rem] flex flex-col animate-slide-in-left"
-              onClick={(e) => e.stopPropagation()}
+              className={`absolute inset-0 bg-black/45 backdrop-blur-[2px] ${drawerClosing ? "cg-overlay-out" : "cg-overlay-in"}`}
+              onClick={() => setSidebarOpen(false)}
+            />
+
+            <div
+              className={`absolute top-0 left-0 bottom-0 w-[86%] max-w-xs bg-white shadow-2xl flex flex-col overflow-hidden ${
+                drawerClosing ? "cg-drawer-out" : "cg-drawer-in"
+              }`}
             >
-              <div className="flex justify-between items-center px-6 py-5 shrink-0">
-                <span className="font-display text-xl font-black text-stone-900">Filters</span>
+              {/* Same warm glow the page header uses */}
+              <div className="pointer-events-none absolute -top-24 -right-16 w-56 h-56 rounded-full bg-red-600/[0.07] blur-3xl" />
+
+              <div className="relative flex items-start justify-between gap-3 px-5 pt-5 pb-4 shrink-0 border-b border-stone-100">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="w-5 h-px" style={{ background: BRAND }} />
+                    <span className="text-[9px] font-black uppercase tracking-[0.26em]" style={{ color: BRAND }}>
+                      Refine
+                    </span>
+                  </div>
+                  <h2 className="font-display text-[20px] font-black text-stone-900 leading-none m-0">Filters</h2>
+                  <p className="text-[11.5px] text-stone-400 mt-1.5 m-0">
+                    {chips.length
+                      ? `${chips.length} filter${chips.length === 1 ? "" : "s"} applied`
+                      : "Narrow down the catalogue"}
+                  </p>
+                </div>
+
                 <button
+                  type="button"
                   aria-label="Close filters"
                   onClick={() => setSidebarOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white ring-1 ring-stone-200 text-stone-500 hover:text-stone-900 flex items-center justify-center border-none cursor-pointer transition-colors"
+                  className="w-8 h-8 shrink-0 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center border-none cursor-pointer active:scale-95 transition-transform"
+                  style={{ WebkitTapHighlightColor: "transparent" }}
                 >
                   <X size={16} />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-6 pb-6">{filterPanel}</div>
-
-              <div className="p-4 shrink-0 border-t border-stone-200/70">
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="w-full py-3.5 rounded-full bg-stone-900 text-white text-[13px] font-bold tracking-wide border-none cursor-pointer transition-colors duration-200 hover:bg-red-700"
-                >
-                  Show {visible.length} {visible.length === 1 ? "product" : "products"}
-                </button>
+              {/* Padding clears the mobile bottom tab bar under the drawer. */}
+              <div
+                className="relative flex-1 overflow-y-auto overscroll-contain px-5 pt-5"
+                style={{ paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}
+              >
+                {renderFilterPanel(true)}
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* ── Results ── */}

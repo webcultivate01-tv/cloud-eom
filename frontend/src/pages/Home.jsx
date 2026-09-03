@@ -8,7 +8,7 @@ import ProductCard from "../components/ProductCard";
 import HeroSlider from "../components/HeroSlider";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Truck, Palette, Star, IndianRupee, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { Truck, Palette, Star, IndianRupee, ChevronLeft, ChevronRight, ChevronDown, ShoppingBag, Upload, Printer, PackageCheck } from "lucide-react";
 
 const REVIEW_EMPTY = { name: "", email: "", rating: 0, message: "" };
 const FEATURES = [
@@ -16,6 +16,33 @@ const FEATURES = [
   { icon: <Palette size={28} className="text-red-700" />, title: "100% Custom Designs", desc: "Upload your photo or design — we print it" },
   { icon: <Star size={28} className="text-red-700" />, title: "Premium Quality", desc: "Durable prints that last for years" },
   { icon: <IndianRupee size={28} className="text-red-700" />, title: "Best Prices", desc: "Affordable prices with bulk discounts" },
+];
+
+const STEPS = [
+  {
+    step: "1",
+    icon: <ShoppingBag size={22} />,
+    title: "Choose Product",
+    desc: "Browse mugs, frames, t-shirts and more — pick what you want to personalize.",
+  },
+  {
+    step: "2",
+    icon: <Upload size={22} />,
+    title: "Upload Design",
+    desc: "Add your photo, logo or artwork. We check the quality before printing.",
+  },
+  {
+    step: "3",
+    icon: <Printer size={22} />,
+    title: "We Print It",
+    desc: "Premium printing on durable materials, finished and quality-checked by hand.",
+  },
+  {
+    step: "4",
+    icon: <PackageCheck size={22} />,
+    title: "Fast Delivery",
+    desc: "Safely packed and delivered to your doorstep across Amravati & Maharashtra.",
+  },
 ];
 
 function StarPicker({ value, onChange }) {
@@ -57,6 +84,39 @@ export default function Home() {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
 
+  const reviewTrackRef = useRef(null);
+  const [reviewIdx, setReviewIdx] = useState(0);
+  const [reviewPages, setReviewPages] = useState(1);
+
+  const reviewStep = () => {
+    const el = reviewTrackRef.current;
+    const card = el?.firstElementChild;
+    if (!el || !card) return 0;
+    return card.offsetWidth + 20; // card + gap-5
+  };
+
+  const syncReviewRail = () => {
+    const el = reviewTrackRef.current;
+    const step = reviewStep();
+    if (!el || !step) return;
+    setReviewPages(Math.max(1, Math.round((el.scrollWidth - el.clientWidth) / step) + 1));
+    setReviewIdx(Math.round(el.scrollLeft / step));
+  };
+
+  const handleReviewScroll = () => {
+    const el = reviewTrackRef.current;
+    const step = reviewStep();
+    if (!el || !step) return;
+    setReviewIdx(Math.round(el.scrollLeft / step));
+  };
+
+  const scrollReviews = (dir) => {
+    const el = reviewTrackRef.current;
+    const step = reviewStep();
+    if (!el || !step) return;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
   const catRailRef = useRef(null);
   const [catArrows, setCatArrows] = useState({ left: false, right: false });
   const [catOverflow, setCatOverflow] = useState(false);
@@ -90,6 +150,13 @@ export default function Home() {
     return () => window.removeEventListener("resize", syncCatArrows);
   }, [categories, catOverflow]);
 
+  useEffect(() => {
+    syncReviewRail();
+    window.addEventListener("resize", syncReviewRail);
+    return () => window.removeEventListener("resize", syncReviewRail);
+  }, [approvedReviews]);
+
+  const visibleReviews = approvedReviews.slice(0, 9);
   const featured = products.slice(0, 8);
   const customize = products.filter((p) => p.requiresCustomImage).slice(0, 4);
 
@@ -337,728 +404,751 @@ export default function Home() {
       )}
 
       {/* How It Works */}
-<section className="bg-white py-24">
+      <section className="py-14 lg:py-16" style={{ background: "#fdfbfa" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
 
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
+          {/* Header */}
+          <div className="text-center max-w-2xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-8 h-[1px]" style={{ background: "#d7b6af" }} />
+              <span
+                className="text-[11px] font-semibold uppercase tracking-[0.3em]"
+                style={{ color: "#B51D0F" }}
+              >
+                How It Works
+              </span>
+              <div className="w-8 h-[1px]" style={{ background: "#d7b6af" }} />
+            </div>
 
-    {/* ───────── Header ───────── */}
-<div className="text-center max-w-4xl mx-auto mb-24">
-
-  {/* Top Label */}
-  <div className="flex items-center justify-center gap-4 mb-6">
-
-    <div
-      className="w-12 h-[1px]"
-      style={{ background: "#e3cfc7" }}
-    />
-
-    <span
-      className="text-xs font-semibold uppercase tracking-[0.35em]"
-      style={{ color: "#B51D0F" }}
-    >
-      How It Works
-    </span>
-
-    <div
-      className="w-12 h-[1px]"
-      style={{ background: "#e3cfc7" }}
-    />
-
-  </div>
-
-  {/* Heading */}
-  <h4
-    style={{
-      fontFamily: "'Playfair Display', serif",
-      fontWeight: 900,
-      fontSize: "clamp(2rem,5vw,4.3rem)",
-      color: "#181818",
-      letterSpacing: "-0.05em",
-      lineHeight: "1.08",
-    }}
-  >
-    Create Your Personalized Product
-    <span style={{ color: "#B51D0F" }}> In Just 4 Simple Steps</span>
-  </h4>
-
-  {/* Description */}
-  <p className="mt-7 text-[15px] leading-[2] text-gray-500 max-w-2xl mx-auto">
-
-    From selecting your product to doorstep delivery,
-    we make the customization process smooth, fast, and hassle-free.
-
-  </p>
-
-  {/* Bottom Text */}
-  <div className="flex items-center justify-center gap-3 mt-10">
-
-    <div
-      className="w-10 h-[1px]"
-      style={{ background: "#e5d6d0" }}
-    />
-
-    <p className="text-sm text-gray-500">
-      Premium Printing • Fast Delivery • Trusted Quality
-    </p>
-
-    <div
-      className="w-10 h-[1px]"
-      style={{ background: "#e5d6d0" }}
-    />
-
-  </div>
-
-</div>
-
-    {/* ───────── Steps ───────── */}
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-7">
-
-      {[
-        {
-          step: "01",
-          title: "Choose Product",
-          desc: "Pick your favorite custom product.",
-        },
-        {
-          step: "02",
-          title: "Upload Design",
-          desc: "Add your photo or artwork.",
-        },
-        {
-          step: "03",
-          title: "We Print",
-          desc: "Premium quality printing process.",
-        },
-        {
-          step: "04",
-          title: "Fast Delivery",
-          desc: "Delivered safely to your doorstep.",
-        },
-      ].map((item, index) => (
-
-        <div
-          key={item.step}
-          className="group relative rounded-[30px] p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(181,29,15,0.08)]"
-          style={{
-            border: "1px solid #f1e5df",
-            background: "#fff",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#e8c9bf";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "#f1e5df";
-          }}
-        >
-
-          {/* Step Number */}
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg font-bold mb-10"
-            style={{
-              background:
-                "linear-gradient(135deg,#B51D0F 0%, #d55444 100%)",
-            }}
-          >
-            {item.step}
-          </div>
-
-          {/* Content */}
-          <h3
-            className="text-[22px] leading-tight"
-            style={{
-              color: "#181818",
-              fontWeight: 700,
-            }}
-          >
-            {item.title}
-          </h3>
-
-          <p className="mt-4 text-[14.5px] leading-[1.9] text-gray-500">
-            {item.desc}
-          </p>
-
-          {/* Arrow */}
-          {index !== 3 && (
-            <div
-              className="hidden xl:flex absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full items-center justify-center text-sm font-semibold z-20"
+            <h2
               style={{
-                background: "#fff",
-                color: "#B51D0F",
-                border: "1px solid #f1e5df",
-                boxShadow: "0 8px 20px rgba(0,0,0,0.04)",
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 700,
+                fontSize: "clamp(1.75rem,3.3vw,3rem)",
+                lineHeight: 1.18,
+                letterSpacing: "-0.02em",
+                color: "#1a1a1a",
               }}
             >
-              →
-            </div>
-          )}
+              Your Design, Delivered
+              <span style={{ color: "#B51D0F" }}> In 4 Simple Steps</span>
+            </h2>
+
+            <p className="mt-4 text-[15px] leading-[1.85] text-gray-500">
+              From picking a product to doorstep delivery — the whole
+              customization process, made smooth and hassle-free.
+            </p>
+          </div>
+
+          {/* Steps */}
+          <div className="relative mt-10 lg:mt-14">
+
+            {/* Connector line (desktop) */}
+            <div
+              className="hidden lg:block absolute left-[12.5%] right-[12.5%] top-7 h-[1px]"
+              style={{ background: "linear-gradient(90deg,#f0dcd6,#e0bdb4,#f0dcd6)" }}
+            />
+
+            <ol className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
+              {STEPS.map((item, i) => (
+                <li key={item.step} className="relative flex gap-5 lg:block text-left lg:text-center">
+
+                  {/* Connector line (mobile / tablet) */}
+                  {i !== STEPS.length - 1 && (
+                    <span
+                      className="sm:hidden absolute left-7 top-14 bottom-[-2rem] w-[1px]"
+                      style={{ background: "#efdcd6" }}
+                      aria-hidden="true"
+                    />
+                  )}
+
+                  {/* Icon badge */}
+                  <div className="relative shrink-0 lg:mx-auto lg:w-14">
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-white"
+                      style={{
+                        background: "linear-gradient(135deg,#B51D0F 0%,#d55444 100%)",
+                        boxShadow: "0 10px 24px rgba(181,29,15,0.22)",
+                      }}
+                    >
+                      {item.icon}
+                    </div>
+                    <span
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold"
+                      style={{
+                        background: "#fff",
+                        color: "#B51D0F",
+                        border: "1px solid #f1ddd7",
+                      }}
+                    >
+                      {item.step}
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="pb-2 lg:pb-0 lg:mt-5">
+                    <h3 className="text-[17px] font-bold" style={{ color: "#181818" }}>
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 text-[14px] leading-[1.8] text-gray-500 lg:max-w-[15rem] lg:mx-auto">
+                      {item.desc}
+                    </p>
+                  </div>
+
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* CTA */}
+          <div className="mt-12 flex flex-col items-center gap-4">
+            <Link
+              to="/products?type=customize"
+              className="group inline-flex items-center gap-3 pl-6 pr-2 py-2 rounded-full text-[14px] font-semibold transition-all duration-300 hover:-translate-y-[2px]"
+              style={{
+                background: "#B51D0F",
+                color: "#fff",
+                boxShadow: "0 12px 30px rgba(181,29,15,0.20)",
+              }}
+            >
+              Start customizing
+              <span
+                className="w-9 h-9 rounded-full flex items-center justify-center text-base transition-transform duration-300 group-hover:translate-x-[2px]"
+                style={{ background: "rgba(255,255,255,0.16)" }}
+              >
+                →
+              </span>
+            </Link>
+
+            <p className="text-[13px] text-gray-500">
+              Premium Printing • Fast Delivery • Trusted Quality
+            </p>
+          </div>
 
         </div>
-
-      ))}
-
-    </div>
-
-  </div>
-
-</section>
+      </section>
 
       {/* Customer Reviews */}
-     <section
-  className="relative py-20 overflow-hidden"
-  style={{ background: "#f8f5f2" }}
->
-
-  {/* Background Glow */}
-  <div
-    className="absolute top-0 right-0 w-[420px] h-[420px] rounded-full blur-3xl opacity-40"
-    style={{ background: "#f1d9d3" }}
-  />
-
-  <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
-
-    {/* ───────────────── Header ───────────────── */}
-<div className="text-center max-w-3xl mx-auto mb-16">
-
-  {/* Top Label */}
-  <div className="flex items-center justify-center gap-3 mb-5">
-
-    <div
-      className="w-10 h-[1px]"
-      style={{ background: "#d7b6af" }}
-    />
-
-    <span
-      className="text-xs font-bold uppercase tracking-[0.3em]"
-      style={{ color: "#B51D0F" }}
-    >
-      Customer Reviews
-    </span>
-
-    <div
-      className="w-10 h-[1px]"
-      style={{ background: "#d7b6af" }}
-    />
-
-  </div>
-
-  {/* Heading */}
-  <h2
-    className="leading-[1.15]"
-    style={{
-      fontFamily: "'Playfair Display', serif",
-      fontWeight: 900,
-      fontSize: "clamp(2.5rem,5vw,4.3rem)",
-      color: "#1a1a1a",
-      letterSpacing: "-0.03em",
-    }}
-  >
-    Loved By Customers <br />
-
-    <span style={{ color: "#B51D0F" }}>
-      Across Amravati
-    </span>
-
-  </h2>
-
-  {/* Description */}
-  <p className="mt-6 text-gray-600 text-[15px] leading-[2] max-w-2xl mx-auto">
-
-    From custom photo gifts to premium printing services,
-    Cloud Graphics has become a trusted choice for customers
-    looking for quality, creativity, and memorable gifting experiences.
-
-  </p>
-
-  {/* Bottom Stats */}
-  <div className="flex flex-wrap items-center justify-center gap-6 mt-8">
-
-    <div
-      className="flex items-center gap-2 px-4 py-2 rounded-full"
-      style={{
-        background: "#fffdfc",
-        border: "1px solid #eadfd8",
-      }}
-    >
-
-      <span
-        className="text-sm font-bold"
-        style={{ color: "#B51D0F" }}
+      <section
+        className="relative overflow-hidden py-14 lg:py-16"
+        style={{ background: "#f8f5f2" }}
       >
-        ★ 4.9
-      </span>
 
-      <span className="text-sm text-gray-500">
-        Customer Rating
-      </span>
-
-    </div>
-
-    <div
-      className="w-[1px] h-5 hidden sm:block"
-      style={{ background: "#ddd0c8" }}
-    />
-
-    <div className="text-sm text-gray-500">
-      Trusted by <span className="font-semibold text-gray-800">500+</span> Happy Customers
-    </div>
-
-  </div>
-
-</div>
-
-    {/* ───────────────── Loading State ───────────────── */}
-    {reviewLoading && approvedReviews.length === 0 ? (
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-
-        {[...Array(3)].map((_, i) => (
-
-          <div
-            key={i}
-            className="h-[260px] rounded-[24px] animate-pulse"
-            style={{
-              background: "#fffdfc",
-              border: "1px solid #ebe1db",
-            }}
-          />
-
-        ))}
-
-      </div>
-
-    ) : approvedReviews.length === 0 ? (
-
-      /* ───────────────── Empty State ───────────────── */
-      <div className="text-center py-16">
-
+        {/* Ambient Glow */}
         <div
-          className="w-20 h-20 rounded-full mx-auto mb-5 flex items-center justify-center text-4xl"
-          style={{ background: "#fff0ed" }}
-        >
-          ⭐
-        </div>
-
-        <h3
-          className="text-3xl"
-          style={{
-            fontFamily: "'Playfair Display', serif",
-            fontWeight: 800,
-            color: "#181818",
-          }}
-        >
-          No Reviews Yet
-        </h3>
-
-        <p className="text-gray-500 mt-3">
-          Be the first customer to share your experience.
-        </p>
-
-      </div>
-
-    ) : (
-
-      /* ───────────────── Reviews Grid ───────────────── */
-<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
-
-  {approvedReviews.slice(0, 6).map((review) => (
-
-    <div
-      key={review._id}
-      className="group relative overflow-hidden rounded-[26px] p-7 transition-all duration-300 hover:-translate-y-1"
-      style={{
-        background: "#fffdfc",
-        border: "1px solid #ebe1db",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
-      }}
-    >
-
-      {/* Top Accent */}
-      <div
-        className="w-16 h-[3px] rounded-full mb-6"
-        style={{ background: "#B51D0F" }}
-      />
-
-      {/* Customer */}
-      <div className="flex items-center gap-4 mb-5">
-
-        {/* Avatar */}
+          className="absolute -top-24 -right-24 w-[420px] h-[420px] rounded-full blur-3xl opacity-40 pointer-events-none"
+          style={{ background: "#f1d9d3" }}
+        />
         <div
-          className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0"
-          style={{
-            background:
-              "linear-gradient(135deg,#B51D0F 0%, #cf4c3d 100%)",
-          }}
-        >
-          {review.name[0].toUpperCase()}
-        </div>
+          className="absolute -bottom-32 -left-28 w-[360px] h-[360px] rounded-full blur-3xl opacity-30 pointer-events-none"
+          style={{ background: "#e9ded6" }}
+        />
 
-        {/* Name & Rating */}
-        <div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
 
-          <h4 className="text-[17px] font-semibold text-gray-900">
-            {review.name}
-          </h4>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
 
-          <div className="mt-1 flex items-center gap-2">
+            {/* ───────────────── Left · Editorial ───────────────── */}
+            <div className="lg:col-span-5">
 
-            <StarDisplay rating={review.rating} />
-
-            <span className="text-xs text-gray-400">
-              {review.rating}.0 Rating
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Review */}
-      <p className="text-[15px] text-gray-600 leading-[2]">
-
-        "{review.message}"
-
-      </p>
-
-      {/* Quote Icon */}
-      <div
-        className="absolute top-5 right-5 text-6xl leading-none pointer-events-none"
-        style={{
-          color: "#f3dfda",
-          fontFamily: "'Playfair Display', serif",
-        }}
-      >
-        ”
-      </div>
-
-    </div>
-
-  ))}
-
-</div>
-
-    )}
-
-    {/* ───────────────── Bottom CTA ───────────────── */}
-    <div className="flex justify-center mt-14">
-
-      <button
-        onClick={() => {
-          setShowReviewForm((v) => !v);
-          setReviewSubmitted(false);
-        }}
-        className="group relative overflow-hidden px-8 py-4 rounded-xl text-sm font-semibold transition-all duration-300 hover:-translate-y-[2px]"
-        style={{
-          background: "#B51D0F",
-          color: "#fff",
-          boxShadow: "0 14px 35px rgba(181,29,15,0.18)",
-        }}
-      >
-
-        <span className="relative z-10 flex items-center gap-2">
-          {showReviewForm ? "Close Review Form" : "✍ Write A Review"}
-        </span>
-
-        <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-
-      </button>
-
-    </div>
-
-    {/* ───────────────── Review Form ───────────────── */}
-  {showReviewForm && (
-
-  <div className="mt-16 flex justify-center">
-
-    <div
-      className="relative overflow-hidden w-full max-w-4xl rounded-[34px]"
-      style={{
-        background:
-          "linear-gradient(180deg,#fffdfc 0%, #fff7f4 100%)",
-        border: "1px solid #efe2db",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.06)",
-      }}
-    >
-
-      {/* Top Decorative */}
-      <div
-        className="h-2 w-full"
-        style={{
-          background:
-            "linear-gradient(90deg,#B51D0F 0%, #d55a4b 50%, #B51D0F 100%)",
-        }}
-      />
-
-      {/* Background Glow */}
-      <div
-        className="absolute top-0 right-0 w-60 h-60 rounded-full blur-3xl opacity-40"
-        style={{ background: "#f5d7d0" }}
-      />
-
-      <div className="relative p-7 md:p-11">
-
-        {/* Header */}
-        <div className="text-center mb-10">
-
-          <span
-            className="inline-block text-xs font-bold uppercase tracking-[0.25em] mb-4"
-            style={{ color: "#B51D0F" }}
-          >
-            Share Feedback
-          </span>
-
-          <h3
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontWeight: 900,
-              fontSize: "clamp(2rem,4vw,3rem)",
-              color: "#181818",
-              letterSpacing: "-0.03em",
-            }}
-          >
-            Share Your Experience
-          </h3>
-
-          <p className="text-gray-500 text-[15px] leading-[1.9] mt-4 max-w-xl mx-auto">
-            Your review helps other customers trust our quality
-            and service.
-          </p>
-
-        </div>
-
-        {reviewSubmitted ? (
-
-          <div
-            className="rounded-2xl px-6 py-5 text-center"
-            style={{
-              background: "#f4faf4",
-              border: "1px solid #d9ead7",
-            }}
-          >
-
-            <div className="text-4xl mb-3">✅</div>
-
-            <h4 className="text-lg font-semibold text-green-700">
-              Review Submitted Successfully
-            </h4>
-
-            <p className="text-sm text-green-600 mt-2">
-              Thank you for sharing your valuable feedback.
-            </p>
-
-          </div>
-
-        ) : (
-
-          <form
-            onSubmit={handleReviewSubmit}
-            noValidate
-            className="flex flex-col gap-7"
-          >
-
-            {/* Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-              {/* Name */}
-              <div>
-
-                <label
-                  className="block text-[13px] font-semibold mb-3"
-                  style={{ color: "#3f3f3f" }}
+              {/* Label */}
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-8 h-[1px]" style={{ background: "#d7b6af" }} />
+                <span
+                  className="text-[11px] font-semibold uppercase tracking-[0.3em]"
+                  style={{ color: "#B51D0F" }}
                 >
-                  Full Name
-                </label>
-
-                <input
-                  placeholder="Enter your full name"
-                  value={reviewForm.name}
-                  onChange={(e) => {
-                    setReviewForm({
-                      ...reviewForm,
-                      name: e.target.value,
-                    });
-
-                    setReviewErrors({
-                      ...reviewErrors,
-                      name: "",
-                    });
-                  }}
-                  className="w-full h-14 px-5 rounded-2xl border text-[15px] transition-all duration-300 outline-none"
-                  style={{
-                    borderColor: "#eaded8",
-                    background: "#ffffff",
-                  }}
-                />
-
-                {reviewErrors.name && (
-                  <span className="text-xs text-red-600 mt-2 block">
-                    {reviewErrors.name}
-                  </span>
-                )}
-
-              </div>
-
-              {/* Email */}
-              <div>
-
-                <label
-                  className="block text-[13px] font-semibold mb-3"
-                  style={{ color: "#3f3f3f" }}
-                >
-                  Email Address
-                </label>
-
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={reviewForm.email}
-                  onChange={(e) => {
-                    setReviewForm({
-                      ...reviewForm,
-                      email: e.target.value,
-                    });
-
-                    setReviewErrors({
-                      ...reviewErrors,
-                      email: "",
-                    });
-                  }}
-                  className="w-full h-14 px-5 rounded-2xl border text-[15px] transition-all duration-300 outline-none"
-                  style={{
-                    borderColor: "#eaded8",
-                    background: "#ffffff",
-                  }}
-                />
-
-                {reviewErrors.email && (
-                  <span className="text-xs text-red-600 mt-2 block">
-                    {reviewErrors.email}
-                  </span>
-                )}
-
-              </div>
-
-            </div>
-
-            {/* Rating */}
-            <div>
-
-              <label
-                className="block text-[13px] font-semibold mb-3"
-                style={{ color: "#3f3f3f" }}
-              >
-                Your Rating
-              </label>
-
-              <div
-                className="rounded-2xl px-5 py-4 border"
-                style={{
-                  borderColor: "#eaded8",
-                  background: "#fff",
-                }}
-              >
-                <StarPicker
-                  value={reviewForm.rating}
-                  onChange={(v) => {
-                    setReviewForm({
-                      ...reviewForm,
-                      rating: v,
-                    });
-
-                    setReviewErrors({
-                      ...reviewErrors,
-                      rating: "",
-                    });
-                  }}
-                />
-              </div>
-
-            </div>
-
-            {/* Review */}
-            <div>
-
-              <label
-                className="block text-[13px] font-semibold mb-3"
-                style={{ color: "#3f3f3f" }}
-              >
-                Your Review
-              </label>
-
-              <textarea
-                rows={6}
-                placeholder="Tell us about your experience with Cloud Graphics..."
-                value={reviewForm.message}
-                onChange={(e) => {
-                  setReviewForm({
-                    ...reviewForm,
-                    message: e.target.value,
-                  });
-
-                  setReviewErrors({
-                    ...reviewErrors,
-                    message: "",
-                  });
-                }}
-                className="w-full rounded-2xl border p-5 text-[15px] leading-[1.9] resize-none transition-all duration-300 outline-none"
-                style={{
-                  borderColor: "#eaded8",
-                  background: "#ffffff",
-                }}
-              />
-
-              {reviewErrors.message && (
-                <span className="text-xs text-red-600 mt-2 block">
-                  {reviewErrors.message}
+                  Customer Reviews
                 </span>
-              )}
+              </div>
 
-            </div>
+              {/* Heading */}
+              <h2
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontWeight: 700,
+                  fontSize: "clamp(2rem,3.3vw,3rem)",
+                  lineHeight: 1.18,
+                  letterSpacing: "-0.02em",
+                  color: "#1a1a1a",
+                }}
+              >
+                Loved By Customers
+                <br />
+                <span style={{ color: "#B51D0F" }}>
+                  Across Amravati
+                </span>
+              </h2>
 
-            {/* Submit */}
-            <div className="flex justify-center pt-2">
+              {/* Description */}
+              <p className="mt-5 text-[15px] leading-[1.85] text-gray-500 max-w-md">
+                From custom photo gifts to premium printing, Cloud Graphics has
+                become a trusted choice for quality, creativity and memorable
+                gifting experiences.
+              </p>
 
+              {/* Stats */}
+              <div className="mt-8 flex items-center gap-7">
+
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      style={{
+                        fontFamily: "'Playfair Display', serif",
+                        fontWeight: 600,
+                        fontSize: "2.3rem",
+                        lineHeight: 1,
+                        color: "#181818",
+                      }}
+                    >
+                      4.9
+                    </span>
+                    <StarDisplay rating={5} />
+                  </div>
+                  <p className="mt-2 text-[13px] text-gray-500">
+                    Average rating
+                  </p>
+                </div>
+
+                <div className="w-[1px] h-12" style={{ background: "#e2d5ce" }} />
+
+                <div>
+                  <span
+                    style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontWeight: 600,
+                      fontSize: "2.3rem",
+                      lineHeight: 1,
+                      color: "#181818",
+                    }}
+                  >
+                    500+
+                  </span>
+                  <p className="mt-2 text-[13px] text-gray-500">
+                    Happy customers
+                  </p>
+                </div>
+
+              </div>
+
+              {/* CTA */}
               <button
-                type="submit"
-                disabled={reviewLoading}
-                className="group relative overflow-hidden px-10 py-4 rounded-2xl text-sm font-semibold transition-all duration-300 hover:-translate-y-1"
+                onClick={() => {
+                  setShowReviewForm((v) => !v);
+                  setReviewSubmitted(false);
+                }}
+                className="group mt-9 inline-flex items-center gap-3 pl-6 pr-2 py-2 rounded-full text-[14px] font-semibold transition-all duration-300 hover:-translate-y-[2px]"
                 style={{
-                  background: reviewLoading
-                    ? "#d7c7c2"
-                    : "linear-gradient(135deg,#B51D0F 0%, #d55444 100%)",
+                  background: "#B51D0F",
                   color: "#fff",
-                  boxShadow: "0 15px 35px rgba(181,29,15,0.22)",
+                  boxShadow: "0 12px 30px rgba(181,29,15,0.20)",
                 }}
               >
-
-                <span className="relative z-10">
-                  {reviewLoading
-                    ? "Submitting..."
-                    : "Submit Review"}
+                {showReviewForm ? "Close review form" : "Write a review"}
+                <span
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-base transition-transform duration-300 group-hover:rotate-90"
+                  style={{ background: "rgba(255,255,255,0.16)" }}
+                >
+                  {showReviewForm ? "×" : "→"}
                 </span>
-
-                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-
               </button>
 
             </div>
 
-          </form>
+            {/* ───────────────── Right · Reviews ───────────────── */}
+            <div className="lg:col-span-7 min-w-0">
 
-        )}
+              {reviewLoading && approvedReviews.length === 0 ? (
 
-      </div>
+                /* Loading */
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {[...Array(2)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-[250px] rounded-[22px] animate-pulse"
+                      style={{
+                        background: "#fffdfc",
+                        border: "1px solid #ebe1db",
+                      }}
+                    />
+                  ))}
+                </div>
 
-    </div>
+              ) : approvedReviews.length === 0 ? (
 
-  </div>
+                /* Empty */
+                <div
+                  className="rounded-[22px] px-8 py-14 text-center"
+                  style={{
+                    background: "#fffdfc",
+                    border: "1px dashed #e6d8d1",
+                  }}
+                >
+                  <div
+                    className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl"
+                    style={{ background: "#fff0ed" }}
+                  >
+                    ⭐
+                  </div>
+                  <h3
+                    className="text-2xl"
+                    style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontWeight: 700,
+                      color: "#181818",
+                    }}
+                  >
+                    No Reviews Yet
+                  </h3>
+                  <p className="text-gray-500 mt-2 text-[14px]">
+                    Be the first customer to share your experience.
+                  </p>
+                </div>
 
-)}
+              ) : (
 
-  </div>
+                <>
+                  {/* Slider */}
+                  <div
+                    ref={reviewTrackRef}
+                    onScroll={handleReviewScroll}
+                    className="flex gap-5 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1 -mx-1 px-1"
+                    style={{ scrollBehavior: "smooth" }}
+                  >
+                    {visibleReviews.map((review) => (
 
-     </section>
+                      <article
+                        key={review._id}
+                        className="group relative snap-start shrink-0 w-full sm:w-[calc(50%-10px)] rounded-[22px] p-6 flex flex-col transition-all duration-300 hover:-translate-y-1"
+                        style={{
+                          background: "#fffdfc",
+                          border: "1px solid #ebe1db",
+                          boxShadow: "0 8px 26px rgba(0,0,0,0.035)",
+                        }}
+                      >
+
+                        {/* Quote Glyph */}
+                        <span
+                          className="absolute top-3 right-6 text-[64px] leading-none pointer-events-none select-none"
+                          style={{
+                            color: "#f5e3de",
+                            fontFamily: "'Playfair Display', serif",
+                          }}
+                        >
+                          ”
+                        </span>
+
+                        {/* Rating */}
+                        <div className="relative flex items-center gap-2 mb-4">
+                          <StarDisplay rating={review.rating} />
+                          <span className="text-[12px] text-gray-400">
+                            {review.rating}.0
+                          </span>
+                        </div>
+
+                        {/* Message */}
+                        <p className="relative text-[14.5px] leading-[1.8] text-gray-600 line-clamp-5 min-h-[130px]">
+                          {review.message}
+                        </p>
+
+                        {/* Author */}
+                        <div
+                          className="mt-5 pt-4 flex items-center gap-3"
+                          style={{ borderTop: "1px solid #f2e8e3" }}
+                        >
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-[15px] shrink-0"
+                            style={{
+                              background:
+                                "linear-gradient(135deg,#B51D0F 0%, #cf4c3d 100%)",
+                            }}
+                          >
+                            {review.name[0].toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-[15px] font-semibold text-gray-900 truncate">
+                              {review.name}
+                            </h4>
+                            <p className="text-[12px] text-gray-400">
+                              Verified customer
+                            </p>
+                          </div>
+                        </div>
+
+                      </article>
+
+                    ))}
+                  </div>
+
+                  {/* Controls */}
+                  <div className="mt-6 flex items-center justify-between">
+
+                    {/* Progress */}
+                    <div className="flex items-center gap-2">
+                      {[...Array(reviewPages)].map((_, i) => (
+                        <span
+                          key={i}
+                          className="h-[3px] rounded-full transition-all duration-300"
+                          style={{
+                            width: i === reviewIdx ? 26 : 10,
+                            background: i === reviewIdx ? "#B51D0F" : "#e0d2cb",
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Arrows */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        aria-label="Previous review"
+                        onClick={() => scrollReviews(-1)}
+                        className="w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300"
+                        style={{
+                          background: "#fffdfc",
+                          border: "1px solid #e6d8d1",
+                          color: "#B51D0F",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#B51D0F";
+                          e.currentTarget.style.color = "#fff";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "#fffdfc";
+                          e.currentTarget.style.color = "#B51D0F";
+                        }}
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+
+                      <button
+                        type="button"
+                        aria-label="Next review"
+                        onClick={() => scrollReviews(1)}
+                        className="w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300"
+                        style={{
+                          background: "#fffdfc",
+                          border: "1px solid #e6d8d1",
+                          color: "#B51D0F",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#B51D0F";
+                          e.currentTarget.style.color = "#fff";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "#fffdfc";
+                          e.currentTarget.style.color = "#B51D0F";
+                        }}
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+
+                  </div>
+                </>
+
+              )}
+
+            </div>
+
+          </div>
+
+          {/* ───────────────── Review Form ───────────────── */}
+          {showReviewForm && (
+
+            <div className="mt-14 flex justify-center">
+
+              <div
+                className="relative overflow-hidden w-full max-w-4xl rounded-[28px]"
+                style={{
+                  background: "linear-gradient(180deg,#fffdfc 0%, #fff7f4 100%)",
+                  border: "1px solid #efe2db",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.06)",
+                }}
+              >
+
+                {/* Top Decorative */}
+                <div
+                  className="h-[6px] w-full"
+                  style={{
+                    background:
+                      "linear-gradient(90deg,#B51D0F 0%, #d55a4b 50%, #B51D0F 100%)",
+                  }}
+                />
+
+                {/* Background Glow */}
+                <div
+                  className="absolute top-0 right-0 w-60 h-60 rounded-full blur-3xl opacity-40 pointer-events-none"
+                  style={{ background: "#f5d7d0" }}
+                />
+
+                <div className="relative p-7 md:p-10">
+
+                  {/* Header */}
+                  <div className="text-center mb-9">
+
+                    <span
+                      className="inline-block text-[11px] font-semibold uppercase tracking-[0.3em] mb-3"
+                      style={{ color: "#B51D0F" }}
+                    >
+                      Share Feedback
+                    </span>
+
+                    <h3
+                      style={{
+                        fontFamily: "'Playfair Display', serif",
+                        fontWeight: 700,
+                        fontSize: "clamp(1.75rem,3vw,2.4rem)",
+                        letterSpacing: "-0.02em",
+                        color: "#181818",
+                      }}
+                    >
+                      Share Your Experience
+                    </h3>
+
+                    <p className="text-gray-500 text-[14.5px] leading-[1.85] mt-3 max-w-xl mx-auto">
+                      Your review helps other customers trust our quality and
+                      service.
+                    </p>
+
+                  </div>
+
+                  {reviewSubmitted ? (
+
+                    <div
+                      className="rounded-2xl px-6 py-5 text-center"
+                      style={{
+                        background: "#f4faf4",
+                        border: "1px solid #d9ead7",
+                      }}
+                    >
+
+                      <div className="text-4xl mb-3">✅</div>
+
+                      <h4 className="text-lg font-semibold text-green-700">
+                        Review Submitted Successfully
+                      </h4>
+
+                      <p className="text-sm text-green-600 mt-2">
+                        Thank you for sharing your valuable feedback.
+                      </p>
+
+                    </div>
+
+                  ) : (
+
+                    <form
+                      onSubmit={handleReviewSubmit}
+                      noValidate
+                      className="flex flex-col gap-6"
+                    >
+
+                      {/* Row */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        {/* Name */}
+                        <div>
+
+                          <label
+                            className="block text-[13px] font-semibold mb-2.5"
+                            style={{ color: "#3f3f3f" }}
+                          >
+                            Full Name
+                          </label>
+
+                          <input
+                            placeholder="Enter your full name"
+                            value={reviewForm.name}
+                            onChange={(e) => {
+                              setReviewForm({
+                                ...reviewForm,
+                                name: e.target.value,
+                              });
+
+                              setReviewErrors({
+                                ...reviewErrors,
+                                name: "",
+                              });
+                            }}
+                            className="w-full h-14 px-5 rounded-2xl border text-[15px] transition-all duration-300 outline-none"
+                            style={{
+                              borderColor: "#eaded8",
+                              background: "#ffffff",
+                            }}
+                          />
+
+                          {reviewErrors.name && (
+                            <span className="text-xs text-red-600 mt-2 block">
+                              {reviewErrors.name}
+                            </span>
+                          )}
+
+                        </div>
+
+                        {/* Email */}
+                        <div>
+
+                          <label
+                            className="block text-[13px] font-semibold mb-2.5"
+                            style={{ color: "#3f3f3f" }}
+                          >
+                            Email Address
+                          </label>
+
+                          <input
+                            type="email"
+                            placeholder="you@example.com"
+                            value={reviewForm.email}
+                            onChange={(e) => {
+                              setReviewForm({
+                                ...reviewForm,
+                                email: e.target.value,
+                              });
+
+                              setReviewErrors({
+                                ...reviewErrors,
+                                email: "",
+                              });
+                            }}
+                            className="w-full h-14 px-5 rounded-2xl border text-[15px] transition-all duration-300 outline-none"
+                            style={{
+                              borderColor: "#eaded8",
+                              background: "#ffffff",
+                            }}
+                          />
+
+                          {reviewErrors.email && (
+                            <span className="text-xs text-red-600 mt-2 block">
+                              {reviewErrors.email}
+                            </span>
+                          )}
+
+                        </div>
+
+                      </div>
+
+                      {/* Rating */}
+                      <div>
+
+                        <label
+                          className="block text-[13px] font-semibold mb-2.5"
+                          style={{ color: "#3f3f3f" }}
+                        >
+                          Your Rating
+                        </label>
+
+                        <div
+                          className="rounded-2xl px-5 py-3.5 border"
+                          style={{
+                            borderColor: "#eaded8",
+                            background: "#fff",
+                          }}
+                        >
+                          <StarPicker
+                            value={reviewForm.rating}
+                            onChange={(v) => {
+                              setReviewForm({
+                                ...reviewForm,
+                                rating: v,
+                              });
+
+                              setReviewErrors({
+                                ...reviewErrors,
+                                rating: "",
+                              });
+                            }}
+                          />
+                        </div>
+
+                        {reviewErrors.rating && (
+                          <span className="text-xs text-red-600 mt-2 block">
+                            {reviewErrors.rating}
+                          </span>
+                        )}
+
+                      </div>
+
+                      {/* Review */}
+                      <div>
+
+                        <label
+                          className="block text-[13px] font-semibold mb-2.5"
+                          style={{ color: "#3f3f3f" }}
+                        >
+                          Your Review
+                        </label>
+
+                        <textarea
+                          rows={5}
+                          placeholder="Tell us about your experience with Cloud Graphics..."
+                          value={reviewForm.message}
+                          onChange={(e) => {
+                            setReviewForm({
+                              ...reviewForm,
+                              message: e.target.value,
+                            });
+
+                            setReviewErrors({
+                              ...reviewErrors,
+                              message: "",
+                            });
+                          }}
+                          className="w-full rounded-2xl border p-5 text-[15px] leading-[1.85] resize-none transition-all duration-300 outline-none"
+                          style={{
+                            borderColor: "#eaded8",
+                            background: "#ffffff",
+                          }}
+                        />
+
+                        {reviewErrors.message && (
+                          <span className="text-xs text-red-600 mt-2 block">
+                            {reviewErrors.message}
+                          </span>
+                        )}
+
+                      </div>
+
+                      {/* Submit */}
+                      <div className="flex justify-center pt-1">
+
+                        <button
+                          type="submit"
+                          disabled={reviewLoading}
+                          className="group relative overflow-hidden px-10 py-4 rounded-2xl text-sm font-semibold transition-all duration-300 hover:-translate-y-1"
+                          style={{
+                            background: reviewLoading
+                              ? "#d7c7c2"
+                              : "linear-gradient(135deg,#B51D0F 0%, #d55444 100%)",
+                            color: "#fff",
+                            boxShadow: "0 15px 35px rgba(181,29,15,0.22)",
+                          }}
+                        >
+
+                          <span className="relative z-10">
+                            {reviewLoading ? "Submitting..." : "Submit Review"}
+                          </span>
+
+                          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+
+                        </button>
+
+                      </div>
+
+                    </form>
+
+                  )}
+
+                </div>
+
+              </div>
+
+            </div>
+
+          )}
+
+        </div>
+
+      </section>
 
       {/* CTA Section */}
       <section className="w-full relative overflow-hidden" style={{ background: "#1a0a08" }}>
@@ -1099,9 +1189,9 @@ export default function Home() {
           <p className="text-white text-base max-w-xl mx-auto mb-8" style={{ opacity: 0.85, fontFamily: "'Montserrat', sans-serif" }}>
             Custom mugs, t-shirts, diaries & more — personalized with your photos and designs. Order today, delivered fast.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+          <div className="flex flex-row gap-2.5 sm:gap-3 items-center justify-center">
             <Link to="/products"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-200 no-underline"
+              className="flex-1 sm:flex-none text-center whitespace-nowrap px-5 sm:px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-200 no-underline"
               style={{ background: "#fff", color: "#B51D0F", fontFamily: "'Montserrat', sans-serif", boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}
               onMouseOver={e => e.currentTarget.style.background = "#fef2f2"}
               onMouseOut={e => e.currentTarget.style.background = "#fff"}
@@ -1109,7 +1199,7 @@ export default function Home() {
               Shop Now →
             </Link>
             <Link to="/contact"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-200 no-underline"
+              className="flex-1 sm:flex-none text-center whitespace-nowrap px-5 sm:px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-200 no-underline"
               style={{ border: "2px solid rgba(255,255,255,0.7)", color: "#fff", fontFamily: "'Montserrat', sans-serif", background: "transparent" }}
               onMouseOver={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
               onMouseOut={e => e.currentTarget.style.background = "transparent"}
