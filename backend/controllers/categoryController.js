@@ -1,4 +1,5 @@
 const Category = require("../models/Category");
+const { cleanupUnusedImages } = require("../config/imageCleanup");
 
 const toSlug = (str) => str.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
 
@@ -25,14 +26,14 @@ const getAllCategoriesAdmin = async (req, res) => {
 // @route POST /api/categories  (admin)
 const createCategory = async (req, res) => {
   try {
-    const { name, image, icon, sortOrder } = req.body;
+    const { name, image, description, icon, sortOrder } = req.body;
     if (!name) return res.status(400).json({ message: "Name is required" });
 
     const slug = toSlug(name);
     const exists = await Category.findOne({ slug });
     if (exists) return res.status(400).json({ message: "Category already exists" });
 
-    const cat = await Category.create({ name, slug, image, icon, sortOrder });
+    const cat = await Category.create({ name, slug, image, description, icon, sortOrder });
     res.status(201).json(cat);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -42,17 +43,26 @@ const createCategory = async (req, res) => {
 // @route PUT /api/categories/:id  (admin)
 const updateCategory = async (req, res) => {
   try {
-    const { name, image, icon, isActive, sortOrder } = req.body;
+    const { name, image, description, icon, isActive, sortOrder } = req.body;
     const cat = await Category.findById(req.params.id);
     if (!cat) return res.status(404).json({ message: "Category not found" });
 
+    // Snapshot before mutating — the replaced file is deleted after the save
+    const previousImage = cat.image;
+
     if (name) { cat.name = name; cat.slug = toSlug(name); }
     if (image !== undefined) cat.image = image;
+    if (description !== undefined) cat.description = description;
     if (icon !== undefined) cat.icon = icon;
     if (isActive !== undefined) cat.isActive = isActive;
     if (sortOrder !== undefined) cat.sortOrder = sortOrder;
 
     const updated = await cat.save();
+    // Old image is now unreferenced by this category — sweep it if nothing
+    // else points at it
+    if (previousImage && previousImage !== updated.image) {
+      await cleanupUnusedImages([previousImage]);
+    }
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -64,6 +74,7 @@ const deleteCategory = async (req, res) => {
   try {
     const cat = await Category.findByIdAndDelete(req.params.id);
     if (!cat) return res.status(404).json({ message: "Category not found" });
+    await cleanupUnusedImages([cat.image]);
     res.json({ message: "Deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });

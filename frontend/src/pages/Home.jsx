@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../features/products/productSlice";
 import { fetchActiveEvents } from "../features/events/eventSlice";
@@ -8,9 +8,8 @@ import ProductCard from "../components/ProductCard";
 import HeroSlider from "../components/HeroSlider";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Truck, Palette, Star, IndianRupee } from "lucide-react";
+import { Truck, Palette, Star, IndianRupee, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
-const CAT_COLORS = ["bg-orange-50","bg-green-50","bg-blue-50","bg-pink-50","bg-purple-50","bg-cyan-50","bg-yellow-50","bg-gray-50"];
 const REVIEW_EMPTY = { name: "", email: "", rating: 0, message: "" };
 const FEATURES = [
   { icon: <Truck size={28} className="text-red-700" />, title: "Fast Delivery", desc: "Quick delivery across Amravati & Maharashtra" },
@@ -58,10 +57,38 @@ export default function Home() {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
 
+  const catRailRef = useRef(null);
+  const [catArrows, setCatArrows] = useState({ left: false, right: false });
+  const [catOverflow, setCatOverflow] = useState(false);
+  const [showAllCats, setShowAllCats] = useState(false);
+
+  const syncCatArrows = () => {
+    const el = catRailRef.current;
+    if (!el) return;
+    const overflowing = el.scrollWidth > el.clientWidth + 8;
+    setCatOverflow(overflowing);
+    setCatArrows({
+      left: overflowing && el.scrollLeft > 8,
+      right: overflowing && el.scrollLeft + el.clientWidth < el.scrollWidth - 8,
+    });
+  };
+
+  const scrollCatRail = (dir) => {
+    const el = catRailRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.round(el.clientWidth * 0.8), behavior: "smooth" });
+  };
+
   useEffect(() => {
     dispatch(fetchProducts()); dispatch(fetchActiveEvents());
     dispatch(fetchCategories()); dispatch(fetchApprovedReviews());
   }, [dispatch]);
+
+  useEffect(() => {
+    syncCatArrows();
+    window.addEventListener("resize", syncCatArrows);
+    return () => window.removeEventListener("resize", syncCatArrows);
+  }, [categories, catOverflow]);
 
   const featured = products.slice(0, 8);
   const customize = products.filter((p) => p.requiresCustomImage).slice(0, 4);
@@ -109,30 +136,95 @@ export default function Home() {
         </div>
       )}
 
-      {/* Category Grid */}
-      <section className="max-w-7xl mx-auto px-4 md:px-12 py-10 md:py-12">
-        <div className="flex justify-between items-center mb-7">
-          <h2 className="text-2xl font-black text-gray-900 -tracking-wide">Shop by Category</h2>
-          <Link to="/products" className="text-red-700 font-bold text-sm">View All →</Link>
-        </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-          {categories.map((cat, i) => (
-            <Link key={cat._id} to={`/products?category=${cat.name}`}
-              className={`flex flex-col items-center gap-2 py-5 px-2 rounded-xl border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${CAT_COLORS[i % CAT_COLORS.length]}`}>
-              {cat.image ? (
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm"
+      {/* Category rail */}
+      {categories.length > 0 && (
+        <section className="max-w-[1800px] mx-auto px-4 md:px-8 lg:px-10 py-10 md:py-14">
+          <div className="flex items-center justify-between gap-4 mb-6 md:mb-8">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">
+              Shop by Category
+            </h2>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link to="/products" className="text-gray-500 hover:text-red-700 font-medium text-sm mr-1 transition-colors">
+                View all
+              </Link>
+              <button
+                type="button"
+                aria-label="Previous categories"
+                onClick={() => scrollCatRail(-1)}
+                disabled={!catArrows.left}
+                className="w-9 h-9 rounded-full bg-gray-900 text-white hidden md:flex items-center justify-center transition-all duration-300 hover:bg-red-700 disabled:opacity-0 disabled:pointer-events-none cursor-pointer"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next categories"
+                onClick={() => scrollCatRail(1)}
+                disabled={!catArrows.right}
+                className="w-9 h-9 rounded-full bg-gray-900 text-white hidden md:flex items-center justify-center transition-all duration-300 hover:bg-red-700 disabled:opacity-0 disabled:pointer-events-none cursor-pointer"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={catRailRef}
+            onScroll={syncCatArrows}
+            className={`grid grid-cols-3 gap-x-3 gap-y-5 md:flex md:gap-y-0 md:overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1 ${
+              catOverflow
+                ? "md:gap-5 lg:gap-8 md:justify-start md:snap-x md:snap-mandatory"
+                : "md:gap-6 md:justify-between"
+            }`}
+          >
+            {categories.map((cat, idx) => (
+              <Link
+                key={cat._id}
+                to={`/products?category=${cat.name}`}
+                className={`group md:snap-start no-underline w-full min-w-0 ${
+                  !showAllCats && idx >= 6 ? "hidden md:block" : ""
+                } ${
+                  catOverflow
+                    ? "md:shrink-0 md:w-[124px]"
+                    : "md:flex-1 md:min-w-[92px] md:max-w-[170px]"
+                }`}
+              >
+                <div className="aspect-square flex items-center justify-center overflow-hidden">
+                  {cat.image ? (
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      loading="lazy"
+                      className="max-w-full max-h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.07]"
+                    />
+                  ) : (
+                    <span className="text-4xl opacity-30">{cat.icon || "🏷️"}</span>
+                  )}
+                </div>
+                <p className="mt-3 text-center text-[13px] md:text-sm font-medium text-gray-800 group-hover:text-red-700 transition-colors duration-300 truncate">
+                  {cat.name}
+                </p>
+              </Link>
+            ))}
+          </div>
+
+          {categories.length > 6 && (
+            <div className="mt-6 flex justify-center md:hidden">
+              <button
+                type="button"
+                onClick={() => setShowAllCats((v) => !v)}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-gray-300 text-sm font-semibold text-gray-800 bg-white hover:border-red-700 hover:text-red-700 transition-colors duration-300 cursor-pointer"
+              >
+                {showAllCats ? "Show Less" : "View More Categories"}
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform duration-300 ${showAllCats ? "rotate-180" : ""}`}
                 />
-              ) : (
-                <span className="text-3xl">{cat.icon || "🏷️"}</span>
-              )}
-              <p className="text-gray-900 text-xs font-bold text-center">{cat.name}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
+              </button>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Events Showcase — visible on website */}
       {events.length > 0 && (
@@ -204,15 +296,18 @@ export default function Home() {
       )}
 
       {/* Featured Products */}
-      <section className="bg-gray-50 px-4 md:px-12 py-10 md:py-12">
+      <section className="bg-[#f7f6f3] px-4 md:px-12 py-12 md:py-16">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-7">
-            <h2 className="text-2xl font-black text-gray-900 -tracking-wide">Featured Products</h2>
-            <Link to="/products" className="text-red-700 font-bold text-sm">View All →</Link>
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h2 className="font-display text-3xl md:text-[40px] font-bold text-gray-900 tracking-tight leading-none">Featured Products</h2>
+              <span className="block w-12 h-[3px] bg-red-700 rounded-full mt-3" />
+            </div>
+            <Link to="/products" className="text-red-700 font-semibold text-sm whitespace-nowrap pt-2">View All →</Link>
           </div>
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => <div key={i} className="h-72 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-xl animate-pulse" />)}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-5">
+              {[...Array(4)].map((_, i) => <div key={i} className="aspect-[4/6.2] bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-2xl animate-pulse" />)}
             </div>
           ) : featured.length === 0 ? (
             <p className="text-gray-400 text-center py-10">No products yet. Check back soon!</p>
@@ -227,11 +322,14 @@ export default function Home() {
       {/* Design Your Own */}
       {customize.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 md:px-12 py-10 md:py-12">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-2xl font-black text-gray-900 -tracking-wide">🎨 Design Your Own</h2>
-            <Link to="/products?type=customize" className="text-red-700 font-bold text-sm">View All →</Link>
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <h2 className="font-display text-3xl md:text-[40px] font-bold text-gray-900 tracking-tight leading-none">Design Your Own</h2>
+              <span className="block w-12 h-[3px] bg-red-700 rounded-full mt-3" />
+            </div>
+            <Link to="/products?type=customize" className="text-red-700 font-semibold text-sm whitespace-nowrap pt-2">View All →</Link>
           </div>
-          <p className="text-gray-500 text-sm mb-6">Upload your photo and get it printed on premium products</p>
+          <p className="text-gray-500 text-sm mb-7 mt-4">Upload your photo and get it printed on premium products</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-5">
             {customize.map((p) => <ProductCard key={p._id} product={p} badge="Customize" />)}
           </div>

@@ -10,6 +10,7 @@ const categorySchema = new mongoose.Schema({
   name:          { type: String, required: true, unique: true, trim: true },
   slug:          { type: String, required: true, unique: true },
   image:         { type: String, default: "" },
+  description:   { type: String, default: "", trim: true },
   icon:          { type: String, default: "🏷️" },
   isActive:      { type: Boolean, default: true },
   sortOrder:     { type: Number, default: 0 },

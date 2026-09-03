@@ -1,4 +1,5 @@
 const Event = require("../models/Event");
+const { cleanupUnusedImages } = require("../config/imageCleanup");
 
 // @desc    Get all active events (for public frontend display)
 // @route   GET /api/events
@@ -58,11 +59,19 @@ const createEvent = async (req, res) => {
 // @access  Admin
 const updateEvent = async (req, res) => {
   try {
+    // Read the current image first — findByIdAndUpdate with new:true returns
+    // the updated document, so the replaced URL is otherwise lost
+    const before = await Event.findById(req.params.id).select("image").lean();
+
     const event = await Event.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
     if (!event) return res.status(404).json({ message: "Event not found" });
+
+    if (before?.image && before.image !== event.image) {
+      await cleanupUnusedImages([before.image]);
+    }
     res.json(event);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -76,6 +85,7 @@ const deleteEvent = async (req, res) => {
   try {
     const event = await Event.findByIdAndDelete(req.params.id);
     if (!event) return res.status(404).json({ message: "Event not found" });
+    await cleanupUnusedImages([event.image]);
     res.json({ message: "Event deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });

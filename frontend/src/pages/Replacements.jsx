@@ -130,7 +130,7 @@ export default function Replacements() {
       try {
         const fd = new FormData();
         fd.append("image", images[i].file);
-        const { data } = await api.post("/upload", fd);
+        const { data } = await api.post("/upload?folder=replacements", fd);
         setImages((prev) => { const n = [...prev]; n[i] = { ...n[i], url: data.imageUrl, uploading: false }; return n; });
         results.push(data.imageUrl);
       } catch {
