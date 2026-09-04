@@ -8,8 +8,10 @@ import { toast } from "react-toastify";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, ShieldCheck,
   CalendarDays, Tag, Mail, Star, RefreshCw, Download, Bell,
-  Home, LogOut, Menu, X, ChevronRight, Zap, CreditCard,
+  Home, LogOut, Menu, X, ChevronRight, CreditCard,
 } from "lucide-react";
+import logoMark from "../assets/logo-mark.png";
+import logoFull from "../assets/logo.png";
 
 const NAV_SECTIONS = [
   {
@@ -78,48 +80,43 @@ export default function AdminLayout({ children }) {
           transition: "width 0.25s cubic-bezier(0.4,0,0.2,1)",
         }}
       >
-        {/* Brand row */}
-        <div
-          className={`flex items-center gap-3 h-[64px] border-b border-slate-100 shrink-0 ${
-            sidebarOpen ? "px-4" : "px-0 justify-center"
-          }`}
-        >
+        {/* Brand row — the real lockup from the website (mark, wordmark and the
+            tagline under it), not a stand-in built from the mark plus typed
+            text. Centred and kept modest: the sidebar header should read as a
+            quiet mark, not as the loudest thing on the screen. The close button
+            sits absolutely on the right so it cannot pull the logo off centre. */}
+        <div className="relative flex items-center justify-center px-4 border-b border-slate-100 shrink-0 h-[64px]">
           {sidebarOpen ? (
-            <div className="w-8 h-8 shrink-0 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <Zap className="text-white" size={16} />
-            </div>
+            <img
+              src={logoFull}
+              alt="Cloud Graphics — Visual Solution For Your Business"
+              className="h-[38px] w-auto shrink-0"
+            />
           ) : (
             <button
               onClick={() => setSidebarOpen(true)}
               title="Open sidebar"
               aria-label="Open sidebar"
-              className="group w-9 h-9 shrink-0 rounded-lg bg-indigo-600 hover:bg-indigo-700
+              className="group w-9 h-9 shrink-0 rounded-lg bg-brand-600 hover:bg-brand-700
                          flex items-center justify-center transition-colors duration-150"
             >
-              <Zap className="text-white group-hover:hidden" size={16} />
+              <img src={logoMark} alt="" aria-hidden="true" className="w-6 h-auto group-hover:hidden brightness-0 invert" />
               <Menu className="text-white hidden group-hover:block" size={16} />
             </button>
           )}
           {sidebarOpen && (
-            <>
-              <div className="flex-1 min-w-0">
-                <p className="text-slate-900 font-bold text-sm leading-tight tracking-tight truncate">
-                  Cloud Graphics
-                </p>
-                <p className="text-indigo-500 text-[10px] font-semibold truncate tracking-widest uppercase">
-                  {user?.adminRole === "superAdmin" ? "Admin Panel" : "Sub Admin Panel"}
-                </p>
-              </div>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="ml-auto w-7 h-7 shrink-0 flex items-center justify-center rounded-lg
-                           text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all duration-150"
-                title="Close sidebar"
-                aria-label="Close sidebar"
-              >
-                <X size={15} />
-              </button>
-            </>
+            /* The lockup carries the name and tagline on its own — text typed
+               beside it only crowds the mark. Which panel the admin is in is
+               already stated in the topbar. */
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg
+                         text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all duration-150"
+              title="Close sidebar"
+              aria-label="Close sidebar"
+            >
+              <X size={15} />
+            </button>
           )}
         </div>
 
@@ -145,7 +142,7 @@ export default function AdminLayout({ children }) {
                      transition-all duration-150 whitespace-nowrap select-none relative
                      ${!sidebarOpen ? "justify-center" : ""}
                      ${isActive
-                       ? "bg-indigo-50 text-indigo-700"
+                       ? "bg-brand-50 text-brand-700"
                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                      }`
                   }
@@ -153,12 +150,12 @@ export default function AdminLayout({ children }) {
                   {({ isActive }) => (
                     <>
                       {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-indigo-600 rounded-r-full" />
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-brand-600 rounded-r-full" />
                       )}
                       <span className="shrink-0 relative">
                         <Icon size={16} strokeWidth={isActive ? 2.5 : 1.8} />
                         {badge && pendingCount > 0 && !sidebarOpen && (
-                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white
+                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-brand-500 text-white
                                            text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                             {pendingCount > 9 ? "9+" : pendingCount}
                           </span>
@@ -166,13 +163,13 @@ export default function AdminLayout({ children }) {
                       </span>
                       {sidebarOpen && <span className="flex-1">{label}</span>}
                       {sidebarOpen && badge && pendingCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full
+                        <span className="ml-auto bg-brand-500 text-white text-[10px] font-bold rounded-full
                                          px-1.5 py-0.5 min-w-[20px] text-center leading-none">
                           {pendingCount > 99 ? "99+" : pendingCount}
                         </span>
                       )}
                       {sidebarOpen && !badge && isActive && (
-                        <ChevronRight size={13} className="ml-auto text-indigo-400" />
+                        <ChevronRight size={13} className="ml-auto text-brand-400" />
                       )}
                     </>
                   )}
@@ -198,7 +195,7 @@ export default function AdminLayout({ children }) {
             onClick={handleLogout}
             title={!sidebarOpen ? "Logout" : undefined}
             className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px]
-                        text-red-500 hover:text-red-700 hover:bg-red-50
+                        text-brand-500 hover:text-brand-700 hover:bg-brand-50
                         transition-all whitespace-nowrap w-full
                         ${!sidebarOpen ? "justify-center" : ""}`}
           >
@@ -234,7 +231,7 @@ export default function AdminLayout({ children }) {
             >
               <Bell size={18} />
               {pendingCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px]
+                <span className="absolute top-1 right-1 w-4 h-4 bg-brand-500 text-white text-[9px]
                                  font-bold rounded-full flex items-center justify-center leading-none">
                   {pendingCount > 9 ? "9+" : pendingCount}
                 </span>
@@ -247,14 +244,14 @@ export default function AdminLayout({ children }) {
               <p className="text-slate-800 text-sm font-semibold leading-tight">{user?.name}</p>
               <p className="text-slate-400 text-[11px]">{user?.email}</p>
             </div>
-            <div className="w-9 h-9 rounded-xl bg-indigo-600
+            <div className="w-9 h-9 rounded-xl bg-brand-600
                             text-white flex items-center justify-center font-bold text-sm">
               {initials}
             </div>
             <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide ${
               user?.adminRole === "superAdmin"
                 ? "bg-amber-100 text-amber-700"
-                : "bg-indigo-100 text-indigo-700"
+                : "bg-brand-100 text-brand-700"
             }`}>
               {user?.adminRole === "superAdmin" ? "SUPER" : "ADMIN"}
             </span>

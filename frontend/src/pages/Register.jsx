@@ -3,14 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { registerUser, clearError } from "../features/auth/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import logoImg from "../assets/Cloud Graphics Logo New White.png";
-
-const PERKS = [
-  { icon: "📦", text: "Track orders in real-time" },
-  { icon: "🎨", text: "Save & reuse custom designs" },
-  { icon: "🏷️", text: "Exclusive member discounts" },
-  { icon: "🚀", text: "Priority delivery on orders" },
-];
+import logoImg from "../assets/logo.png";
 
 const EyeBtn = ({ show, onToggle }) => (
   <button type="button" onClick={onToggle}
@@ -50,218 +43,123 @@ export default function Register() {
   };
 
   const inp = (extra = "") =>
-    `w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:border-red-600 focus:bg-white focus:ring-2 focus:ring-red-100 transition-all ${extra}`;
+    `w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-100 transition-all ${extra}`;
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)]">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 px-5 py-10 sm:px-8">
+      <div className="w-full max-w-[400px] bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
 
-      {/* ════════════════════════════════
-          LEFT PANEL — desktop only
-      ════════════════════════════════ */}
-      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden flex-shrink-0">
+        {/* Logo — the full stacked lockup, wordmark and all */}
+        <Link to="/" className="flex justify-center mb-7">
+          <img src={logoImg} alt="Cloud Graphics — Visual Solution For Your Business" className="h-[84px] w-auto block" />
+        </Link>
 
-        {/* Background — colorful gift wrapping / celebration */}
-        <img
-          src="https://images.pexels.com/photos/5632399/pexels-photo-5632399.jpeg?auto=compress&cs=tinysrgb&w=1260"
-          alt="Gift printing"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-        {/* Fallback solid bg in case image fails */}
-        <div className="absolute inset-0 bg-red-950" style={{ zIndex: -1 }} />
-
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
-        <div className="absolute inset-0 bg-gradient-to-r from-red-950/55 to-transparent" />
-
-        {/* ── Top bar ── */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-10 pt-9 z-10">
-          <div className="flex items-center gap-3">
-            <img src={logoImg} alt="Cloud Graphics" className="h-10 w-auto object-contain drop-shadow-lg" />
-          </div>
-          <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 py-1">
-            <span className="text-yellow-400 text-xs">🎁</span>
-            <span className="text-white/80 text-[10px] font-semibold">Free Account</span>
-          </div>
+        {/* Heading */}
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-black text-gray-900 leading-tight">Create account ✨</h1>
+          <p className="text-gray-400 text-sm mt-1">Takes less than a minute</p>
         </div>
 
-        {/* ── Floating product cards ── */}
-        <div className="absolute top-24 right-8 z-10">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/25 rounded-2xl p-2 shadow-2xl -rotate-2 hover:rotate-0 transition-transform duration-500">
-            <img
-              src="https://images.pexels.com/photos/5632399/pexels-photo-5632399.jpeg?auto=compress&cs=tinysrgb&w=200"
-              alt="Custom gift"
-              className="w-20 h-20 rounded-xl object-cover"
-            />
-            <p className="text-white text-[10px] font-bold text-center mt-1.5 tracking-wide">Gift Box</p>
-          </div>
-        </div>
-        <div className="absolute top-56 right-4 z-10">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/25 rounded-2xl p-2 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
-            <img
-              src="https://images.pexels.com/photos/1566308/pexels-photo-1566308.jpeg?auto=compress&cs=tinysrgb&w=200"
-              alt="Custom mug"
-              className="w-14 h-14 rounded-xl object-cover"
-            />
-            <p className="text-white text-[10px] font-bold text-center mt-1.5 tracking-wide">Mug</p>
-          </div>
-        </div>
+        <form onSubmit={handleSubmit} noValidate className="space-y-3.5">
 
-        {/* ── Bottom content ── */}
-          <div className="absolute bottom-0 left-0 right-0 px-10 pb-10 z-10 -translate-y-24">
-          <h2 className="text-white text-4xl font-black leading-[1.15] mb-3 drop-shadow-lg">
-            Join Cloud<br />
-            <span className="text-red-300">Graphics</span><br />
-            — It's Free!
-          </h2>
-          <p className="text-white/65 text-sm leading-relaxed mb-7 max-w-sm">
-            Create your account and start ordering personalized gifts from Amravati's #1 print shop.
-          </p>
-
-          {/* Perks */}
-          <div className="grid grid-cols-2 gap-2">
-            {PERKS.map(({ icon, text }) => (
-              <div key={text} className="flex items-center gap-2 bg-white/8 backdrop-blur-md border border-white/15 rounded-xl px-3 py-2">
-                <span className="text-base">{icon}</span>
-                <span className="text-white/80 text-xs font-medium leading-tight">{text}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Stats */}
-          <div className="flex items-center gap-6 mt-6 pt-5 border-t border-white/15">
-            {[["500+", "Customers"], ["50+", "Products"], ["5.0★", "Rating"]].map(([val, lbl]) => (
-              <div key={lbl}>
-                <p className="text-white font-black text-xl leading-none">{val}</p>
-                <p className="text-white/45 text-[10px] mt-0.5 tracking-wide">{lbl}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ════════════════════════════════
-          RIGHT PANEL — form (all screens)
-      ════════════════════════════════ */}
-<div className="flex-1 flex items-center justify-center bg-white px-5 py-8 sm:px-8 overflow-y-auto -translate-y-6">       
-   <div className="w-full max-w-[360px]">
-
-          {/* Logo — mobile only (desktop logo is in left panel top bar) */}
-          <div className="flex lg:hidden justify-center mb-7">
-            <div className="bg-red-800 rounded-2xl px-5 py-3 shadow-md">
-              <img src={logoImg} alt="Cloud Graphics" className="h-10 w-auto object-contain" />
+          {/* Full Name */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Full Name</label>
+            <div className="relative">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+              <input type="text" name="name" placeholder="Your full name" required
+                value={form.name} onChange={handleChange} className={inp()} />
             </div>
           </div>
 
-          {/* Heading */}
-          <div className="mb-6">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-100 px-3 py-1 rounded-full mb-4">
-              🎁 Free — no credit card needed
-            </span>
-            <h1 className="text-2xl font-black text-gray-900 leading-tight">Create account ✨</h1>
-            <p className="text-gray-400 text-sm mt-1">Takes less than a minute</p>
+          {/* Email */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Email Address</label>
+            <div className="relative">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+              <input type="email" name="email" placeholder="you@example.com" required
+                value={form.email} onChange={handleChange} className={inp()} />
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate className="space-y-3.5">
-
-            {/* Full Name */}
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Full Name</label>
-              <div className="relative">
-                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-                <input type="text" name="name" placeholder="Your full name" required
-                  value={form.name} onChange={handleChange} className={inp()} />
-              </div>
+          {/* Phone */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
+              Phone <span className="normal-case font-normal text-gray-400">(optional)</span>
+            </label>
+            <div className="relative">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+              </svg>
+              <input type="tel" name="phone" placeholder="+91 98765 43210"
+                value={form.phone} onChange={handleChange} className={inp()} />
             </div>
+          </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Email Address</label>
-              <div className="relative">
-                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                </svg>
-                <input type="email" name="email" placeholder="you@example.com" required
-                  value={form.email} onChange={handleChange} className={inp()} />
-              </div>
+          {/* Password */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Password</label>
+            <div className="relative">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              <input type={showPass ? "text" : "password"} name="password"
+                placeholder="Min 6 characters" required
+                value={form.password} onChange={handleChange} className={inp("pr-11")} />
+              <EyeBtn show={showPass} onToggle={() => setShowPass(!showPass)} />
             </div>
+          </div>
 
-            {/* Phone */}
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
-                Phone <span className="normal-case font-normal text-gray-400">(optional)</span>
-              </label>
-              <div className="relative">
-                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                </svg>
-                <input type="tel" name="phone" placeholder="+91 98765 43210"
-                  value={form.phone} onChange={handleChange} className={inp()} />
-              </div>
+          {/* Confirm Password */}
+          <div>
+            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Confirm Password</label>
+            <div className="relative">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <input
+                type={showConfirm ? "text" : "password"}
+                placeholder="Re-enter password" required
+                value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)}
+                className={inp(`pr-11 ${confirmPass && form.password !== confirmPass ? "!border-brand-400 !bg-brand-50" : ""}`)}
+              />
+              <EyeBtn show={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />
             </div>
+            {confirmPass && form.password !== confirmPass && (
+              <p className="text-brand-500 text-xs mt-1.5 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
+                Passwords do not match
+              </p>
+            )}
+          </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Password</label>
-              <div className="relative">
-                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-                <input type={showPass ? "text" : "password"} name="password"
-                  placeholder="Min 6 characters" required
-                  value={form.password} onChange={handleChange} className={inp("pr-11")} />
-                <EyeBtn show={showPass} onToggle={() => setShowPass(!showPass)} />
-              </div>
-            </div>
+          {/* Submit */}
+          <button
+            type="submit" disabled={loading}
+            className="w-full py-3.5 rounded-xl bg-brand-800 hover:bg-brand-900 active:scale-[0.98] text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-brand-200 !mt-5"
+          >
+            {loading
+              ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Creating account...</>
+              : "Create Account →"
+            }
+          </button>
+        </form>
 
-            {/* Confirm Password */}
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Confirm Password</label>
-              <div className="relative">
-                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <input
-                  type={showConfirm ? "text" : "password"}
-                  placeholder="Re-enter password" required
-                  value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)}
-                  className={inp(`pr-11 ${confirmPass && form.password !== confirmPass ? "!border-red-400 !bg-red-50" : ""}`)}
-                />
-                <EyeBtn show={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />
-              </div>
-              {confirmPass && form.password !== confirmPass && (
-                <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
-                  Passwords do not match
-                </p>
-              )}
-            </div>
+        {/* Terms */}
+        <p className="text-gray-400 text-xs text-center mt-3 leading-relaxed">
+          By registering you agree to our{" "}
+          <Link to="/terms" className="text-brand-700 hover:underline">Terms</Link> &{" "}
+          <Link to="/privacy" className="text-brand-700 hover:underline">Privacy Policy</Link>
+        </p>
 
-            {/* Submit */}
-            <button
-              type="submit" disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-red-800 hover:bg-red-900 active:scale-[0.98] text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-200 !mt-5"
-            >
-              {loading
-                ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Creating account...</>
-                : "Create Account →"
-              }
-            </button>
-          </form>
-
-          {/* Terms */}
-          <p className="text-gray-400 text-xs text-center mt-3 leading-relaxed">
-            By registering you agree to our{" "}
-            <Link to="/terms" className="text-red-700 hover:underline">Terms</Link> &{" "}
-            <Link to="/privacy" className="text-red-700 hover:underline">Privacy Policy</Link>
-          </p>
-
-          <p className="text-center text-gray-500 text-sm mt-4">
-            Already have an account?{" "}
-            <Link to="/login" className="text-red-800 font-bold hover:underline">Sign in</Link>
-          </p>
-        </div>
+        <p className="text-center text-gray-500 text-sm mt-4">
+          Already have an account?{" "}
+          <Link to="/login" className="text-brand-800 font-bold hover:underline">Sign in</Link>
+        </p>
       </div>
     </div>
   );

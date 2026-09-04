@@ -1,12 +1,16 @@
+import Reveal, { RevealGroup } from "../components/Reveal";
+
 export default function ReturnPolicy() {
   return (
     <div className="bg-white min-h-screen py-12 px-6 md:px-16 lg:px-24">
       <div className="max-w-6xl mx-auto">
 
-        <h1 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">Return Policy</h1>
-        <p className="text-sm text-gray-400 mb-8">Last updated: June 2025</p>
+        <Reveal>
+          <h1 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">Return Policy</h1>
+          <p className="text-sm text-gray-400 mb-8">Last updated: June 2025</p>
+        </Reveal>
 
-        <div className="space-y-8 text-gray-600 text-sm leading-relaxed">
+        <RevealGroup stagger={70} className="space-y-8 text-gray-600 text-sm leading-relaxed">
 
           <section>
             <h2 className="text-base font-bold text-gray-800 mb-2">1. Custom Products</h2>
@@ -40,7 +44,7 @@ export default function ReturnPolicy() {
             <p>To initiate a return or replacement:</p>
             <ol className="list-decimal list-inside mt-2 space-y-1">
               <li>Contact us within <span className="font-semibold text-gray-700">48 hours</span> of delivery</li>
-              <li>Email us at <span className="text-[#B51D0F] font-semibold">info@cloudgraphics.in</span> with your order number</li>
+              <li>Email us at <span className="text-[#0672a7] font-semibold">info@cloudgraphics.in</span> with your order number</li>
               <li>Attach clear photos of the defective/damaged product</li>
               <li>Our team will review and respond within 24–48 hours</li>
             </ol>
@@ -57,15 +61,15 @@ export default function ReturnPolicy() {
 
           <section>
             <h2 className="text-base font-bold text-gray-800 mb-2">6. Cancellation Policy</h2>
-            <p>Orders can be cancelled within <span className="font-semibold text-gray-700">2 hours</span> of placement, provided production has not started. Once printing begins, cancellation is not possible. Contact us immediately at <span className="text-[#B51D0F] font-semibold">info@cloudgraphics.in</span> to request cancellation.</p>
+            <p>Orders can be cancelled within <span className="font-semibold text-gray-700">2 hours</span> of placement, provided production has not started. Once printing begins, cancellation is not possible. Contact us immediately at <span className="text-[#0672a7] font-semibold">info@cloudgraphics.in</span> to request cancellation.</p>
           </section>
 
           <section>
             <h2 className="text-base font-bold text-gray-800 mb-2">7. Contact Us</h2>
-            <p>For return/refund queries, reach us at <span className="text-[#B51D0F] font-semibold">info@cloudgraphics.in</span> or call <span className="font-semibold">+91 93076 41746</span>. Business hours: Mon–Sat, 10 AM – 7 PM.</p>
+            <p>For return/refund queries, reach us at <span className="text-[#0672a7] font-semibold">info@cloudgraphics.in</span> or call <span className="font-semibold">+91 93076 41746</span>. Business hours: Mon–Sat, 10 AM – 7 PM.</p>
           </section>
 
-        </div>
+        </RevealGroup>
       </div>
     </div>
   );

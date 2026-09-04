@@ -203,7 +203,7 @@ const sendInquiryToAdmin = async ({ name, email, phone, subject, message }) => {
       <div style="margin-top:16px;">
         <p style="font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Message</p>
         <div style="background:#f7f7f7;border-left:4px solid #c41230;border-radius:6px;padding:14px 16px;">
-          <p style="color:#333;font-size:0.9rem;line-height:1.7;margin:0;">${message.replace(/\n/g, "<br/>")}</p>
+          <p style="color:#333;font-size:0.9rem;line-height:1.7;margin:0;">${message ? message.replace(/\n/g, "<br/>") : '<em style="color:#999;">No message provided.</em>'}</p>
         </div>
       </div>
 

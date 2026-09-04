@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import logoImg from "../assets/Cloud Graphics Logo New White.png";
+import logoImg from "../assets/logo.png";
 
 /* ── Google Fonts ── */
 const fontLink = document.createElement("link");
@@ -18,6 +18,13 @@ const PROMO_CATEGORIES = ["Sale", "New Arrivals"];
 const PRODUCT_CATEGORIES = ["Cup", "T-Shirt", "Diary", "Pen", "ID Card", "Frame", "Keychain", "Banner"].sort((a, b) => a.localeCompare(b));
 const CATEGORIES = [...PROMO_CATEGORIES, ...PRODUCT_CATEGORIES];
 
+/* Standalone pages pinned to the end of the desktop category bar */
+const PAGE_LINKS = [
+  { label: "About", to: "/about" },
+  { label: "Services", to: "/services" },
+  { label: "Contact Us", to: "/contact" },
+];
+
 const OFFERS = [
   "Get EXTRA 10% OFF On Orders Above ₹1299 | Code: MEGA10",
   "Get EXTRA 15% OFF On Orders Above ₹1699 | Code: MEGA15",
@@ -32,7 +39,7 @@ const IconSearch = () => (
   </svg>
 );
 const IconHeart = ({ filled }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? "#B51D0F" : "none"} stroke={filled ? "#B51D0F" : "currentColor"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? "#0672a7" : "none"} stroke={filled ? "#0672a7" : "currentColor"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
   </svg>
 );
@@ -105,6 +112,12 @@ const IconGrid = () => (
     <rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
   </svg>
 );
+const IconSparkle = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/>
+    <path d="M18 15.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/>
+  </svg>
+);
 const IconMailSm = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,7 12,13 2,7"/>
@@ -128,7 +141,7 @@ const styles = `
     bottom: 0;
     left: 0; right: 0;
     height: 2px;
-    background: #B51D0F;
+    background: #0672a7;
     transform: scaleX(0);
     transform-origin: center;
     transition: transform 0.2s ease;
@@ -154,7 +167,7 @@ const styles = `
     padding: 0;
     text-decoration: none;
   }
-  .icon-btn:hover { background: #fef2f2; color: #B51D0F; }
+  .icon-btn:hover { background: #eff8fd; color: #0672a7; }
 
   .badge {
     position: absolute;
@@ -162,7 +175,7 @@ const styles = `
     right: 2px;
     min-width: 17px;
     height: 17px;
-    background: #B51D0F;
+    background: #0672a7;
     color: #fff;
     border-radius: 50%;
     font-size: 9px;
@@ -174,6 +187,11 @@ const styles = `
     padding: 0 2px;
     pointer-events: none;
   }
+
+  /* The logo is the stacked lockup — mark over wordmark — so the row has to be
+     tall enough for "CLOUD GRAPHICS" underneath the cloud to still read. */
+  .nav-row { height: 62px; }
+  .nav-logo { height: 50px; }
 
   .drawer-overlay {
     position: fixed;
@@ -290,7 +308,7 @@ export default function Navbar() {
       >
 
         {/* ── Offer Ticker Bar ── */}
-        <div style={{ background: "#B51D0F", padding: "7px 0", overflow: "hidden" }}>
+        <div style={{ background: "#0672a7", padding: "7px 0", overflow: "hidden" }}>
           <div style={{
             display: "flex",
             alignItems: "center",
@@ -322,13 +340,13 @@ export default function Navbar() {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "0 16px",
-            height: "56px",
             maxWidth: "1280px",
             margin: "0 auto",
             width: "100%",
             boxSizing: "border-box",
             position: "relative",
           }}
+          className="nav-row"
         >
 
           {/* LEFT — Hamburger (mobile) + Search (desktop) */}
@@ -365,7 +383,7 @@ export default function Navbar() {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={(e) => { e.target.style.borderColor = "#B51D0F"; e.target.style.width = "230px"; }}
+                onFocus={(e) => { e.target.style.borderColor = "#0672a7"; e.target.style.width = "230px"; }}
                 onBlur={(e) => { e.target.style.borderColor = "#e5e7eb"; e.target.style.width = "170px"; }}
               />
               <button
@@ -378,15 +396,15 @@ export default function Navbar() {
                   width: 34,
                   height: 34,
                   borderRadius: "50%",
-                  background: "#B51D0F",
+                  background: "#0672a7",
                   color: "#fff",
                   border: "none",
                   cursor: "pointer",
                   flexShrink: 0,
                   transition: "background 0.15s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#8f1709"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#B51D0F"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#0a5b82"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#0672a7"; }}
               >
                 <IconSearch />
               </button>
@@ -407,11 +425,7 @@ export default function Navbar() {
               transform: "translateX(-50%)",
             }}
           >
-            <img src={logoImg} alt="Cloud Graphics" style={{ height: 46, width: "auto", display: "block" }} />
-            <div>
-              <span style={{ display: "block", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "18px", letterSpacing: "0.12em", color: "#B51D0F", lineHeight: 1 }}>CLOUD GRAPHICS</span>
-              <span style={{ display: "block", fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: "8px", letterSpacing: "0.5em", color: "#555", lineHeight: 1.6 }}>AMRAVATI</span>
-            </div>
+            <img className="nav-logo" src={logoImg} alt="Cloud Graphics — Visual Solution For Your Business" style={{ width: "auto", display: "block" }} />
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: "2px", flex: 1, justifyContent: "flex-end" }}>
 
@@ -435,7 +449,7 @@ export default function Navbar() {
             </Link>
 
             {/* Cart */}
-            <Link to="/cart" className="icon-btn desktop-icon" aria-label="Cart">
+            <Link to="/cart" className="icon-btn desktop-icon" aria-label="Cart" data-cart-target>
               <IconCart />
               {cartCount > 0 && <span className="badge">{cartCount}</span>}
             </Link>
@@ -451,8 +465,8 @@ export default function Navbar() {
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
-                    background: "#fef2f2",
-                    border: "1px solid #fca5a5",
+                    background: "#eff8fd",
+                    border: "1px solid #b0def4",
                     borderRadius: "24px",
                     padding: "4px 10px 4px 4px",
                     cursor: "pointer",
@@ -462,7 +476,7 @@ export default function Navbar() {
                     style={{
                       width: 28,
                       height: 28,
-                      background: "#B51D0F",
+                      background: "#0672a7",
                       borderRadius: "50%",
                       color: "#fff",
                       display: "flex",
@@ -532,7 +546,7 @@ export default function Navbar() {
                           fontFamily: "'Montserrat', sans-serif",
                           transition: "background 0.15s",
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#B51D0F"; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "#eff8fd"; e.currentTarget.style.color = "#0672a7"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "#333"; }}
                       >
                         {item.icon} {item.label}
@@ -550,13 +564,13 @@ export default function Navbar() {
                           padding: "10px 16px",
                           border: "none",
                           background: "none",
-                          color: "#B51D0F",
+                          color: "#0672a7",
                           fontSize: 13,
                           fontWeight: 600,
                           cursor: "pointer",
                           fontFamily: "'Montserrat', sans-serif",
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "#eff8fd"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = ""; }}
                       >
                         <IconLogout /> Logout
@@ -579,7 +593,7 @@ export default function Navbar() {
                     fontFamily: "'Montserrat', sans-serif",
                     transition: "color 0.15s",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "#B51D0F"; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "#0672a7"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = "#333"; }}
                 >
                   Sign In
@@ -593,7 +607,7 @@ export default function Navbar() {
                     color: "#fff",
                     padding: "6px 14px",
                     borderRadius: 20,
-                    background: "#B51D0F",
+                    background: "#0672a7",
                     fontFamily: "'Montserrat', sans-serif",
                     whiteSpace: "nowrap",
                   }}
@@ -616,10 +630,12 @@ export default function Navbar() {
             padding: "0 16px",
           }}
         >
-          {[...CATEGORIES, "Contact Us"].map((cat, i) => {
-            const isLast = i === CATEGORIES.length;
-            const to = isLast ? "/contact" : `/products${catQuery(cat)}`;
-            const active = isLast ? location.pathname === "/contact" : catActive(cat);
+          {[...CATEGORIES, ...PAGE_LINKS.map((p) => p.label)].map((cat, i) => {
+            /* Everything past the categories is a standalone page, not a filtered
+               product listing — About / Services / Contact Us live here. */
+            const page = PAGE_LINKS[i - CATEGORIES.length];
+            const to = page ? page.to : `/products${catQuery(cat)}`;
+            const active = page ? location.pathname === page.to : catActive(cat);
             return (
               <Link
                 key={cat}
@@ -631,13 +647,13 @@ export default function Navbar() {
                   fontSize: "12.5px",
                   fontWeight: 600,
                   letterSpacing: "0.5px",
-                  color: active ? "#B51D0F" : "#787A7C",
+                  color: active ? "#0672a7" : "#787A7C",
                   whiteSpace: "nowrap",
                   fontFamily: "'Montserrat', sans-serif",
                   textTransform: "uppercase",
                   transition: "color 0.15s",
                 }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "#B51D0F"; }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "#0672a7"; }}
                 onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = "#787A7C"; }}
               >
                 {cat.toUpperCase()}
@@ -650,6 +666,8 @@ export default function Navbar() {
       {/* ── Responsive styles ── */}
       <style>{`
         @media (min-width: 1024px) {
+          .nav-row { height: 76px; }
+          .nav-logo { height: 62px; }
           .desktop-search { display: flex !important; }
           .desktop-categories { display: flex !important; }
           .desktop-user { display: block !important; }
@@ -692,11 +710,7 @@ export default function Navbar() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src={logoImg} alt="Cloud Graphics" style={{ height: 36, width: "auto" }} />
-            <div>
-              <p style={{ margin: 0, fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 15, letterSpacing: "0.12em", color: "#B51D0F", lineHeight: 1 }}>CLOUD GRAPHICS</p>
-              <p style={{ margin: 0, fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 7, letterSpacing: "0.5em", color: "#555" }}>AMRAVATI</p>
-            </div>
+            <img src={logoImg} alt="Cloud Graphics — Visual Solution For Your Business" style={{ height: 52, width: "auto" }} />
           </div>
           <button
             onClick={() => setMobileDrawer(false)}
@@ -727,13 +741,13 @@ export default function Navbar() {
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={(e) => { e.target.style.borderColor = "#B51D0F"; }}
+            onFocus={(e) => { e.target.style.borderColor = "#0672a7"; }}
             onBlur={(e) => { e.target.style.borderColor = "#e5e7eb"; }}
           />
           <button
             type="submit"
             style={{
-              background: "#B51D0F",
+              background: "#0672a7",
               color: "#fff",
               border: "none",
               borderRadius: 12,
@@ -767,6 +781,7 @@ export default function Navbar() {
             { to: "/", icon: <IconHome />, label: "Home" },
             { to: "/products", icon: <IconGrid />, label: "Products" },
             { to: "/about", icon: <IconInfo />, label: "About" },
+            { to: "/services", icon: <IconSparkle />, label: "Services" },
             { to: "/contact", icon: <IconMailSm />, label: "Contact" },
           ].map((item) => {
             const active = item.to === "/"
@@ -784,12 +799,12 @@ export default function Navbar() {
                   textDecoration: "none",
                   fontSize: 13,
                   fontWeight: 600,
-                  color: active ? "#B51D0F" : "#333",
-                  background: active ? "#fef2f2" : "transparent",
+                  color: active ? "#0672a7" : "#333",
+                  background: active ? "#eff8fd" : "transparent",
                   fontFamily: "'Montserrat', sans-serif",
                   transition: "background 0.15s, color 0.15s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#B51D0F"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#eff8fd"; e.currentTarget.style.color = "#0672a7"; }}
                 onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#333"; } }}
               >
                 {item.icon} {item.label}
@@ -808,12 +823,12 @@ export default function Navbar() {
                 gap: 12,
                 margin: "8px 14px",
                 padding: "12px",
-                background: "#fef2f2",
+                background: "#eff8fd",
                 borderRadius: 12,
               }}>
                 <div style={{
                   width: 40, height: 40,
-                  background: "#B51D0F",
+                  background: "#0672a7",
                   borderRadius: "50%",
                   color: "#fff",
                   display: "flex",
@@ -844,8 +859,8 @@ export default function Navbar() {
                   textAlign: "left",
                   padding: "11px 18px",
                   border: "none",
-                  background: drawerAccountOpen ? "#fef2f2" : "none",
-                  color: drawerAccountOpen ? "#B51D0F" : "#333",
+                  background: drawerAccountOpen ? "#eff8fd" : "none",
+                  color: drawerAccountOpen ? "#0672a7" : "#333",
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: "pointer",
@@ -884,13 +899,13 @@ export default function Navbar() {
                           gap: 12,
                           padding: "11px 18px 11px 32px",
                           textDecoration: "none",
-                          color: active ? "#B51D0F" : "#333",
-                          background: active ? "#fef2f2" : "transparent",
+                          color: active ? "#0672a7" : "#333",
+                          background: active ? "#eff8fd" : "transparent",
                           fontSize: 13,
                           fontFamily: "'Montserrat', sans-serif",
                           transition: "background 0.15s, color 0.15s",
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#B51D0F"; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "#eff8fd"; e.currentTarget.style.color = "#0672a7"; }}
                         onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#333"; } }}
                       >
                         {item.icon} {item.label}
@@ -912,13 +927,13 @@ export default function Navbar() {
                     padding: "11px 18px",
                     border: "none",
                     background: "none",
-                    color: "#B51D0F",
+                    color: "#0672a7",
                     fontSize: 13,
                     fontWeight: 700,
                     cursor: "pointer",
                     fontFamily: "'Montserrat', sans-serif",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#fef2f2"; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#eff8fd"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = ""; }}
                 >
                   <IconLogout /> Logout
@@ -931,8 +946,8 @@ export default function Navbar() {
               margin: "14px",
               borderRadius: 16,
               overflow: "hidden",
-              border: "1px solid #f5dcd9",
-              background: "linear-gradient(160deg, #fff5f4 0%, #ffffff 70%)",
+              border: "1px solid #c9e5f5",
+              background: "linear-gradient(160deg, #f4fafd 0%, #ffffff 70%)",
             }}>
               <div style={{ padding: "18px 16px 16px", textAlign: "center" }}>
                 <div style={{
@@ -940,12 +955,12 @@ export default function Navbar() {
                   height: 44,
                   margin: "0 auto 10px",
                   borderRadius: "50%",
-                  background: "#B51D0F",
+                  background: "#0672a7",
                   color: "#fff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  boxShadow: "0 4px 14px rgba(181,29,15,0.32)",
+                  boxShadow: "0 4px 14px rgba(6, 114, 167,0.32)",
                 }}>
                   <IconUser />
                 </div>
@@ -976,14 +991,14 @@ export default function Navbar() {
                     justifyContent: "center",
                     gap: 8,
                     padding: "12px",
-                    background: "#B51D0F",
+                    background: "#0672a7",
                     borderRadius: 12,
                     color: "#fff",
                     fontSize: 13,
                     fontWeight: 700,
                     textDecoration: "none",
                     fontFamily: "'Montserrat', sans-serif",
-                    boxShadow: "0 4px 14px rgba(181,29,15,0.3)",
+                    boxShadow: "0 4px 14px rgba(6, 114, 167,0.3)",
                   }}
                 >
                   Sign In <IconArrowRight />
@@ -991,7 +1006,7 @@ export default function Navbar() {
               </div>
 
               <div style={{
-                borderTop: "1px solid #f5dcd9",
+                borderTop: "1px solid #c9e5f5",
                 padding: "11px 16px",
                 textAlign: "center",
                 background: "rgba(255,255,255,0.6)",
@@ -1004,7 +1019,7 @@ export default function Navbar() {
                   style={{
                     fontSize: 11.5,
                     fontWeight: 800,
-                    color: "#B51D0F",
+                    color: "#0672a7",
                     textDecoration: "none",
                     fontFamily: "'Montserrat', sans-serif",
                   }}

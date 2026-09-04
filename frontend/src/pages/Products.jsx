@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, X, SlidersHorizontal, ChevronDown, ChevronRight, Package } from "lucide-react";
+import { Search, X, SlidersHorizontal, ChevronDown, ChevronRight } from "lucide-react";
 import { fetchProducts } from "../features/products/productSlice";
 import { fetchCategories } from "../features/categories/categorySlice";
 import ProductCard from "../components/ProductCard";
 import { OPEN_FILTERS_EVENT } from "../components/MobileBottomNav";
 
-const BRAND = "#B51D0F";
+const BRAND = "#0672a7";
 
 /* Kept in step with .cg-drawer-out / .cg-overlay-out in index.css */
 const DRAWER_EXIT_MS = 300;
@@ -44,21 +44,21 @@ function useNavHeight() {
 
 const SectionLabel = ({ children }) => (
   <div className="flex items-center gap-3 mb-2.5">
-    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-900 whitespace-nowrap">
+    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 whitespace-nowrap">
       {children}
     </h3>
-    <span className="flex-1 h-px bg-stone-200" />
+    <span className="flex-1 h-px bg-slate-200" />
   </div>
 );
 
 const Shimmer = ({ className = "" }) => (
-  <div className={`relative overflow-hidden bg-stone-100 ${className}`}>
+  <div className={`relative overflow-hidden bg-slate-100 ${className}`}>
     <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/80 to-transparent" />
   </div>
 );
 
 const CardSkeleton = () => (
-  <div className="rounded-2xl overflow-hidden bg-white ring-1 ring-stone-200/60">
+  <div className="rounded-2xl overflow-hidden bg-white ring-1 ring-slate-200/60">
     <Shimmer className="aspect-[4/5]" />
     <div className="p-4 md:p-5 space-y-2.5">
       <Shimmer className="h-2 w-1/3 rounded-full" />
@@ -174,19 +174,19 @@ export default function Products() {
 
   const navRow = (active) =>
     `relative w-full flex items-center gap-2.5 text-left pl-2 pr-1.5 py-1.5 rounded-lg bg-transparent text-[12.5px] border-none cursor-pointer transition-colors duration-200 ${
-      active ? "text-stone-900 font-semibold" : "text-stone-500 font-normal hover:text-stone-900"
+      active ? "text-slate-900 font-semibold" : "text-slate-500 font-normal hover:text-slate-900"
     }`;
 
   const pill = (active) =>
     `px-3 py-1.5 rounded-full bg-white text-[11.5px] border cursor-pointer whitespace-nowrap transition-colors duration-200 ${
       active
-        ? "border-stone-900 text-stone-900 font-semibold"
-        : "border-stone-200 text-stone-500 font-medium hover:border-stone-400 hover:text-stone-900"
+        ? "border-slate-900 text-slate-900 font-semibold"
+        : "border-slate-200 text-slate-500 font-medium hover:border-slate-400 hover:text-slate-900"
     }`;
 
   // A plain render function, not a component — keeps the search box from remounting
-  // on every keystroke. `mobile` swaps the category rows to a compact, image-free
-  // list with a chevron before each name, sized to scroll inside the drawer.
+  // on every keystroke. Category rows are text-only with a chevron before each name;
+  // `mobile` drops the search box and scroll-caps the list inside the drawer.
   const renderFilterPanel = (mobile = false) => (
     <div className="flex flex-col gap-6">
       {/* Search — desktop only; on mobile the navbar already carries a search icon */}
@@ -194,9 +194,9 @@ export default function Products() {
         <div>
           <SectionLabel>Search</SectionLabel>
           <div className="relative">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
-              className="w-full pl-9 pr-8 py-2 rounded-full border border-stone-200 bg-white text-[12.5px] text-stone-800 placeholder-stone-400 outline-none transition-all duration-200 focus:border-stone-900 focus:ring-4 focus:ring-stone-900/5"
+              className="w-full pl-9 pr-8 py-2 rounded-full border border-slate-200 bg-white text-[12.5px] text-slate-800 placeholder-slate-400 outline-none transition-all duration-200 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5"
               placeholder="Search products..."
               value={searchInput}
               onChange={(e) => setDraft(e.target.value)}
@@ -205,7 +205,7 @@ export default function Products() {
               <button
                 aria-label="Clear search"
                 onClick={() => setDraft("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-red-700 bg-transparent border-none cursor-pointer p-0.5 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-700 bg-transparent border-none cursor-pointer p-0.5 transition-colors"
               >
                 <X size={14} />
               </button>
@@ -247,13 +247,7 @@ export default function Products() {
             className={navRow(!activeCategory)}
             onClick={() => { updateParams({ category: null, subcategory: null }); setSidebarOpen(false); }}
           >
-            {mobile ? (
-              <ChevronRight size={14} className={`shrink-0 ${!activeCategory ? "text-stone-900" : "text-stone-300"}`} />
-            ) : (
-              <span className="w-7 h-7 shrink-0 rounded-lg bg-stone-100 flex items-center justify-center">
-                <Package size={13} className={!activeCategory ? "text-stone-900" : "text-stone-400"} />
-              </span>
-            )}
+            <ChevronRight size={14} className={`shrink-0 ${!activeCategory ? "text-slate-900" : "text-slate-300"}`} />
             All Products
           </button>
 
@@ -274,15 +268,7 @@ export default function Products() {
                       else setSidebarOpen(false);
                     }}
                   >
-                    {mobile ? (
-                      <ChevronRight size={14} className={`shrink-0 ${isCatActive ? "text-stone-900" : "text-stone-300"}`} />
-                    ) : (
-                      <span className="w-7 h-7 shrink-0 rounded-lg bg-stone-100 overflow-hidden flex items-center justify-center text-[12px]">
-                        {cat.image
-                          ? <img src={cat.image} alt="" loading="lazy" className="w-full h-full object-contain p-0.5" />
-                          : (cat.icon || "\u{1F3F7}\u{FE0F}")}
-                      </span>
-                    )}
+                    <ChevronRight size={14} className={`shrink-0 ${isCatActive ? "text-slate-900" : "text-slate-300"}`} />
                     <span className="truncate">{cat.name}</span>
                   </button>
 
@@ -291,7 +277,7 @@ export default function Products() {
                       aria-label={`Toggle ${cat.name} subcategories`}
                       onClick={() => toggleCat(cat.name)}
                       className={`shrink-0 p-1.5 rounded-lg bg-transparent border-none cursor-pointer transition-colors ${
-                        isBranchActive ? "text-stone-700" : "text-stone-300 hover:text-stone-700"
+                        isBranchActive ? "text-slate-700" : "text-slate-300 hover:text-slate-700"
                       }`}
                     >
                       <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
@@ -300,7 +286,7 @@ export default function Products() {
                 </div>
 
                 {isOpen && subs.length > 0 && (
-                  <div className={`${mobile ? "ml-[14px]" : "ml-[22px]"} pl-3 mt-1 mb-1.5 border-l border-stone-200 flex flex-col items-start gap-0.5`}>
+                  <div className={`ml-[14px] pl-3 mt-1 mb-1.5 border-l border-slate-200 flex flex-col items-start gap-0.5`}>
                     {subs.map((sub) => {
                       const isSubActive = activeCategory === cat.name && activeSubcategory === sub.name;
                       return (
@@ -309,8 +295,8 @@ export default function Products() {
                           onClick={() => { updateParams({ category: cat.name, subcategory: sub.name }); setSidebarOpen(false); }}
                           className={`text-left px-2.5 py-1 rounded-full text-[12px] border-none bg-transparent cursor-pointer transition-colors duration-200 ${
                             isSubActive
-                              ? "text-stone-900 font-semibold"
-                              : "text-stone-500 hover:text-stone-900"
+                              ? "text-slate-900 font-semibold"
+                              : "text-slate-500 hover:text-slate-900"
                           }`}
                         >
                           {sub.name}
@@ -329,7 +315,7 @@ export default function Products() {
       {chips.length > 0 && (
         <button
           onClick={() => { clearAll(); setSidebarOpen(false); }}
-          className="self-start text-[12px] font-semibold text-stone-400 hover:text-red-700 bg-transparent border-none cursor-pointer underline underline-offset-4 decoration-stone-300 hover:decoration-red-700 transition-colors"
+          className="self-start text-[12px] font-semibold text-slate-400 hover:text-brand-700 bg-transparent border-none cursor-pointer underline underline-offset-4 decoration-slate-300 hover:decoration-brand-700 transition-colors"
         >
           Clear all filters
         </button>
@@ -338,50 +324,50 @@ export default function Products() {
   );
 
   return (
-    <div className="bg-[#FAFAF9] min-h-[calc(100vh_-_var(--nav-h))]" style={{ "--nav-h": navHeight + "px" }}>
+    <div className="bg-[#f7fafc] min-h-[calc(100vh_-_var(--nav-h))]" style={{ "--nav-h": navHeight + "px" }}>
       {/* ── Editorial header ── */}
-      <header className="relative overflow-hidden bg-white border-b border-stone-200/70">
-        <div className="pointer-events-none absolute -top-28 -right-20 w-72 h-72 rounded-full bg-red-600/[0.06] blur-3xl" />
+      <header className="relative overflow-hidden bg-white border-b border-slate-200/70">
+        <div className="pointer-events-none absolute -top-28 -right-20 w-72 h-72 rounded-full bg-brand-600/[0.06] blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 w-64 h-64 rounded-full bg-amber-400/[0.05] blur-3xl" />
 
         <div className="relative max-w-[1400px] mx-auto px-4 md:px-8 pt-4 pb-6 md:pt-5 md:pb-7">
-          <nav className="flex items-center gap-2 text-[11px] font-medium text-stone-400 mb-3.5">
-            <Link to="/" className="hover:text-red-700 transition-colors">Home</Link>
-            <span className="text-stone-300">/</span>
-            <Link to="/products" className="hover:text-red-700 transition-colors">Products</Link>
+          <nav className="flex items-center gap-2 text-[11px] font-medium text-slate-400 mb-3.5">
+            <Link to="/" className="hover:text-brand-700 transition-colors">Home</Link>
+            <span className="text-slate-300">/</span>
+            <Link to="/products" className="hover:text-brand-700 transition-colors">Products</Link>
             {activeCategory && (
               <>
-                <span className="text-stone-300">/</span>
-                <span className={activeSubcategory ? "" : "text-stone-800"}>{activeCategory}</span>
+                <span className="text-slate-300">/</span>
+                <span className={activeSubcategory ? "" : "text-slate-800"}>{activeCategory}</span>
               </>
             )}
             {activeSubcategory && (
               <>
-                <span className="text-stone-300">/</span>
-                <span className="text-stone-800">{activeSubcategory}</span>
+                <span className="text-slate-300">/</span>
+                <span className="text-slate-800">{activeSubcategory}</span>
               </>
             )}
           </nav>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 mb-2">
-              <span className="w-6 h-px bg-red-700" />
-              <span className="text-[9.5px] font-bold uppercase tracking-[0.28em] text-red-700">
+              <span className="w-6 h-px bg-brand-700" />
+              <span className="text-[9.5px] font-bold uppercase tracking-[0.28em] text-brand-700">
                 {activeCategory ? "Collection" : "Shop All"}
               </span>
             </div>
 
-            <h1 className="font-display text-[26px] md:text-[34px] font-black text-stone-900 leading-[1.08] tracking-[-0.02em]">
+            <h1 className="font-display text-[26px] md:text-[34px] font-black text-slate-900 leading-[1.08] tracking-[-0.02em]">
               {heading}
             </h1>
 
-            <p className="text-stone-500 text-[12.5px] md:text-[13.5px] mt-2 max-w-xl leading-relaxed">
+            <p className="text-slate-500 text-[12.5px] md:text-[13.5px] mt-2 max-w-xl leading-relaxed">
               {subheading}
             </p>
 
-            <div className="flex items-center gap-2.5 mt-3.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+            <div className="flex items-center gap-2.5 mt-3.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-400">
               <span>{loading ? "—" : visible.length} {visible.length === 1 ? "Item" : "Items"}</span>
-              <span className="w-1 h-1 rounded-full bg-stone-300" />
+              <span className="w-1 h-1 rounded-full bg-slate-300" />
               <span>Free design proof</span>
             </div>
           </div>
@@ -390,7 +376,7 @@ export default function Products() {
 
       {/* ── Category rail (mobile) — deliberately not sticky; the toolbar below owns that slot ── */}
       {categoryItems.length > 0 && (
-        <div className="lg:hidden bg-white border-b border-stone-200/70">
+        <div className="lg:hidden bg-white border-b border-slate-200/70">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 py-3">
             <button className={pill(!activeCategory)} onClick={() => updateParams({ category: null, subcategory: null })}>
               All
@@ -437,9 +423,9 @@ export default function Products() {
               }`}
             >
               {/* Same warm glow the page header uses */}
-              <div className="pointer-events-none absolute -top-24 -right-16 w-56 h-56 rounded-full bg-red-600/[0.07] blur-3xl" />
+              <div className="pointer-events-none absolute -top-24 -right-16 w-56 h-56 rounded-full bg-brand-600/[0.07] blur-3xl" />
 
-              <div className="relative flex items-start justify-between gap-3 px-5 pt-5 pb-4 shrink-0 border-b border-stone-100">
+              <div className="relative flex items-start justify-between gap-3 px-5 pt-5 pb-4 shrink-0 border-b border-slate-100">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="w-5 h-px" style={{ background: BRAND }} />
@@ -447,8 +433,8 @@ export default function Products() {
                       Refine
                     </span>
                   </div>
-                  <h2 className="font-display text-[20px] font-black text-stone-900 leading-none m-0">Filters</h2>
-                  <p className="text-[11.5px] text-stone-400 mt-1.5 m-0">
+                  <h2 className="font-display text-[20px] font-black text-slate-900 leading-none m-0">Filters</h2>
+                  <p className="text-[11.5px] text-slate-400 mt-1.5 m-0">
                     {chips.length
                       ? `${chips.length} filter${chips.length === 1 ? "" : "s"} applied`
                       : "Narrow down the catalogue"}
@@ -459,7 +445,7 @@ export default function Products() {
                   type="button"
                   aria-label="Close filters"
                   onClick={() => setSidebarOpen(false)}
-                  className="w-8 h-8 shrink-0 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center border-none cursor-pointer active:scale-95 transition-transform"
+                  className="w-8 h-8 shrink-0 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center border-none cursor-pointer active:scale-95 transition-transform"
                   style={{ WebkitTapHighlightColor: "transparent" }}
                 >
                   <X size={16} />
@@ -481,22 +467,22 @@ export default function Products() {
         {/* ── Results ── */}
         <main className="flex-1 min-w-0 pb-16">
           {/* Glass toolbar */}
-          <div className="sticky top-[var(--nav-h)] z-20 -mx-4 lg:mx-0 px-4 lg:px-0 lg:pt-9 bg-[#FAFAF9]/95 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-3 py-3.5 lg:py-0 lg:pb-5 border-b border-stone-200/80">
-              <p className="text-stone-500 text-[13px]">
-                <span className="font-bold text-stone-900">{visible.length}</span>{" "}
+          <div className="sticky top-[var(--nav-h)] z-20 -mx-4 lg:mx-0 px-4 lg:px-0 lg:pt-9 bg-[#f7fafc]/95 backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-3 py-3.5 lg:py-0 lg:pb-5 border-b border-slate-200/80">
+              <p className="text-slate-500 text-[13px]">
+                <span className="font-bold text-slate-900">{visible.length}</span>{" "}
                 {visible.length === 1 ? "product" : "products"}
               </p>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="lg:hidden inline-flex items-center gap-1.5 rounded-full bg-white border border-stone-200 px-3.5 py-2 text-[12.5px] font-semibold text-stone-700 cursor-pointer transition-colors hover:border-stone-900"
+                  className="lg:hidden inline-flex items-center gap-1.5 rounded-full bg-white border border-slate-200 px-3.5 py-2 text-[12.5px] font-semibold text-slate-700 cursor-pointer transition-colors hover:border-slate-900"
                 >
                   <SlidersHorizontal size={14} />
                   Filters
                   {chips.length > 0 && (
-                    <span className="ml-0.5 w-[18px] h-[18px] rounded-full bg-red-700 text-white text-[10px] font-bold flex items-center justify-center">
+                    <span className="ml-0.5 w-[18px] h-[18px] rounded-full bg-brand-700 text-white text-[10px] font-bold flex items-center justify-center">
                       {chips.length}
                     </span>
                   )}
@@ -506,11 +492,11 @@ export default function Products() {
                   <select
                     value={sort}
                     onChange={(e) => updateParams({ sort: e.target.value === "newest" ? null : e.target.value })}
-                    className="appearance-none rounded-full bg-white border border-stone-200 pl-4 pr-9 py-2 text-[12.5px] font-semibold text-stone-700 cursor-pointer outline-none transition-colors hover:border-stone-900 focus:border-stone-900"
+                    className="appearance-none rounded-full bg-white border border-slate-200 pl-4 pr-9 py-2 text-[12.5px] font-semibold text-slate-700 cursor-pointer outline-none transition-colors hover:border-slate-900 focus:border-slate-900"
                   >
                     {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
-                  <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+                  <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -523,15 +509,15 @@ export default function Products() {
                 <button
                   key={chip.label}
                   onClick={() => { if ("search" in chip.clear) setDraft(null); updateParams(chip.clear); }}
-                  className="group inline-flex items-center gap-2 pl-3.5 pr-2.5 py-1.5 rounded-full bg-white ring-1 ring-stone-200 text-stone-700 text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:ring-red-700 hover:text-red-700"
+                  className="group inline-flex items-center gap-2 pl-3.5 pr-2.5 py-1.5 rounded-full bg-white ring-1 ring-slate-200 text-slate-700 text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:ring-brand-700 hover:text-brand-700"
                 >
                   {chip.label}
-                  <X size={12} strokeWidth={3} className="text-stone-400 group-hover:text-red-700 transition-colors" />
+                  <X size={12} strokeWidth={3} className="text-slate-400 group-hover:text-brand-700 transition-colors" />
                 </button>
               ))}
               <button
                 onClick={clearAll}
-                className="text-[12px] font-semibold text-stone-400 hover:text-red-700 bg-transparent border-none cursor-pointer px-1 underline underline-offset-4 decoration-stone-300 hover:decoration-red-700 transition-colors"
+                className="text-[12px] font-semibold text-slate-400 hover:text-brand-700 bg-transparent border-none cursor-pointer px-1 underline underline-offset-4 decoration-slate-300 hover:decoration-brand-700 transition-colors"
               >
                 Clear all
               </button>
@@ -546,17 +532,17 @@ export default function Products() {
               </div>
             ) : visible.length === 0 ? (
               <div className="flex flex-col items-center text-center py-24 px-6">
-                <span className="w-20 h-20 rounded-full bg-white ring-1 ring-stone-200 shadow-[0_16px_40px_-24px_rgba(0,0,0,0.4)] flex items-center justify-center mb-6">
-                  <Search size={26} className="text-red-700" />
+                <span className="w-20 h-20 rounded-full bg-white ring-1 ring-slate-200 shadow-[0_16px_40px_-24px_rgba(0,0,0,0.4)] flex items-center justify-center mb-6">
+                  <Search size={26} className="text-brand-700" />
                 </span>
-                <h3 className="font-display text-2xl font-black text-stone-900 mb-2">Nothing here yet</h3>
-                <p className="text-stone-500 text-[13px] max-w-xs leading-relaxed">
+                <h3 className="font-display text-2xl font-black text-slate-900 mb-2">Nothing here yet</h3>
+                <p className="text-slate-500 text-[13px] max-w-xs leading-relaxed">
                   No products match these filters right now. Try clearing them or browsing another category.
                 </p>
                 {chips.length > 0 && (
                   <button
                     onClick={clearAll}
-                    className="mt-7 px-7 py-3 rounded-full bg-stone-900 text-white text-[13px] font-bold border-none cursor-pointer transition-colors duration-200 hover:bg-red-700"
+                    className="mt-7 px-7 py-3 rounded-full bg-slate-900 text-white text-[13px] font-bold border-none cursor-pointer transition-colors duration-200 hover:bg-brand-700"
                   >
                     Clear all filters
                   </button>

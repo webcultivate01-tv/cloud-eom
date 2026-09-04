@@ -9,7 +9,7 @@ import MobileAccountSheet from "./MobileAccountSheet";
 /* Products.jsx listens for this to open its mobile filter drawer */
 export const OPEN_FILTERS_EVENT = "cg:open-mobile-filters";
 
-const BRAND = "#B51D0F";
+const BRAND = "#0672a7";
 
 /* Auth screens — the Account tab stays lit while the user is sitting on one */
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
@@ -26,10 +26,10 @@ function Badge({ count }) {
   );
 }
 
-function Tab({ icon: Icon, label, active, badge, to, onClick, fillActive }) {
+function Tab({ icon: Icon, label, active, badge, to, onClick, fillActive, cartTarget }) {
   const inner = (
     <>
-      <span className="relative flex items-center justify-center">
+      <span className="relative flex items-center justify-center" {...(cartTarget ? { "data-cart-target": "" } : {})}>
         <Icon size={21} strokeWidth={active ? 2.4 : 1.9} fill={active && fillActive ? BRAND : "none"} />
         <Badge count={badge} />
       </span>
@@ -78,7 +78,7 @@ export default function MobileBottomNav() {
       : { key: "home", icon: Home, label: "Home", to: "/", active: pathname === "/" },
     { key: "shop", icon: Store, label: "Shop", to: "/products", active: pathname.startsWith("/products") },
     { key: "wishlist", icon: Heart, label: "Wishlist", to: "/favorites", badge: favCount, fillActive: true, active: pathname === "/favorites" },
-    { key: "cart", icon: ShoppingCart, label: "Cart", to: "/cart", badge: cartCount, active: pathname === "/cart" },
+    { key: "cart", icon: ShoppingCart, label: "Cart", to: "/cart", badge: cartCount, cartTarget: true, active: pathname === "/cart" },
     /* Signed in: open the account sheet (full details + admin shortcuts).
        Signed out: straight to login. */
     user
@@ -90,7 +90,7 @@ export default function MobileBottomNav() {
   return (
     <>
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-[120] flex items-stretch min-h-[64px] bg-white/95 backdrop-blur-xl border-t border-stone-200"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-[120] flex items-stretch min-h-[64px] bg-white/95 backdrop-blur-xl border-t border-slate-200"
       style={{ paddingBottom: "env(safe-area-inset-bottom)", boxShadow: "0 -2px 18px rgba(0,0,0,0.06)" }}
       aria-label="Primary"
     >

@@ -6,6 +6,7 @@ const {
   getPendingCount,
   deleteInquiry,
   respondToInquiry,
+  updateInquiryStatus,
 } = require("../controllers/inquiryController");
 const { protect } = require("../middleware/authMiddleware");
 const { adminOnly } = require("../middleware/adminMiddleware");
@@ -22,7 +23,10 @@ router.get("/pending-count", protect, adminOnly, getPendingCount);
 // Admin: delete inquiry
 router.delete("/:id", protect, adminOnly, deleteInquiry);
 
-// Admin: respond to inquiry
+// Admin: respond to inquiry (sends the reply email)
 router.patch("/:id/respond", protect, adminOnly, respondToInquiry);
+
+// Admin: move the enquiry along the pipeline / save working notes
+router.patch("/:id/status", protect, adminOnly, updateInquiryStatus);
 
 module.exports = router;

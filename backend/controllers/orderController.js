@@ -3,6 +3,7 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const User = require("../models/User");
 const { sendCancelOTP, sendOrderConfirmation, sendOrderStatusUpdate } = require("../config/mailer");
+const { archiveOrderArtwork } = require("../config/imageArchive");
 
 const getRazorpay = () =>
   new Razorpay({
@@ -212,6 +213,14 @@ const updateOrderStatus = async (req, res) => {
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
+    }
+
+    // The artwork has been printed and handed over, so the full-resolution file
+    // is no longer needed — compress it for long-term storage. Deliberately
+    // awaited but never allowed to throw: the order is already saved, and the
+    // admin's status change must succeed whether or not this does.
+    if (status === "Delivered") {
+      await archiveOrderArtwork(order);
     }
 
     // Send status update email to the customer (non-blocking)

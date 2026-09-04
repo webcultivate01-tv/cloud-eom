@@ -2,25 +2,43 @@ import { useRef, useState } from "react";
 import { Upload, ImageIcon, X, Link2 } from "lucide-react";
 import { toast } from "react-toastify";
 import api from "../utils/api";
+import { MAX_UPLOAD_MB, validateImageFile } from "../utils/uploadLimits";
 
-export default function ImageInput({ value, onChange, previewSize = "square", folder = "misc" }) {
+// `category` and `product` are only meaningful for folder="products" — see
+// MultiImageInput for how the per-product folders are laid out.
+export default function ImageInput({
+  value,
+  onChange,
+  previewSize = "square",
+  folder = "misc",
+  category = "",
+  product = "",
+}) {
   const [uploading, setUploading] = useState(false);
   const [mode, setMode]           = useState("upload");
   const [urlInput, setUrlInput]   = useState("");
   const fileRef                   = useRef();
 
+  const uploadUrl = `/upload?folder=${encodeURIComponent(folder)}` +
+    (category ? `&category=${encodeURIComponent(category)}` : "") +
+    (product ? `&product=${encodeURIComponent(product)}` : "");
+
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+    // Caught here as well as on the server, so an oversized file fails at once
+    // instead of after a long upload
+    const problem = validateImageFile(file);
+    if (problem) {
+      toast.error(problem);
+      if (fileRef.current) fileRef.current.value = "";
       return;
     }
     setUploading(true);
     try {
       const fd = new FormData();
       fd.append("image", file);
-      const { data } = await api.post(`/upload?folder=${folder}`, fd, {
+      const { data } = await api.post(uploadUrl, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       onChange(data.imageUrl);
@@ -62,7 +80,7 @@ export default function ImageInput({ value, onChange, previewSize = "square", fo
             <button
               type="button"
               onClick={() => onChange("")}
-              className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              className="absolute top-1 right-1 w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
               title="Remove image"
             >
               <X size={14} />
@@ -83,7 +101,7 @@ export default function ImageInput({ value, onChange, previewSize = "square", fo
           onClick={() => setMode("upload")}
           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-bold transition-all ${
             mode === "upload"
-              ? "bg-white text-indigo-700 shadow-sm"
+              ? "bg-white text-brand-700 shadow-sm"
               : "text-slate-500 hover:text-slate-700"
           }`}
         >
@@ -94,7 +112,7 @@ export default function ImageInput({ value, onChange, previewSize = "square", fo
           onClick={() => setMode("url")}
           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-bold transition-all ${
             mode === "url"
-              ? "bg-white text-indigo-700 shadow-sm"
+              ? "bg-white text-brand-700 shadow-sm"
               : "text-slate-500 hover:text-slate-700"
           }`}
         >
@@ -119,7 +137,7 @@ export default function ImageInput({ value, onChange, previewSize = "square", fo
             className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold cursor-pointer border-2 transition-all w-fit ${
               uploading
                 ? "bg-slate-100 border-slate-200 text-slate-400 cursor-wait"
-                : "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
+                : "bg-brand-50 border-brand-200 text-brand-700 hover:bg-brand-100"
             }`}
           >
             {uploading ? (
@@ -128,6 +146,9 @@ export default function ImageInput({ value, onChange, previewSize = "square", fo
               <><Upload size={12} /> {value ? "Change Image" : "Choose Image"}</>
             )}
           </button>
+          <p className="text-[11px] text-slate-400 mt-1.5">
+            Stored at full quality for printing — max {MAX_UPLOAD_MB} MB per image.
+          </p>
         </>
       )}
 

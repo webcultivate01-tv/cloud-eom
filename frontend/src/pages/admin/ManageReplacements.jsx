@@ -14,7 +14,7 @@ const STATUS_CFG = {
   pending:    { cls: "bg-amber-100 text-amber-700",   label: "Pending",    dot: "bg-amber-400" },
   approved:   { cls: "bg-sky-100 text-sky-700",       label: "Approved",   dot: "bg-sky-400" },
   rejected:   { cls: "bg-red-100 text-red-700",       label: "Rejected",   dot: "bg-red-400" },
-  processing: { cls: "bg-indigo-100 text-indigo-700", label: "Processing", dot: "bg-indigo-400" },
+  processing: { cls: "bg-brand-100 text-brand-700", label: "Processing", dot: "bg-brand-400" },
   completed:  { cls: "bg-emerald-100 text-emerald-700", label: "Completed",dot: "bg-emerald-400" },
 };
 
@@ -54,7 +54,7 @@ export default function ManageReplacements() {
   const ACTION_MAP = {
     approve:  { thunk: approveReplacement,  label: "Approve",       confirmLabel: "Approve Request",  cls: "text-emerald-700 bg-emerald-50 hover:bg-emerald-100", needsResponse: false },
     reject:   { thunk: rejectReplacement,   label: "Reject",        confirmLabel: "Reject Request",   cls: "text-red-600 bg-red-50 hover:bg-red-100",             needsResponse: true  },
-    process:  { thunk: processReplacement,  label: "Mark Processing", confirmLabel: "Start Processing", cls: "text-indigo-700 bg-indigo-50 hover:bg-indigo-100",   needsResponse: false },
+    process:  { thunk: processReplacement,  label: "Mark Processing", confirmLabel: "Start Processing", cls: "text-brand-700 bg-brand-50 hover:bg-brand-100",   needsResponse: false },
     complete: { thunk: completeReplacement, label: "Complete",      confirmLabel: "Mark Completed",   cls: "text-emerald-700 bg-emerald-50 hover:bg-emerald-100", needsResponse: false },
   };
 
@@ -115,7 +115,7 @@ export default function ManageReplacements() {
         {[
           { label: "Total",      value: counts.total,      color: "text-slate-800", bg: "bg-slate-50" },
           { label: "Pending",    value: counts.pending,    color: "text-amber-700", bg: "bg-amber-50" },
-          { label: "Processing", value: counts.processing, color: "text-indigo-700", bg: "bg-indigo-50" },
+          { label: "Processing", value: counts.processing, color: "text-brand-700", bg: "bg-brand-50" },
           { label: "Completed",  value: counts.completed,  color: "text-emerald-700", bg: "bg-emerald-50" },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`admin-card p-4 ${bg}`}>
@@ -129,8 +129,8 @@ export default function ManageReplacements() {
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-4 border-brand-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-brand-600 animate-spin" />
           </div>
         </div>
       ) : visible.length === 0 ? (
@@ -172,7 +172,7 @@ export default function ManageReplacements() {
                       <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{fmt(rep.createdAt)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1 flex-wrap">
-                          <button onClick={() => setDetailItem(rep)} className="admin-btn bg-indigo-50 hover:bg-indigo-100 text-indigo-700 !py-1 !px-2.5 !text-xs whitespace-nowrap">👁 View</button>
+                          <button onClick={() => setDetailItem(rep)} className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-700 !py-1 !px-2.5 !text-xs whitespace-nowrap">👁 View</button>
                           {rep.status === "pending"    && <button onClick={() => openAction(rep, "approve")}  className={`admin-btn !py-1 !px-2 !text-xs ${ACTION_MAP.approve.cls} whitespace-nowrap`}>✓ Approve</button>}
                           {rep.status === "pending"    && <button onClick={() => openAction(rep, "reject")}   className={`admin-btn !py-1 !px-2 !text-xs ${ACTION_MAP.reject.cls} whitespace-nowrap`}>✕ Reject</button>}
                           {rep.status === "approved"   && <button onClick={() => openAction(rep, "process")}  className={`admin-btn !py-1 !px-2 !text-xs ${ACTION_MAP.process.cls} whitespace-nowrap`}>⚙ Process</button>}
@@ -248,7 +248,7 @@ export default function ManageReplacements() {
                 <button onClick={() => { setDetailItem(null); openAction(detailItem, "approve"); }} className="admin-btn admin-btn-primary !text-sm">✓ Approve</button>
                 <button onClick={() => { setDetailItem(null); openAction(detailItem, "reject");  }} className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !text-sm">✕ Reject</button>
               </>}
-              {detailItem.status === "approved"   && <button onClick={() => { setDetailItem(null); openAction(detailItem, "process");  }} className="admin-btn bg-indigo-50 hover:bg-indigo-100 text-indigo-700 !text-sm">⚙ Mark Processing</button>}
+              {detailItem.status === "approved"   && <button onClick={() => { setDetailItem(null); openAction(detailItem, "process");  }} className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-700 !text-sm">⚙ Mark Processing</button>}
               {detailItem.status === "processing" && <button onClick={() => { setDetailItem(null); openAction(detailItem, "complete"); }} className="admin-btn admin-btn-primary !text-sm">🎉 Mark Completed</button>}
               <button onClick={() => handleDelete(detailItem._id, detailItem.user?.name)} className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !text-sm ml-auto">🗑 Delete</button>
             </div>

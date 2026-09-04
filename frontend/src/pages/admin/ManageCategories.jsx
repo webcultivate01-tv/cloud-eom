@@ -116,7 +116,7 @@ export default function ManageCategories() {
       {showForm && (
         <form onSubmit={handleSubmit} className="admin-card p-6 mb-6 animate-fade-in-up">
           <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
-            <span className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">{editId ? "✏️" : "➕"}</span>
+            <span className="w-7 h-7 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center text-sm">{editId ? "✏️" : "➕"}</span>
             {editId ? "Edit Category" : "New Category"}
           </h2>
 
@@ -194,8 +194,8 @@ export default function ManageCategories() {
       {loading && categories.length === 0 ? (
         <div className="flex items-center justify-center py-24">
           <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-4 border-brand-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-brand-600 animate-spin" />
           </div>
         </div>
       ) : categories.length === 0 ? (
@@ -221,7 +221,7 @@ export default function ManageCategories() {
                         className="w-14 h-14 shrink-0 rounded-2xl object-cover border border-slate-200 shadow-sm"
                       />
                     ) : (
-                      <div className="w-14 h-14 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center text-slate-300 shadow-sm">
+                      <div className="w-14 h-14 shrink-0 rounded-2xl bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-100 flex items-center justify-center text-slate-300 shadow-sm">
                         <ImageIcon size={22} strokeWidth={1.5} />
                       </div>
                     )}
@@ -229,7 +229,7 @@ export default function ManageCategories() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-bold text-slate-800">{cat.name}</p>
                         {!cat.isActive && (
-                          <span className="status-badge bg-red-100 text-red-500 !text-[10px]">Hidden</span>
+                          <span className="status-badge bg-brand-100 text-brand-500 !text-[10px]">Hidden</span>
                         )}
                         {cat.sortOrder > 0 && (
                           <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Order: {cat.sortOrder}</span>
@@ -239,7 +239,7 @@ export default function ManageCategories() {
                         <p className="text-xs text-slate-400 mt-0.5">{cat.description}</p>
                       )}
                       <p className="text-xs text-slate-400 mt-0.5">
-                        <span className="font-medium text-indigo-500">{subCount}</span> subcategor{subCount !== 1 ? "ies" : "y"}
+                        <span className="font-medium text-brand-500">{subCount}</span> subcategor{subCount !== 1 ? "ies" : "y"}
                       </p>
                     </div>
                   </div>
@@ -248,7 +248,7 @@ export default function ManageCategories() {
                     <button
                       onClick={() => setExpandedCat(isExpanded ? null : cat._id)}
                       className={`admin-btn !py-1.5 !px-3 !text-xs flex items-center gap-1.5 ${
-                        isExpanded ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                        isExpanded ? "bg-brand-100 text-brand-700" : "bg-slate-100 hover:bg-slate-200 text-slate-600"
                       }`}
                     >
                       {isExpanded ? <ChevronUp /> : <ChevronDown />}
@@ -256,21 +256,21 @@ export default function ManageCategories() {
                     </button>
                     <button
                       onClick={() => handleEdit(cat)}
-                      className="admin-btn bg-indigo-50 hover:bg-indigo-100 text-indigo-700 !py-1.5 !px-3 !text-xs"
+                      className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-700 !py-1.5 !px-3 !text-xs"
                     >✏️ Edit</button>
                     <button
                       onClick={() => handleToggleActive(cat)}
                       className={`admin-btn !py-1.5 !px-3 !text-xs ${
                         cat.isActive
                           ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
-                          : "bg-red-50 hover:bg-red-100 text-red-500"
+                          : "bg-brand-50 hover:bg-brand-100 text-brand-500"
                       }`}
                     >
                       {cat.isActive ? "👁 Visible" : "🚫 Hidden"}
                     </button>
                     <button
                       onClick={() => handleDelete(cat)}
-                      className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !py-1.5 !px-3 !text-xs"
+                      className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-600 !py-1.5 !px-3 !text-xs"
                     >🗑 Delete</button>
                   </div>
                 </div>
@@ -312,21 +312,21 @@ export default function ManageCategories() {
                               </span>
                               <button
                                 onClick={() => setEditSub({ catId: cat._id, subId: sub._id, name: sub.name })}
-                                className="admin-btn bg-indigo-50 hover:bg-indigo-100 text-indigo-600 !py-1 !px-2.5 !text-xs"
+                                className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-600 !py-1 !px-2.5 !text-xs"
                               >✏️</button>
                               <button
                                 onClick={() => handleToggleSub(cat._id, sub)}
                                 className={`admin-btn !py-1 !px-2.5 !text-xs ${
                                   sub.isActive
                                     ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-600"
-                                    : "bg-red-50 hover:bg-red-100 text-red-500"
+                                    : "bg-brand-50 hover:bg-brand-100 text-brand-500"
                                 }`}
                               >
                                 {sub.isActive ? "On" : "Off"}
                               </button>
                               <button
                                 onClick={() => handleDeleteSub(cat._id, sub)}
-                                className="admin-btn bg-red-50 hover:bg-red-100 text-red-500 !py-1 !px-2.5 !text-xs"
+                                className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-500 !py-1 !px-2.5 !text-xs"
                               >🗑</button>
                             </>
                           )}

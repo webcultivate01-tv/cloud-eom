@@ -135,7 +135,7 @@ export default function ManageOrders() {
             <div className="p-6">
               {loadingTracking ? (
                 <div className="flex flex-col items-center py-10 gap-3">
-                  <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
+                  <div className="w-10 h-10 border-4 border-brand-100 border-t-brand-600 rounded-full animate-spin" />
                   <p className="text-slate-400 text-sm">Fetching live tracking from Shiprocket…</p>
                 </div>
               ) : trackingData ? (
@@ -149,7 +149,7 @@ export default function ManageOrders() {
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">AWB Number</p>
-                        <p className="font-mono font-bold text-indigo-600 text-sm">{trackingData.shipment?.trackingId || "—"}</p>
+                        <p className="font-mono font-bold text-brand-600 text-sm">{trackingData.shipment?.trackingId || "—"}</p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Shipped On</p>
@@ -204,7 +204,7 @@ export default function ManageOrders() {
                             {trackingData.liveTracking.shipment_track_activities.map((activity, i) => (
                               <div key={i} className="flex gap-3 pb-4 relative">
                                 <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center z-10 mt-0.5 ${
-                                  i === 0 ? "bg-indigo-600" : "bg-slate-200"
+                                  i === 0 ? "bg-brand-600" : "bg-slate-200"
                                 }`}>
                                   <span className={`text-[9px] font-bold ${
                                     i === 0 ? "text-white" : "text-slate-500"
@@ -212,7 +212,7 @@ export default function ManageOrders() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className={`text-sm font-semibold ${
-                                    i === 0 ? "text-indigo-700" : "text-slate-700"
+                                    i === 0 ? "text-brand-700" : "text-slate-700"
                                   }`}>
                                     {activity["sr-status-label"] || activity.activity || "Update"}
                                   </p>
@@ -238,15 +238,15 @@ export default function ManageOrders() {
                       </p>
                       <div className="mt-3 flex flex-col gap-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">✓</span>
+                          <span className="w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">✓</span>
                           <span className="text-xs text-slate-600 font-medium">Order created on Shiprocket</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">✓</span>
+                          <span className="w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">✓</span>
                           <span className="text-xs text-slate-600 font-medium">AWB assigned — {trackingData.shipment?.courierName}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">✓</span>
+                          <span className="w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">✓</span>
                           <span className="text-xs text-slate-600 font-medium">Pickup scheduled</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -270,7 +270,7 @@ export default function ManageOrders() {
                     <a
                       href={`https://shiprocket.co/tracking/${trackingData.shipment.trackingId}`}
                       target="_blank" rel="noreferrer"
-                      className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-colors"
+                      className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold transition-colors"
                     >
                       🔗 Open Full Tracking on Shiprocket ↗
                     </a>
@@ -303,8 +303,8 @@ export default function ManageOrders() {
               onClick={() => setDateFilter(value)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${
                 dateFilter === value
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                  : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                  ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                  : "bg-white text-slate-500 border-slate-200 hover:border-brand-300 hover:text-brand-600"
               }`}
             >
               {label}
@@ -336,8 +336,8 @@ export default function ManageOrders() {
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-4 border-brand-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-brand-600 animate-spin" />
           </div>
         </div>
       ) : orders.length === 0 ? (
@@ -356,7 +356,7 @@ export default function ManageOrders() {
                 {/* ── Compact row — always visible ─────────────────── */}
                 <div
                   onClick={() => setExpandedOrderId(isExpanded ? null : order._id)}
-                  className={`cursor-pointer transition-colors ${isExpanded ? "bg-indigo-50/40" : "hover:bg-slate-50"}`}
+                  className={`cursor-pointer transition-colors ${isExpanded ? "bg-brand-50/40" : "hover:bg-slate-50"}`}
                 >
                   <div className="grid grid-cols-12 gap-3 items-center px-4 py-3">
                     {/* Status dot + Order ID */}
@@ -414,8 +414,8 @@ export default function ManageOrders() {
                         onClick={(e) => { e.stopPropagation(); setExpandedOrderId(isExpanded ? null : order._id); }}
                         className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                           isExpanded
-                            ? "bg-indigo-600 text-white border-indigo-600"
-                            : "bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                            ? "bg-brand-600 text-white border-brand-600"
+                            : "bg-white text-brand-600 border-brand-200 hover:bg-brand-50"
                         }`}
                       >
                         <Eye size={12} />
@@ -446,7 +446,7 @@ export default function ManageOrders() {
                   {/* Customer info */}
                   <div className="p-3 bg-slate-50 rounded-xl mb-4">
                     <div className="flex items-start gap-3 mb-2">
-                      <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                      <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center font-bold text-sm shadow-sm">
                         {order.user?.name?.[0]?.toUpperCase() ?? "?"}
                       </div>
                       <div className="min-w-0">
@@ -490,7 +490,7 @@ export default function ManageOrders() {
                     </span>
                     {order.razorpayPaymentId && (
                       <span className="text-xs text-slate-400 font-mono">
-                        ID: <span className="text-indigo-500">{order.razorpayPaymentId}</span>
+                        ID: <span className="text-brand-500">{order.razorpayPaymentId}</span>
                       </span>
                     )}
                   </div>
@@ -506,7 +506,7 @@ export default function ManageOrders() {
                           <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 flex-wrap">
                             {item.name}
                             {item.size && (
-                              <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              <span className="bg-brand-50 text-brand-700 border border-brand-100 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 Size: {item.size}
                               </span>
                             )}
@@ -550,7 +550,7 @@ export default function ManageOrders() {
                         {/* Live Track button */}
                         <button
                           onClick={() => handleTrackShipment(order)}
-                          className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg font-semibold transition-colors border-none cursor-pointer"
+                          className="text-xs bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded-lg font-semibold transition-colors border-none cursor-pointer"
                         >
                           📍 Track Live
                         </button>
@@ -559,7 +559,7 @@ export default function ManageOrders() {
                           <button
                             disabled={cancellingShipment === order._id}
                             onClick={() => handleCancelShipment(order._id)}
-                            className="text-xs text-red-500 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 transition-colors font-semibold shrink-0 disabled:opacity-50"
+                            className="text-xs text-brand-500 border border-brand-200 px-2.5 py-1 rounded-lg hover:bg-brand-50 transition-colors font-semibold shrink-0 disabled:opacity-50"
                           >
                             {cancellingShipment === order._id ? "Cancelling…" : "Cancel"}
                           </button>
@@ -579,7 +579,7 @@ export default function ManageOrders() {
 
                       {/* If cancelled by user — show locked badge, no dropdown */}
                       {order.cancelledBy === "user" ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 border border-brand-200 text-brand-600 text-xs font-semibold">
                           🔒 Cancelled by Customer — Cannot Edit
                         </span>
                       ) : order.status === "Cancelled" ? (
@@ -614,8 +614,8 @@ export default function ManageOrders() {
                     {/* Shiprocket */}
                     {!order.shipment?.trackingId && order.status !== "Cancelled" && (
                       shippingOrderId === order._id ? (
-                        <div className="bg-white border-2 border-indigo-200 rounded-xl p-4 w-full mt-1 shadow-sm">
-                          <p className="text-sm font-black text-indigo-700 mb-3 flex items-center gap-1.5">
+                        <div className="bg-white border-2 border-brand-200 rounded-xl p-4 w-full mt-1 shadow-sm">
+                          <p className="text-sm font-black text-brand-700 mb-3 flex items-center gap-1.5">
                             📦 Confirm Shipment via Shiprocket
                           </p>
 

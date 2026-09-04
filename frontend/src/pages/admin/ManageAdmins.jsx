@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 const EMPTY_FORM = { name: "", email: "", password: "", phone: "", adminRole: "subAdmin" };
 
 const AVATAR_GRADIENTS = [
-  "from-indigo-500 to-blue-600",
+  "from-brand-500 to-blue-600",
   "from-violet-500 to-purple-600",
   "from-emerald-500 to-teal-600",
   "from-amber-500 to-orange-500",
@@ -85,7 +85,7 @@ export default function ManageAdmins() {
       {showForm && (
         <div className="admin-card p-6 mb-6 animate-fade-in-up">
           <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
-            <span className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">🔐</span>
+            <span className="w-7 h-7 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center text-sm">🔐</span>
             Create New Admin Account
           </h2>
           <form onSubmit={handleCreate}>
@@ -126,7 +126,7 @@ export default function ManageAdmins() {
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Admin Role</p>
               <div className="flex flex-wrap gap-3">
                 {[
-                  { value: "subAdmin",   icon: "👤", label: "Sub Admin",   desc: "Limited access — cannot manage other admins", cls: "border-indigo-400 bg-indigo-50" },
+                  { value: "subAdmin",   icon: "👤", label: "Sub Admin",   desc: "Limited access — cannot manage other admins", cls: "border-brand-400 bg-brand-50" },
                   { value: "superAdmin", icon: "⭐", label: "Super Admin", desc: "Full access — can manage all admins and settings", cls: "border-amber-400 bg-amber-50" },
                 ].map(({ value, icon, label, desc, cls }) => (
                   <label
@@ -140,7 +140,7 @@ export default function ManageAdmins() {
                       onChange={() => setForm({ ...form, adminRole: value })} />
                     <span className="text-xl mt-0.5">{icon}</span>
                     <div>
-                      <p className={`font-bold text-sm ${form.adminRole === value ? (value === "superAdmin" ? "text-amber-800" : "text-indigo-800") : "text-slate-700"}`}>{label}</p>
+                      <p className={`font-bold text-sm ${form.adminRole === value ? (value === "superAdmin" ? "text-amber-800" : "text-brand-800") : "text-slate-700"}`}>{label}</p>
                       <p className="text-xs text-slate-400 mt-0.5 leading-snug">{desc}</p>
                     </div>
                   </label>
@@ -162,7 +162,7 @@ export default function ManageAdmins() {
           <span>Full access — can manage other admins</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span className="status-badge bg-indigo-100 text-indigo-700">👤 Sub Admin</span>
+          <span className="status-badge bg-brand-100 text-brand-700">👤 Sub Admin</span>
           <span>Limited access — cannot manage other admins</span>
         </div>
       </div>
@@ -171,8 +171,8 @@ export default function ManageAdmins() {
       {loading && !showForm ? (
         <div className="flex items-center justify-center py-24">
           <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-4 border-brand-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-brand-600 animate-spin" />
           </div>
         </div>
       ) : admins.length === 0 ? (
@@ -195,7 +195,7 @@ export default function ManageAdmins() {
                 {admins.map((admin) => {
                   const isSelf = admin._id === currentUser?._id;
                   return (
-                    <tr key={admin._id} className={`transition-colors ${isSelf ? "bg-indigo-50/40" : "hover:bg-slate-50/80"}`}>
+                    <tr key={admin._id} className={`transition-colors ${isSelf ? "bg-brand-50/40" : "hover:bg-slate-50/80"}`}>
                       <td className="td">
                         <div className="flex items-center gap-2.5">
                           <div className={`w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br ${avatarGradient(admin.name)} text-white flex items-center justify-center font-bold text-sm shadow-sm`}>
@@ -204,7 +204,7 @@ export default function ManageAdmins() {
                           <div>
                             <p className="font-semibold text-slate-800 leading-tight">{admin.name}</p>
                             {isSelf && (
-                              <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">You</span>
+                              <span className="text-xs font-semibold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">You</span>
                             )}
                           </div>
                         </div>
@@ -215,7 +215,7 @@ export default function ManageAdmins() {
                         <span className={`status-badge ${
                           admin.adminRole === "superAdmin"
                             ? "bg-amber-100 text-amber-700"
-                            : "bg-indigo-100 text-indigo-700"
+                            : "bg-brand-100 text-brand-700"
                         }`}>
                           {admin.adminRole === "superAdmin" ? "⭐ Super Admin" : "👤 Sub Admin"}
                         </span>
@@ -230,13 +230,13 @@ export default function ManageAdmins() {
                           <div className="flex gap-2 flex-wrap">
                             <button
                               onClick={() => handleRoleChange(admin._id, admin.adminRole === "superAdmin" ? "subAdmin" : "superAdmin")}
-                              className="admin-btn bg-indigo-50 hover:bg-indigo-100 text-indigo-700 !py-1.5 !px-3 !text-xs"
+                              className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-700 !py-1.5 !px-3 !text-xs"
                             >
                               {admin.adminRole === "superAdmin" ? "↓ Make Sub Admin" : "↑ Make Super Admin"}
                             </button>
                             <button
                               onClick={() => handleRemove(admin)}
-                              className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !py-1.5 !px-3 !text-xs"
+                              className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-600 !py-1.5 !px-3 !text-xs"
                             >
                               Remove
                             </button>

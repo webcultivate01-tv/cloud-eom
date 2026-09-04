@@ -2,7 +2,7 @@ const path = require("path");
 const {
   UPLOADS_ROOT,
   ALLOWED_FOLDERS,
-  ORIGINAL_QUALITY_FOLDERS,
+  PROTECTED_FOLDERS,
   deleteLocalImage,
 } = require("./localUpload");
 
@@ -57,7 +57,7 @@ const toUploadsPath = (imageUrl) => {
 // order keeps it as its record of what was ordered. Nothing in the automatic
 // cleanup is ever allowed to touch it.
 const isProtectedPath = (relative) =>
-  ORIGINAL_QUALITY_FOLDERS.includes(String(relative).split("/")[0]);
+  PROTECTED_FOLDERS.includes(String(relative).split("/")[0]);
 
 // Is this exact URL still stored on any document? Matching is exact-string:
 // a false "yes" only leaves an orphan file behind (harmless), while a false

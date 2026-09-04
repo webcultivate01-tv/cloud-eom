@@ -70,6 +70,11 @@ const orderSchema = new mongoose.Schema(
     // Set when admin marks the order as Delivered — used for 7-day replacement window
     deliveredAt: { type: Date, default: null },
 
+    // Set once the customer's print artwork has been compressed for long-term
+    // storage, which happens automatically on delivery. The full-resolution file
+    // is only needed up to the moment the order ships.
+    artworkArchivedAt: { type: Date, default: null },
+
     // Cancellation OTP (cleared after use)
     cancelOTP:       { type: String, default: null },
     cancelOTPExpiry: { type: Date,   default: null },

@@ -11,97 +11,125 @@ export default function Cart() {
   const { user } = useSelector((s) => s.auth);
 
   if (items.length === 0) return (
-    <div className="bg-gray-50 min-h-[70vh] flex flex-col items-center justify-center px-6 py-20">
-      <div className="bg-transparent text-center w-full flex flex-col items-center">
-        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-          <ShoppingCart className="w-12 h-12 text-gray-300" />
-        </div>
-        <h2 className="text-2xl font-black text-gray-900 mb-3">Your cart is empty</h2>
-        <p className="text-gray-500 text-base mb-8">Looks like you haven't added any products yet.</p>
-        <Link to="/products" className="inline-flex items-center gap-2 bg-red-700 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-red-800 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
-          Start Shopping
-          <ArrowRight className="w-5 h-5" />
-        </Link>
-      </div>
+    <div className="bg-[#f7fafc] min-h-[50vh] flex flex-col items-center justify-center px-6 py-16 text-center">
+      <span className="w-20 h-20 rounded-full bg-white ring-1 ring-slate-200 shadow-[0_16px_40px_-24px_rgba(0,0,0,0.4)] flex items-center justify-center mb-6">
+        <ShoppingCart className="w-7 h-7 text-brand-700" />
+      </span>
+      <h2 className="font-display text-2xl md:text-[28px] font-black text-slate-900 tracking-[-0.02em] mb-2">Your cart is empty</h2>
+      <p className="text-slate-500 text-[13px] max-w-xs leading-relaxed">Looks like you haven't added any products yet.</p>
+      <Link to="/products"
+        className="mt-7 inline-flex items-center gap-2 px-7 py-3 rounded-full bg-slate-900 text-white text-[12px] font-bold uppercase tracking-[0.14em] no-underline transition-all duration-200 hover:bg-brand-700">
+        Start Shopping
+        <ArrowRight className="w-4 h-4" />
+      </Link>
     </div>
   );
 
   return (
-    <div className="bg-gray-50 min-h-[80vh]">
-      <div className="w-full mx-auto px-4 md:px-10 py-10 pb-20">
-        <div className="flex items-center gap-4 mb-10 pb-6 border-b border-gray-200">
-          <ShoppingCart className="w-8 h-8 text-red-700" />
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 m-0">Shopping Cart</h1>
-          <span className="bg-white border border-gray-200 text-gray-600 text-sm font-bold px-3 py-1 rounded-full shadow-sm">
-            {items.length} {items.length === 1 ? "item" : "items"}
-          </span>
-        </div>
+    <div className="bg-[#f7fafc] min-h-[80vh]">
+      {/* ── Header ── */}
+      <header className="bg-white border-b border-slate-200/70">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 md:py-5 flex items-center justify-between gap-4">
+          <div className="flex items-baseline gap-3 min-w-0">
+            <h1 className="font-display text-[21px] md:text-[25px] font-black text-slate-900 tracking-[-0.02em] leading-none m-0">
+              Cart
+            </h1>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              {items.length} {items.length === 1 ? "item" : "items"}
+            </span>
+          </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-          {/* Items */}
-          <div className="flex-1 min-w-0 w-full bg-transparent p-2 md:p-6">
-            <div className="hidden md:flex items-center gap-4 pb-4 border-b border-gray-100 text-xs font-black text-gray-400 uppercase tracking-widest px-4">
+          <Link to="/products"
+            className="hidden sm:inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 no-underline transition-colors hover:text-brand-700">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Continue Shopping
+          </Link>
+        </div>
+      </header>
+
+      <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 md:py-8 pb-20">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
+          {/* ── Items ── */}
+          <div className="flex-1 min-w-0 w-full bg-white rounded-[20px] ring-1 ring-slate-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
+            <div className="hidden md:flex items-center gap-4 px-6 py-3 border-b border-slate-200/70 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
               <span className="flex-[2]">Product</span>
-              <span className="w-32 text-center">Quantity</span>
-              <span className="w-28 text-right">Total</span>
-              <span className="w-12" />
+              <span className="w-28 text-center">Quantity</span>
+              <span className="w-24 text-right">Total</span>
+              <span className="w-10" />
             </div>
-            
-            <div className="flex flex-col divide-y divide-gray-100">
-              {items.map((item) => {
+
+            <div className="flex flex-col divide-y divide-slate-200/60">
+              {items.map((item, i) => {
                 const key = makeCartKey(item._id, item.size);
                 return (
-                <div key={key} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 hover:bg-gray-50 transition-colors rounded-2xl">
-                  <div className="flex gap-4 flex-[2] min-w-0 w-full sm:w-auto">
-                    <img src={item.image || "https://placehold.co/100x100/f5f5f5/999?text=Item"} alt={item.name}
-                      className="w-24 h-24 object-cover rounded-2xl bg-gray-100 cursor-pointer shrink-0 border border-gray-200"
-                      onClick={() => navigate(`/products/${item._id}`)} />
-                    <div className="min-w-0 flex flex-col justify-center">
-                      <p className="text-gray-900 font-bold text-base cursor-pointer mb-1 truncate hover:text-red-700 transition-colors" onClick={() => navigate(`/products/${item._id}`)}>{item.name}</p>
-                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <p className="text-gray-500 text-sm font-medium m-0">{item.category}</p>
+                <div key={key}
+                  className="group flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 px-4 md:px-6 py-3 transition-colors duration-200 hover:bg-slate-50/70 animate-fade-in-up"
+                  style={{ animationDelay: `${Math.min(i, 8) * 40}ms`, animationFillMode: "both" }}>
+                  <div className="flex gap-3.5 flex-[2] min-w-0 w-full sm:w-auto">
+                    <div
+                      className="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-[#f1f5f8] ring-1 ring-slate-200/70 cursor-pointer transition-all duration-300 group-hover:ring-slate-300 group-hover:shadow-[0_8px_18px_-12px_rgba(0,0,0,0.45)]"
+                      onClick={() => navigate(`/products/${item._id}`)}>
+                      <img src={item.image || "https://placehold.co/100x100/f5f5f5/999?text=Item"} alt={item.name}
+                        className="w-full h-full object-cover transition-transform duration-[600ms] group-hover:scale-[1.05]" />
+                    </div>
+
+                    <div className="min-w-0 flex flex-col justify-center gap-1">
+                      <p className="font-display text-slate-900 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-[-0.01em] line-clamp-1 cursor-pointer m-0 transition-colors hover:text-brand-700"
+                        onClick={() => navigate(`/products/${item._id}`)}>
+                        {item.name}
+                      </p>
+
+                      <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase tracking-[0.16em]">{item.category}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                        <span className="text-slate-500 text-[12px] font-semibold tabular-nums">
+                          ₹{item.price.toLocaleString()} <span className="text-slate-400 font-normal">each</span>
+                        </span>
                         {item.size && (
-                          <span className="bg-red-50 text-red-700 border border-red-100 text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                            Size: {item.size}
+                          <span className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-brand-700 bg-brand-50 ring-1 ring-brand-100 px-2 py-0.5 rounded-full">
+                            {item.size}
+                          </span>
+                        )}
+                        {item.requiresCustomImage && !item.uploadedImage && (
+                          <span className="inline-flex items-center gap-1 text-[9.5px] font-bold uppercase tracking-[0.14em] text-amber-700 bg-amber-50 ring-1 ring-amber-100 px-2 py-0.5 rounded-full">
+                            <AlertCircle className="w-3 h-3" /> Image required
+                          </span>
+                        )}
+                        {item.uploadedImage && (
+                          <span className="inline-flex items-center gap-1 text-[9.5px] font-bold uppercase tracking-[0.14em] text-emerald-700 bg-emerald-50 ring-1 ring-emerald-100 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 className="w-3 h-3" /> Image ready
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-600 text-sm font-semibold">₹{item.price.toLocaleString()} <span className="text-gray-400 font-normal">each</span></p>
-
-                      {item.requiresCustomImage && !item.uploadedImage && (
-                        <div className="flex items-center gap-1.5 mt-2 text-orange-600 bg-orange-50 px-2 py-1 rounded text-xs font-bold w-fit border border-orange-100">
-                          <AlertCircle className="w-3 h-3" /> Custom image required
-                        </div>
-                      )}
-                      {item.uploadedImage && (
-                        <div className="flex items-center gap-1.5 mt-2 text-green-700 bg-green-50 px-2 py-1 rounded text-xs font-bold w-fit border border-green-100">
-                          <CheckCircle2 className="w-3 h-3" /> Custom image ready
-                        </div>
-                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-6 sm:gap-0 mt-2 sm:mt-0">
-                    <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden w-32 bg-white shadow-sm">
-                      <button className="bg-gray-50 border-r border-gray-200 w-10 h-10 flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-100 hover:text-red-700 transition-colors active:bg-gray-200"
+                  <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-4">
+                    <div className="flex items-center justify-center bg-white rounded-full ring-1 ring-slate-200 overflow-hidden transition-shadow duration-200 group-hover:ring-slate-300 sm:w-28">
+                      <button aria-label="Decrease quantity"
+                        className="w-9 h-8 flex items-center justify-center bg-transparent border-none cursor-pointer text-slate-500 hover:text-brand-700 transition-colors"
                         onClick={() => dispatch(updateQuantity({ key, quantity: Math.max(1, item.quantity - 1) }))}>
-                        <Minus className="w-4 h-4" />
+                        <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="flex-1 text-center font-bold text-sm text-gray-900">{item.quantity}</span>
-                      <button className="bg-gray-50 border-l border-gray-200 w-10 h-10 flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-100 hover:text-red-700 transition-colors active:bg-gray-200"
+                      <span className="w-9 text-center text-[14px] font-bold text-slate-900 tabular-nums">{item.quantity}</span>
+                      <button aria-label="Increase quantity"
+                        className="w-9 h-8 flex items-center justify-center bg-transparent border-none cursor-pointer text-slate-500 hover:text-brand-700 transition-colors"
                         onClick={() => dispatch(updateQuantity({ key, quantity: item.quantity + 1 }))}>
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
-                    <p className="sm:w-28 sm:text-right font-black text-gray-900 text-lg sm:text-base">
+                    <p className="font-display text-slate-900 text-[17px] sm:text-[16px] font-black tabular-nums m-0 sm:w-24 sm:text-right">
                       ₹{(item.price * item.quantity).toLocaleString()}
                     </p>
 
-                    <button className="sm:w-12 flex justify-end text-gray-400 hover:text-red-700 bg-transparent border-none cursor-pointer transition-colors p-2"
-                      onClick={() => dispatch(removeFromCart(key))} title="Remove item">
-                      <X className="w-5 h-5" />
-                    </button>
+                    <div className="sm:w-10 flex justify-end">
+                      <button aria-label="Remove item" title="Remove item"
+                        className="w-8 h-8 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer text-slate-300 hover:text-brand-700 hover:bg-brand-50 transition-all duration-200 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+                        onClick={() => dispatch(removeFromCart(key))}>
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 );
@@ -109,38 +137,43 @@ export default function Cart() {
             </div>
           </div>
 
-          {/* Summary */}
-          <div className="w-full lg:w-[340px] bg-transparent p-6 lg:sticky lg:top-28 shrink-0">
-            <h2 className="text-lg font-black text-gray-900 mb-6 pb-4 border-b border-gray-100">Order Summary</h2>
-            
-            <div className="flex flex-col gap-4 mb-6">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500 text-sm font-medium">Subtotal</span>
-                <span className="text-gray-900 font-bold text-sm">₹{total.toLocaleString()}</span>
+          {/* ── Summary ── */}
+          <div className="w-full lg:w-[310px] shrink-0 lg:sticky lg:top-28">
+            <div className="bg-white rounded-[18px] ring-1 ring-slate-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-5">
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 m-0 mb-4">
+                Summary
+              </h2>
+
+              <div className="flex flex-col gap-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 text-[12.5px]">Subtotal</span>
+                  <span className="text-slate-900 font-semibold text-[12.5px] tabular-nums">₹{total.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 text-[12.5px]">Shipping</span>
+                  <span className="text-emerald-700 font-bold text-[11px] uppercase tracking-[0.12em]">Free</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500 text-sm font-medium">Shipping</span>
-                <span className="text-green-700 font-bold text-sm bg-green-50 px-2 py-0.5 rounded border border-green-100">FREE</span>
+
+              <div className="border-t border-slate-200/70 mt-4 pt-4 flex items-baseline justify-between gap-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-900">Total</span>
+                <span className="font-display text-brand-700 text-[22px] font-black leading-none tracking-tight tabular-nums">
+                  ₹{total.toLocaleString()}
+                </span>
               </div>
+
+              <button onClick={() => user ? navigate("/checkout") : navigate("/login")}
+                className="w-full inline-flex items-center justify-center gap-2 mt-5 py-3 rounded-full bg-brand-700 text-white border-none text-[11.5px] font-bold uppercase tracking-[0.14em] cursor-pointer transition-all duration-200 hover:bg-brand-800 hover:shadow-[0_10px_24px_-12px_rgba(10, 91, 130,0.7)]">
+                {user ? "Checkout" : "Login to Checkout"}
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <Link to="/products"
+                className="flex items-center justify-center gap-1.5 mt-3.5 text-slate-400 text-[11px] font-semibold no-underline transition-colors hover:text-brand-700">
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Continue Shopping
+              </Link>
             </div>
-            
-            <div className="h-px bg-gray-200 mb-4" />
-            
-            <div className="flex justify-between items-center mb-8">
-              <span className="font-black text-gray-900 text-base">Total</span>
-              <span className="text-red-700 font-black text-2xl">₹{total.toLocaleString()}</span>
-            </div>
-            
-            <button onClick={() => user ? navigate("/checkout") : navigate("/login")}
-              className="w-full py-4 bg-red-700 hover:bg-red-800 text-white rounded-xl font-bold text-base cursor-pointer border-none transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2">
-              {user ? "Proceed to Checkout" : "Login to Checkout"}
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            
-            <Link to="/products" className="flex items-center justify-center gap-2 text-gray-500 font-semibold text-sm mt-6 hover:text-red-700 transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              Continue Shopping
-            </Link>
           </div>
         </div>
       </div>

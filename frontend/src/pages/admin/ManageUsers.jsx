@@ -4,7 +4,7 @@ import { fetchAllUsers, toggleBlockUser, deleteUser } from "../../features/users
 import { toast } from "react-toastify";
 
 const AVATAR_GRADIENTS = [
-  "from-indigo-500 to-blue-600",
+  "from-brand-500 to-blue-600",
   "from-violet-500 to-purple-600",
   "from-emerald-500 to-teal-600",
   "from-amber-500 to-orange-500",
@@ -68,8 +68,8 @@ export default function ManageUsers() {
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-4 border-brand-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-brand-600 animate-spin" />
           </div>
         </div>
       ) : filtered.length === 0 ? (
@@ -103,8 +103,8 @@ export default function ManageUsers() {
                     <td className="td text-slate-500">{user.email}</td>
                     <td className="td text-slate-500">{user.phone || <span className="text-slate-300">—</span>}</td>
                     <td className="td">
-                      <span className={`status-badge ${user.isBlocked ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-700"}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 inline-block ${user.isBlocked ? "bg-red-400" : "bg-emerald-400"}`} />
+                      <span className={`status-badge ${user.isBlocked ? "bg-brand-100 text-brand-600" : "bg-emerald-100 text-emerald-700"}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 inline-block ${user.isBlocked ? "bg-brand-400" : "bg-emerald-400"}`} />
                         {user.isBlocked ? "Blocked" : "Active"}
                       </span>
                     </td>
@@ -125,7 +125,7 @@ export default function ManageUsers() {
                         </button>
                         <button
                           onClick={() => handleDelete(user)}
-                          className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !py-1.5 !px-3 !text-xs"
+                          className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-600 !py-1.5 !px-3 !text-xs"
                         >
                           Delete
                         </button>

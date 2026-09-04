@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import logoImg from "../assets/Cloud Graphics Logo New White.png";
+import Reveal, { RevealGroup } from "../components/Reveal";
 
-const BRAND = "#B51D0F";
+const BRAND = "#0672a7";
 
 /* ── SVG Icons ── */
 const IconPrint = () => (
@@ -88,70 +88,91 @@ export default function About() {
   return (
     <div className="bg-gray-50 min-h-screen" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
 
-      {/* ── HERO ── */}
-      <div className="relative overflow-hidden" style={{ background: "#1a0a08" }}>
-        <div className="absolute top-0 left-0 right-0 h-1" style={{ background: BRAND, zIndex: 3 }} />
+      {/* ── HERO — light, kept short so the story starts above the fold ── */}
+      <section
+        className="relative overflow-hidden flex flex-col justify-center"
+        style={{
+          minHeight: "auto",
+          background: "linear-gradient(180deg, #f4fafd 0%, #ffffff 100%)",
+        }}
+      >
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(circle at 20% 20%, rgba(181,29,15,0.35), transparent 55%), radial-gradient(circle at 85% 80%, rgba(181,29,15,0.22), transparent 50%)",
+              "radial-gradient(circle at 18% 10%, rgba(6,114,167,0.10), transparent 55%), radial-gradient(circle at 88% 85%, rgba(41,163,220,0.08), transparent 52%)",
+          }}
+        />
+        {/* Faint artboard grid, faded off at the edges */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(6,114,167,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(6,114,167,0.10) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage: "radial-gradient(circle at 50% 40%, #000 8%, transparent 70%)",
+            WebkitMaskImage: "radial-gradient(circle at 50% 40%, #000 8%, transparent 70%)",
           }}
         />
 
-        <div className="relative max-w-5xl mx-auto px-6 py-14 md:py-20 text-center" style={{ zIndex: 2 }}>
-          <img src={logoImg} alt="Cloud Graphics" className="h-16 md:h-20 w-auto mx-auto mb-6" />
-
-          <div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
-            style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}
-          >
-            <div className="w-2 h-2 rounded-full" style={{ background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
-            <span className="text-white text-[11px] font-bold uppercase" style={{ letterSpacing: "0.12em" }}>
-              Printing From Amravati
-            </span>
-          </div>
-
-          <h1
-            className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-5 tracking-tight leading-tight"
+        <div className="relative w-full max-w-5xl mx-auto px-6 pt-8 pb-9 md:pt-10 md:pb-11 text-center flex-1 flex flex-col justify-center" style={{ zIndex: 2 }}>
+          <Reveal
+            as="h1"
+            className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.05]"
             style={{ fontFamily: "'Playfair Display', serif" }}
           >
             We Print What<br />
-            <span style={{ color: "#ff6b5a" }}>You Imagine</span>
-          </h1>
+            <span style={{ color: BRAND }}>You Imagine</span>
+          </Reveal>
 
-          <p className="text-white/90 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+          <Reveal as="p" delay={120} className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
             Cloud Graphics is a custom printing studio in Amravati, Maharashtra. From a single
             personalised mug to a full corporate merchandise run, we handle design, print and
             delivery under one roof — so your idea reaches you finished, not half-done.
-          </p>
-        </div>
+          </Reveal>
 
-        {/* Stats strip */}
-        <div className="relative border-t border-white/10" style={{ zIndex: 2 }}>
-          <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-4">
+          <Reveal delay={240} className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
+            <Link
+              to="/products"
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm text-white no-underline transition-transform hover:-translate-y-0.5"
+              style={{ background: BRAND, boxShadow: "0 4px 18px rgba(6,114,167,0.28)" }}
+            >
+              Explore Products <IconArrow />
+            </Link>
+            <Link
+              to="/services"
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm no-underline bg-white transition-transform hover:-translate-y-0.5"
+              style={{ color: BRAND, border: "1px solid #cfe7f5", boxShadow: "0 2px 10px rgba(15,23,42,0.05)" }}
+            >
+              Our Services
+            </Link>
+          </Reveal>
+        </div>
+        {/* Stats strip — sits inside the hero */}
+        <div className="relative w-full border-t border-gray-200/70" style={{ zIndex: 2 }}>
+          <RevealGroup delay={320} stagger={90} className="max-w-5xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-4">
             {STATS.map(({ value, label }) => (
               <div
                 key={label}
-                className="text-center py-5 px-2 border-r border-b sm:border-b-0 border-white/10 last:border-r-0 even:border-r-0 sm:even:border-r"
+                className="text-center py-5 px-2 border-r border-b sm:border-b-0 border-gray-200/70 last:border-r-0 even:border-r-0 sm:even:border-r"
               >
-                <p className="text-xl md:text-2xl font-black text-white leading-none">{value}</p>
+                <p className="text-xl md:text-2xl font-black leading-none" style={{ color: BRAND }}>{value}</p>
                 <p
-                  className="text-[10px] md:text-xs uppercase mt-1.5"
-                  style={{ color: "rgba(255,255,255,0.6)", letterSpacing: "0.1em" }}
+                  className="text-[10px] md:text-xs uppercase mt-1.5 text-gray-400 font-semibold"
+                  style={{ letterSpacing: "0.1em" }}
                 >
                   {label}
                 </p>
               </div>
             ))}
-          </div>
+          </RevealGroup>
         </div>
-      </div>
+      </section>
 
       {/* ── OUR STORY ── */}
       <div className="max-w-5xl mx-auto px-5 md:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-10 items-start">
-          <div>
+          <Reveal variant="left">
             <p className="text-[11px] font-bold uppercase mb-3" style={{ color: BRAND, letterSpacing: "0.15em" }}>
               Our Story
             </p>
@@ -179,10 +200,10 @@ export default function About() {
                 job gets the same attention.
               </p>
             </div>
-          </div>
+          </Reveal>
 
           {/* What we print */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <Reveal variant="right" delay={120} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <p className="text-[11px] font-bold uppercase mb-4 text-gray-400" style={{ letterSpacing: "0.15em" }}>
               What We Print
             </p>
@@ -191,7 +212,7 @@ export default function About() {
                 <span
                   key={item}
                   className="text-xs font-semibold px-3 py-1.5 rounded-full"
-                  style={{ background: "#fef2f2", color: BRAND }}
+                  style={{ background: "#eff8fd", color: BRAND }}
                 >
                   {item}
                 </span>
@@ -204,14 +225,14 @@ export default function About() {
             >
               Browse all products <IconArrow />
             </Link>
-          </div>
+          </Reveal>
         </div>
       </div>
 
       {/* ── WHAT WE STAND FOR ── */}
       <div className="bg-white border-y border-gray-100">
         <div className="max-w-5xl mx-auto px-5 md:px-8 py-12 md:py-16">
-          <div className="text-center mb-10">
+          <Reveal className="text-center mb-10">
             <p className="text-[11px] font-bold uppercase mb-3" style={{ color: BRAND, letterSpacing: "0.15em" }}>
               What We Stand For
             </p>
@@ -221,14 +242,14 @@ export default function About() {
             >
               Four things we do not cut corners on
             </h2>
-          </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <RevealGroup stagger={110} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {VALUES.map(({ Icon, title, desc }) => (
               <div key={title} className="flex gap-4 p-5 rounded-2xl border border-gray-100 bg-gray-50/60">
                 <div
                   className="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ background: "#fde8e6", color: BRAND }}
+                  style={{ background: "#daeffa", color: BRAND }}
                 >
                   <Icon />
                 </div>
@@ -238,13 +259,13 @@ export default function About() {
                 </div>
               </div>
             ))}
-          </div>
+          </RevealGroup>
         </div>
       </div>
 
       {/* ── FIND US ── */}
       <div className="max-w-5xl mx-auto px-5 md:px-8 py-12 md:py-16">
-        <div className="text-center mb-10">
+        <Reveal className="text-center mb-10">
           <p className="text-[11px] font-bold uppercase mb-3" style={{ color: BRAND, letterSpacing: "0.15em" }}>
             Find Us
           </p>
@@ -254,14 +275,14 @@ export default function About() {
           >
             Come by, or just call
           </h2>
-        </div>
+        </Reveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <RevealGroup stagger={100} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {CONTACT_INFO.map(({ Icon, label, value }) => (
             <div key={label} className="flex items-start gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div
                 className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
-                style={{ background: "#fde8e6", color: BRAND }}
+                style={{ background: "#daeffa", color: BRAND }}
               >
                 <Icon />
               </div>
@@ -273,47 +294,48 @@ export default function About() {
               </div>
             </div>
           ))}
-        </div>
+        </RevealGroup>
       </div>
 
       {/* ── CTA ── */}
       <div className="px-5 md:px-8 pb-14">
-        <div
-          className="max-w-5xl mx-auto rounded-3xl px-6 py-10 md:py-14 text-center overflow-hidden relative"
-          style={{ background: "#1a0a08" }}
+        <Reveal
+          variant="zoom"
+          className="max-w-5xl mx-auto rounded-3xl px-6 py-10 md:py-14 text-center overflow-hidden relative bg-white"
+          style={{ border: "1px solid #e3f0f8", boxShadow: "0 8px 30px rgba(15,23,42,0.05)" }}
         >
           <div
             className="absolute inset-0"
-            style={{ background: "radial-gradient(circle at 50% 0%, rgba(181,29,15,0.4), transparent 60%)" }}
+            style={{ background: "radial-gradient(circle at 50% 0%, rgba(6,114,167,0.10), transparent 62%)" }}
           />
           <div className="relative" style={{ zIndex: 2 }}>
             <h2
-              className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight"
+              className="text-2xl md:text-3xl font-black text-gray-900 mb-3 tracking-tight"
               style={{ fontFamily: "'Playfair Display', serif" }}
             >
               Got something in mind?
             </h2>
-            <p className="text-white/80 text-sm md:text-base max-w-lg mx-auto mb-8 leading-relaxed">
+            <p className="text-gray-600 text-sm md:text-base max-w-lg mx-auto mb-8 leading-relaxed">
               Tell us what you need printed and we will come back with options, pricing and a timeline.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 to="/products"
                 className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm text-white no-underline"
-                style={{ background: BRAND, boxShadow: "0 4px 20px rgba(181,29,15,0.5)" }}
+                style={{ background: BRAND, boxShadow: "0 4px 18px rgba(6,114,167,0.28)" }}
               >
                 Start Designing <IconArrow />
               </Link>
               <Link
                 to="/contact"
-                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm text-white no-underline"
-                style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.25)" }}
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm no-underline bg-white"
+                style={{ color: BRAND, border: "1px solid #cfe7f5" }}
               >
                 Talk To Us
               </Link>
             </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </div>
   );
