@@ -4,6 +4,9 @@ const Product = require("../models/Product");
 const User = require("../models/User");
 const { sendCancelOTP, sendOrderConfirmation, sendOrderStatusUpdate } = require("../config/mailer");
 const { archiveOrderArtwork } = require("../config/imageArchive");
+const { ensureInvoiceNumber, isBillable } = require("./invoiceController");
+const { renderInvoiceBuffer, invoiceFileName } = require("../config/invoice");
+const { nextOrderNumber } = require("../models/Counter");
 
 const getRazorpay = () =>
   new Razorpay({
@@ -20,6 +23,17 @@ const createOrder = async (req, res) => {
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "No items in order" });
+    }
+
+    /* This endpoint books Cash-on-Delivery orders only. An online order is
+       created by POST /api/payment/verify, after the Razorpay signature has
+       been checked — so an order that is meant to be paid for online can
+       never exist unless the money actually arrived. Without this guard the
+       endpoint would happily mint an unpaid "razorpay" order. */
+    if (paymentMethod === "razorpay") {
+      return res.status(400).json({
+        message: "Online orders are confirmed only after payment succeeds. Please complete the payment to place this order.",
+      });
     }
 
     // Build order items with current prices from DB
@@ -71,11 +85,12 @@ const createOrder = async (req, res) => {
 
     const order = await Order.create({
       user: req.user._id,
+      orderNumber: await nextOrderNumber(),
       items: orderItems,
       shippingAddress,
       totalPrice,
       customerNote,
-      paymentMethod: paymentMethod === "razorpay" ? "razorpay" : "cod",
+      paymentMethod: "cod",
       paymentStatus: "pending",
     });
 
@@ -135,12 +150,23 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// @desc    Get all orders (admin) with optional date filter
-// @route   GET /api/orders?filter=today|3days|7days|30days&from=DATE&to=DATE
+/* Which statuses belong to each tab of the admin Orders screen.
+
+   "active" is the working queue — everything still needing attention.
+   Delivered and cancelled orders leave that queue and live in their own
+   tabs, so a finished order never pads the list an admin works from. */
+const ORDER_GROUPS = {
+  active:    ["Pending", "Processing", "Printing", "Shipped"],
+  delivered: ["Delivered"],
+  cancelled: ["Cancelled"],
+};
+
+// @desc    Get all orders (admin) with optional date/status filters
+// @route   GET /api/orders?group=active|delivered|cancelled&filter=today|3days|7days|30days&from=DATE&to=DATE
 // @access  Admin
 const getAllOrders = async (req, res) => {
   try {
-    const { filter, from, to, status } = req.query;
+    const { filter, from, to, status, group } = req.query;
     const query = {};
 
     // Date range filter
@@ -164,14 +190,48 @@ const getAllOrders = async (req, res) => {
       }
     }
 
-    // Status filter
-    if (status) query.status = status;
+    /* Group first, then the status dropdown narrows within it. A status
+       outside the current group would return nothing, so it is ignored
+       rather than silently emptying the list. */
+    const groupStatuses = ORDER_GROUPS[group];
+    if (groupStatuses) {
+      query.status = status && groupStatuses.includes(status)
+        ? status
+        : { $in: groupStatuses };
+    } else if (status) {
+      query.status = status;
+    }
+
+    /* Delivered and cancelled orders are most useful in the order they
+       finished, not the order they were placed. */
+    const sort = group === "delivered" ? { deliveredAt: -1, createdAt: -1 } : { createdAt: -1 };
 
     const orders = await Order.find(query)
       .populate("user", "name email phone")
       .populate("items.product", "name category")
-      .sort({ createdAt: -1 });
+      .sort(sort);
     res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Order counts per admin tab, for the badges on the Orders screen
+// @route   GET /api/orders/admin/group-counts
+// @access  Admin
+const getOrderGroupCounts = async (req, res) => {
+  try {
+    const rows = await Order.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]);
+    const byStatus = Object.fromEntries(rows.map((r) => [r._id, r.count]));
+
+    const counts = Object.fromEntries(
+      Object.entries(ORDER_GROUPS).map(([group, statuses]) => [
+        group,
+        statuses.reduce((sum, s) => sum + (byStatus[s] || 0), 0),
+      ])
+    );
+
+    res.json({ ...counts, byStatus });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -180,9 +240,11 @@ const getAllOrders = async (req, res) => {
 // @desc    Update order status (admin)
 // @route   PUT /api/orders/:id/status
 // @access  Admin
+const PAYMENT_COLLECTION_METHODS = ["cash", "upi", "card"];
+
 const updateOrderStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, paymentCollectedVia } = req.body;
     const validStatuses = ["Pending", "Processing", "Printing", "Shipped", "Delivered", "Cancelled"];
 
     if (!validStatuses.includes(status)) {
@@ -201,7 +263,27 @@ const updateOrderStatus = async (req, res) => {
     }
 
     const updateFields = { status };
-    if (status === "Delivered") updateFields.deliveredAt = new Date();
+
+    if (status === "Delivered") {
+      /* Delivery settles a COD order: the courier hands over the parcel and
+         collects the money at the same moment. But "collected" isn't good
+         enough for the books — the admin must say how it came in (cash, UPI
+         or card), so the invoice and the payments report can record it
+         accurately rather than lumping every COD sale together as cash. */
+      if (existing.paymentMethod === "cod" && existing.paymentStatus === "pending") {
+        if (!PAYMENT_COLLECTION_METHODS.includes(paymentCollectedVia)) {
+          return res.status(400).json({
+            message: "Record how the payment was collected (Cash, UPI or Card) before marking this order Delivered.",
+          });
+        }
+        updateFields.paymentStatus = "paid";
+        updateFields.paidAt = new Date();
+        updateFields.paymentCollectedVia = paymentCollectedVia;
+      }
+
+      updateFields.deliveredAt = new Date();
+    }
+
     // Track admin cancellation
     if (status === "Cancelled") updateFields.cancelledBy = "admin";
 
@@ -209,7 +291,9 @@ const updateOrderStatus = async (req, res) => {
       req.params.id,
       updateFields,
       { new: true }
-    ).populate("user", "name email");
+    )
+      .populate("user", "name email phone")
+      .populate("items.product", "image");
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -223,6 +307,25 @@ const updateOrderStatus = async (req, res) => {
       await archiveOrderArtwork(order);
     }
 
+    /* The bill is raised at the moment of delivery, which is when the sale
+       is complete and the money is settled either way. Issuing it here —
+       rather than on the first download — means the invoice number, the
+       customer's copy and the GST report all appear at the same instant.
+       A failure to number must not undo a delivery, so it is contained. */
+    let invoiceAttachment = [];
+    if (status === "Delivered" && isBillable(order)) {
+      try {
+        await ensureInvoiceNumber(order);
+        invoiceAttachment = [{
+          filename: invoiceFileName(order),
+          content: await renderInvoiceBuffer(order),
+          contentType: "application/pdf",
+        }];
+      } catch (err) {
+        console.error("Invoice generation failed for order", order._id.toString(), err.message);
+      }
+    }
+
     // Send status update email to the customer (non-blocking)
     try {
       if (order.user?.email) {
@@ -230,9 +333,11 @@ const updateOrderStatus = async (req, res) => {
           toEmail: order.user.email,
           toName: order.user.name,
           orderId: order._id.toString(),
+          orderNumber: order.orderNumber,
           status,
           totalPrice: order.totalPrice,
           items: order.items,
+          attachments: invoiceAttachment,
         });
       }
     } catch (_) {}
@@ -306,6 +411,7 @@ const requestCancelOTP = async (req, res) => {
       toEmail: order.user.email,
       toName: order.user.name,
       orderId: order._id.toString(),
+      orderNumber: order.orderNumber,
       otp,
     });
 
@@ -382,6 +488,7 @@ module.exports = {
   getMyOrders,
   getOrderById,
   getAllOrders,
+  getOrderGroupCounts,
   updateOrderStatus,
   getDashboardStats,
   requestCancelOTP,

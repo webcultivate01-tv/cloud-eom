@@ -1,4 +1,6 @@
+const fs = require("fs");
 const nodemailer = require("nodemailer");
+const { COMPANY, BRAND, LOGO_WHITE } = require("./company");
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -10,428 +12,535 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const header = `
-  <div style="background:#c41230;padding:20px 28px;">
-    <h2 style="color:#fff;margin:0;font-size:1.2rem;">☁️ Cloud Graphics Amravati</h2>
-  </div>`;
+const FROM = () => `"${COMPANY.name}" <${process.env.SMTP_USER}>`;
+const SITE = () => process.env.FRONTEND_URL || "http://localhost:5173";
 
-const footer = `
-  <div style="background:#f7f7f7;padding:14px 28px;text-align:center;">
-    <p style="color:#bbb;font-size:0.75rem;margin:0;">© 2025 Cloud Graphics Amravati. All rights reserved.</p>
-  </div>`;
+/* ══════════════════════════════════════════════════════════════
+   TEMPLATE
 
-const wrap = (body) =>
-  `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;">${header}<div style="padding:28px;">${body}</div>${footer}</div>`;
+   One shell for every message the system sends, so an OTP and a
+   dispatch notice arrive looking like the same company wrote them.
 
-const sendCancelOTP = async ({ toEmail, toName, orderId, otp }) => {
-  const shortId = orderId.slice(-8).toUpperCase();
-  await transporter.sendMail({
-    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
-    to: toEmail,
-    subject: `Order Cancellation OTP — #${shortId}`,
-    html: wrap(`
-      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
-      <p style="color:#333;font-size:0.9rem;">
-        You requested to cancel your order <strong>#${shortId}</strong>.
-        Use the OTP below to confirm the cancellation.
-      </p>
-      <div style="text-align:center;margin:28px 0;">
-        <div style="display:inline-block;background:#fff5f6;border:2px dashed #c41230;border-radius:10px;padding:18px 40px;">
-          <p style="color:#888;font-size:0.75rem;margin:0 0 6px;letter-spacing:1px;text-transform:uppercase;">Your OTP</p>
-          <p style="color:#c41230;font-size:2.4rem;font-weight:900;letter-spacing:10px;margin:0;">${otp}</p>
-        </div>
-      </div>
-      <p style="color:#888;font-size:0.82rem;">This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.</p>
-      <p style="color:#e53935;font-size:0.82rem;background:#fff5f6;padding:10px 14px;border-radius:6px;border-left:3px solid #c41230;">
-        ⚠️ If you did not request this cancellation, please ignore this email — your order is safe.
-      </p>
-    `),
-  });
+   Built for real mail clients rather than for a browser: tables
+   instead of flexbox, inline styles only, no web fonts, and the
+   logo attached by CID so it renders with images-off blocking
+   remote content. Outlook ignores border-radius and drops
+   background images, so nothing structural depends on either.
+══════════════════════════════════════════════════════════════ */
+
+const LOGO_CID = "cg-logo";
+
+/** The attachment that backs every <img src="cid:cg-logo">. */
+const logoAttachment = () =>
+  fs.existsSync(LOGO_WHITE)
+    ? [{ filename: "cloud-graphics.png", path: LOGO_WHITE, cid: LOGO_CID }]
+    : [];
+
+const T = {
+  ink:    BRAND.ink,
+  muted:  "#64748b",
+  faint:  "#94a3b8",
+  line:   "#e6edf3",
+  paper:  "#f4f7fa",
+  brand:  BRAND.primary,
+  dark:   BRAND.dark,
+  light:  BRAND.light,
 };
 
-const sendOrderConfirmation = async ({ toEmail, toName, order }) => {
-  const shortId = order._id.toString().slice(-8).toUpperCase();
-  const payLabel = order.paymentMethod === "razorpay" ? "💳 Online (Razorpay)" : "💵 Cash on Delivery";
-  const itemRows = order.items
-    .map(
-      (it) =>
-        `<tr>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#333;font-size:0.85rem;">${it.name}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#555;font-size:0.85rem;text-align:center;">${it.quantity}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#333;font-size:0.85rem;text-align:right;">₹${(it.price * it.quantity).toLocaleString("en-IN")}</td>
-        </tr>`
-    )
-    .join("");
+const esc = (s) =>
+  String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-  await transporter.sendMail({
-    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
-    to: toEmail,
-    subject: `Order Confirmed #${shortId} — Cloud Graphics Amravati`,
-    html: wrap(`
-      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
-      <p style="color:#2e7d32;font-size:0.9rem;background:#f1f8e9;padding:10px 14px;border-radius:6px;border-left:3px solid #2e7d32;">
-        ✅ Your order has been placed successfully! We'll start processing it right away.
-      </p>
+const nl2br = (s) => esc(s).replace(/\n/g, "<br/>");
 
-      <div style="text-align:center;margin:20px 0;">
-        <div style="display:inline-block;background:#fff5f6;border:2px dashed #c41230;border-radius:10px;padding:14px 36px;">
-          <p style="color:#888;font-size:0.72rem;margin:0 0 4px;letter-spacing:1px;text-transform:uppercase;">Your Order ID</p>
-          <p style="color:#c41230;font-size:1.5rem;font-weight:900;letter-spacing:4px;margin:0;">#${shortId}</p>
-          <p style="color:#888;font-size:0.72rem;margin:4px 0 0;">Use this ID to track your order</p>
-        </div>
-        <div style="margin-top:14px;">
-          <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/admin/orders"
-             style="display:inline-block;background:#c41230;color:#fff;padding:10px 28px;border-radius:8px;font-weight:700;font-size:0.85rem;text-decoration:none;letter-spacing:0.5px;">
-            View Order in Admin Panel →
-          </a>
-        </div>
-      </div>
+const money = (n) =>
+  `&#8377;${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
-      <h3 style="color:#1a1a1a;font-size:0.9rem;margin:20px 0 8px;">📦 Order Details</h3>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-        <thead>
-          <tr style="background:#f7f7f7;">
-            <th style="padding:8px 10px;text-align:left;font-size:0.78rem;color:#888;text-transform:uppercase;">Item</th>
-            <th style="padding:8px 10px;text-align:center;font-size:0.78rem;color:#888;text-transform:uppercase;">Qty</th>
-            <th style="padding:8px 10px;text-align:right;font-size:0.78rem;color:#888;text-transform:uppercase;">Amount</th>
-          </tr>
-        </thead>
-        <tbody>${itemRows}</tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2" style="padding:10px;font-weight:700;color:#1a1a1a;font-size:0.9rem;">Total</td>
-            <td style="padding:10px;font-weight:700;color:#c41230;font-size:1rem;text-align:right;">₹${order.totalPrice.toLocaleString("en-IN")}</td>
-          </tr>
-        </tfoot>
+/** Section heading — small, uppercase, tracked. Used above every block. */
+const heading = (text) => `
+  <p style="margin:26px 0 10px;font:700 11px/1.2 Arial,Helvetica,sans-serif;color:${T.faint};letter-spacing:1.2px;text-transform:uppercase;">${esc(text)}</p>`;
+
+/** Coloured status/notice panel with a left rule. */
+const panel = ({ tone = T.brand, tint = T.light, title, body }) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;">
+    <tr>
+      <td style="width:4px;background:${tone};"></td>
+      <td style="background:${tint};padding:14px 18px;">
+        ${title ? `<p style="margin:0 0 4px;font:700 15px/1.35 Arial,Helvetica,sans-serif;color:${tone};">${esc(title)}</p>` : ""}
+        <p style="margin:0;font:400 14px/1.6 Arial,Helvetica,sans-serif;color:#475569;">${body}</p>
+      </td>
+    </tr>
+  </table>`;
+
+/** Label/value rows — the workhorse for order and customer details. */
+const detailRows = (rows) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+    ${rows.filter(Boolean).map(([k, v]) => `
+      <tr>
+        <td style="padding:7px 0;font:400 13px/1.5 Arial,Helvetica,sans-serif;color:${T.muted};width:40%;border-bottom:1px solid ${T.line};">${esc(k)}</td>
+        <td style="padding:7px 0;font:700 13px/1.5 Arial,Helvetica,sans-serif;color:${T.ink};text-align:right;border-bottom:1px solid ${T.line};">${v}</td>
+      </tr>`).join("")}
+  </table>`;
+
+/** Primary call-to-action. Bulletproof enough for Outlook. */
+const button = (label, href) => `
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0;">
+    <tr><td style="background:${T.brand};">
+      <a href="${href}" style="display:inline-block;padding:13px 30px;font:700 14px/1 Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;letter-spacing:0.3px;">${esc(label)}</a>
+    </td></tr>
+  </table>`;
+
+/** The big monospaced code block used by both OTP emails. */
+const otpBlock = (otp) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:26px 0;">
+    <tr><td align="center" style="background:${T.light};border:1px solid ${BRAND.border};padding:26px 20px;">
+      <p style="margin:0 0 10px;font:700 11px/1 Arial,Helvetica,sans-serif;color:${T.faint};letter-spacing:1.6px;text-transform:uppercase;">Verification Code</p>
+      <p style="margin:0;font:700 38px/1 'Courier New',Courier,monospace;color:${T.dark};letter-spacing:12px;text-indent:12px;">${esc(otp)}</p>
+      <p style="margin:12px 0 0;font:400 12px/1.4 Arial,Helvetica,sans-serif;color:${T.muted};">Valid for 10 minutes</p>
+    </td></tr>
+  </table>`;
+
+/** Line-item table shared by the order, dispatch and delivery mails. */
+const itemsTable = (items, totalPrice) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+    <tr>
+      <th align="left"   style="padding:0 0 8px;font:700 11px/1 Arial,Helvetica,sans-serif;color:${T.faint};letter-spacing:0.8px;text-transform:uppercase;border-bottom:2px solid ${T.line};">Item</th>
+      <th align="center" style="padding:0 0 8px;font:700 11px/1 Arial,Helvetica,sans-serif;color:${T.faint};letter-spacing:0.8px;text-transform:uppercase;border-bottom:2px solid ${T.line};">Qty</th>
+      <th align="right"  style="padding:0 0 8px;font:700 11px/1 Arial,Helvetica,sans-serif;color:${T.faint};letter-spacing:0.8px;text-transform:uppercase;border-bottom:2px solid ${T.line};">Amount</th>
+    </tr>
+    ${(items || []).map((it) => `
+      <tr>
+        <td style="padding:11px 0;font:400 14px/1.45 Arial,Helvetica,sans-serif;color:${T.ink};border-bottom:1px solid ${T.line};">
+          ${esc(it.name)}${it.size ? `<span style="color:${T.faint};font-size:12px;"> &middot; Size ${esc(it.size)}</span>` : ""}
+        </td>
+        <td align="center" style="padding:11px 0;font:400 14px/1.45 Arial,Helvetica,sans-serif;color:${T.muted};border-bottom:1px solid ${T.line};">${it.quantity}</td>
+        <td align="right"  style="padding:11px 0;font:700 14px/1.45 Arial,Helvetica,sans-serif;color:${T.ink};border-bottom:1px solid ${T.line};">${money(it.price * it.quantity)}</td>
+      </tr>`).join("")}
+    ${totalPrice !== undefined ? `
+      <tr>
+        <td colspan="2" style="padding:14px 0 0;font:700 15px/1.4 Arial,Helvetica,sans-serif;color:${T.ink};">Total</td>
+        <td align="right" style="padding:14px 0 0;font:700 19px/1.4 Arial,Helvetica,sans-serif;color:${T.brand};">${money(totalPrice)}</td>
+      </tr>` : ""}
+  </table>`;
+
+/** Formatted postal address block. */
+const addressBlock = (a) => `
+  <p style="margin:0;font:400 14px/1.75 Arial,Helvetica,sans-serif;color:#475569;">
+    <strong style="color:${T.ink};">${esc(a.fullName)}</strong><br/>
+    ${esc(a.phone)}<br/>
+    ${esc(a.address)}${a.addressLine2 ? `, ${esc(a.addressLine2)}` : ""}<br/>
+    ${a.landmark ? `Near ${esc(a.landmark)}<br/>` : ""}
+    ${esc(a.city)}${a.state ? `, ${esc(a.state)}` : ""} &ndash; ${esc(a.pincode)}
+  </p>`;
+
+/**
+ * Wrap body content in the branded shell.
+ * `preheader` is the grey line inbox lists show beside the subject —
+ * left empty it leaks whatever markup comes first, so it is always set.
+ */
+const wrap = ({ preheader = "", eyebrow = "", title, body }) => `
+<div style="margin:0;padding:0;background:${T.paper};">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${T.paper};padding:28px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid ${T.line};">
+
+        <!-- Brand band -->
+        <tr><td style="background:${T.dark};padding:24px 32px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="vertical-align:middle;">
+                <img src="cid:${LOGO_CID}" width="86" alt="${esc(COMPANY.name)}" style="display:block;width:86px;height:auto;border:0;" />
+              </td>
+              <td align="right" style="vertical-align:middle;font:700 15px/1.3 Arial,Helvetica,sans-serif;color:#ffffff;">
+                ${esc(COMPANY.name)}
+                <span style="display:block;font:400 12px/1.5 Arial,Helvetica,sans-serif;color:#a8d3ea;margin-top:3px;">${esc(COMPANY.website)}</span>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+        <tr><td style="height:3px;background:${T.brand};font-size:0;line-height:0;">&nbsp;</td></tr>
+
+        <!-- Body -->
+        <tr><td style="padding:32px;">
+          ${eyebrow ? `<p style="margin:0 0 6px;font:700 11px/1 Arial,Helvetica,sans-serif;color:${T.brand};letter-spacing:1.4px;text-transform:uppercase;">${esc(eyebrow)}</p>` : ""}
+          <h1 style="margin:0 0 18px;font:700 23px/1.3 Arial,Helvetica,sans-serif;color:${T.ink};">${esc(title)}</h1>
+          ${body}
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background:#fbfdfe;border-top:1px solid ${T.line};padding:22px 32px;">
+          <p style="margin:0 0 8px;font:700 13px/1.4 Arial,Helvetica,sans-serif;color:${T.ink};">${esc(COMPANY.name)}</p>
+          <p style="margin:0 0 10px;font:400 12px/1.7 Arial,Helvetica,sans-serif;color:${T.muted};">
+            ${esc(COMPANY.address1)}, ${esc(COMPANY.address2)}<br/>
+            ${esc(COMPANY.phone)} &nbsp;&middot;&nbsp; <a href="mailto:${esc(COMPANY.email)}" style="color:${T.brand};text-decoration:none;">${esc(COMPANY.email)}</a>
+          </p>
+          <p style="margin:0;font:400 11px/1.6 Arial,Helvetica,sans-serif;color:${T.faint};">
+            &copy; ${new Date().getFullYear()} ${esc(COMPANY.name)}. This is an automated message &mdash; replies reach our support team.
+          </p>
+        </td></tr>
       </table>
+    </td></tr>
+  </table>
+</div>`;
 
-      <h3 style="color:#1a1a1a;font-size:0.9rem;margin:16px 0 8px;">🚚 Shipping Address</h3>
-      <p style="color:#555;font-size:0.85rem;line-height:1.7;margin:0;">
-        <strong>${order.shippingAddress.fullName}</strong>${order.shippingAddress.addressType ? ` <span style="background:#f0f0f0;padding:1px 6px;border-radius:3px;font-size:0.72rem;">${order.shippingAddress.addressType}</span>` : ""}<br/>
-        📞 ${order.shippingAddress.phone}<br/>
-        ${order.shippingAddress.address}${order.shippingAddress.addressLine2 ? ", " + order.shippingAddress.addressLine2 : ""}<br/>
-        ${order.shippingAddress.landmark ? "Near: " + order.shippingAddress.landmark + "<br/>" : ""}
-        ${order.shippingAddress.city}${order.shippingAddress.state ? ", " + order.shippingAddress.state : ""} – ${order.shippingAddress.pincode}
-      </p>
-
-      <div style="margin-top:16px;padding:12px 16px;background:#f7f7f7;border-radius:8px;display:flex;justify-content:space-between;">
-        <span style="color:#555;font-size:0.82rem;">Payment Method</span>
-        <span style="color:#333;font-weight:700;font-size:0.82rem;">${payLabel}</span>
-      </div>
-
-      ${order.customerNote ? `<p style="color:#888;font-size:0.82rem;margin-top:12px;">📝 Note: ${order.customerNote}</p>` : ""}
-
-      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
-        You will receive another email when your order status is updated. Thank you for shopping with us!
-      </p>
-    `),
+/** Every message goes out through here, so none can forget the logo. */
+const send = ({ to, subject, attachments = [], ...content }) =>
+  transporter.sendMail({
+    from: FROM(),
+    to,
+    subject,
+    html: wrap(content),
+    attachments: [...logoAttachment(), ...attachments],
   });
-};
 
-const STATUS_MESSAGES = {
-  Processing: { emoji: "⚙️", text: "Your order is now being processed by our team.", color: "#1565c0", bg: "#e3f2fd" },
-  Printing:   { emoji: "🖨️", text: "Your custom print job is in progress!", color: "#6a1b9a", bg: "#f3e5f5" },
-  Shipped:    { emoji: "🚚", text: "Your order is on its way! Get ready to receive it.", color: "#1b5e20", bg: "#e8f5e9" },
-  Delivered:  { emoji: "🎉", text: "Your order has been delivered. Enjoy your purchase!", color: "#2e7d32", bg: "#f1f8e9" },
-  Cancelled:  { emoji: "❌", text: "Your order has been cancelled.", color: "#b71c1c", bg: "#ffebee" },
-};
+const shortId = (id) => String(id).slice(-8).toUpperCase();
 
-const sendOrderStatusUpdate = async ({ toEmail, toName, orderId, status, totalPrice, items }) => {
-  const shortId = orderId.slice(-8).toUpperCase();
-  const info = STATUS_MESSAGES[status] || { emoji: "📋", text: `Your order status has been updated to ${status}.`, color: "#333", bg: "#f7f7f7" };
+/* Customer-facing order reference for emails — the real order number
+   ("2026-0001") once it exists, falling back to a short slice of the
+   Mongo ID for orders placed before that field existed. */
+const orderRef = (order) => order?.orderNumber || shortId(order?._id ?? order);
 
-  const itemList = items
-    ? items.map((it) => `<li style="color:#555;font-size:0.85rem;margin-bottom:4px;">${it.name} × ${it.quantity}</li>`).join("")
-    : "";
+/* ══════════════════════════════════════════════════════════════
+   ONE-TIME PASSWORDS
+══════════════════════════════════════════════════════════════ */
 
-  await transporter.sendMail({
-    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
+const sendCancelOTP = async ({ toEmail, toName, orderId, orderNumber, otp }) => {
+  const ref = orderRef({ _id: orderId, orderNumber });
+  await send({
     to: toEmail,
-    subject: `Order #${shortId} — Status Updated: ${status}`,
-    html: wrap(`
-      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
-
-      <div style="background:${info.bg};border-left:4px solid ${info.color};border-radius:6px;padding:14px 18px;margin:16px 0;">
-        <p style="color:${info.color};font-size:1rem;font-weight:700;margin:0 0 4px;">${info.emoji} Order Status: ${status}</p>
-        <p style="color:#555;font-size:0.88rem;margin:0;">${info.text}</p>
-      </div>
-
-      <p style="color:#555;font-size:0.85rem;">
-        <strong>Order ID:</strong> #${shortId}<br/>
-        <strong>Total:</strong> ₹${totalPrice ? totalPrice.toLocaleString("en-IN") : "—"}
+    subject: `${otp} is your cancellation code — Order ${ref}`,
+    preheader: `Use code ${otp} to confirm cancelling order ${ref}. Expires in 10 minutes.`,
+    eyebrow: "Confirm cancellation",
+    title: `Cancel order ${ref}?`,
+    body: `
+      <p style="margin:0;font:400 15px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Hi <strong style="color:${T.ink};">${esc(toName)}</strong>, enter the code below to confirm that you want to cancel this order.
       </p>
-
-      ${itemList ? `<ul style="padding-left:16px;margin-top:8px;">${itemList}</ul>` : ""}
-
-      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
-        If you have any questions, reply to this email or contact us.<br/>
-        Thank you for choosing Cloud Graphics Amravati!
+      ${otpBlock(otp)}
+      <p style="margin:0 0 6px;font:400 13px/1.6 Arial,Helvetica,sans-serif;color:${T.muted};">
+        Never share this code with anyone. Our team will never ask you for it.
       </p>
-    `),
-  });
-};
-
-// ── Inquiry emails ────────────────────────────────────────────
-
-const sendInquiryToAdmin = async ({ name, email, phone, subject, message }) => {
-  await transporter.sendMail({
-    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
-    to: process.env.SMTP_USER,
-    subject: `New Enquiry Received`,
-    html: wrap(`
-      <p style="color:#c41230;font-size:1rem;font-weight:700;margin:0 0 16px;">📬 New Inquiry Received</p>
-
-      <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
-        <tr>
-          <td style="padding:9px 12px;background:#f7f7f7;font-weight:700;color:#555;width:130px;border-radius:4px 0 0 4px;">Name</td>
-          <td style="padding:9px 12px;color:#1a1a1a;border-bottom:1px solid #f0f0f0;">${name}</td>
-        </tr>
-        <tr>
-          <td style="padding:9px 12px;background:#f7f7f7;font-weight:700;color:#555;">Email</td>
-          <td style="padding:9px 12px;color:#1a1a1a;border-bottom:1px solid #f0f0f0;">${email}</td>
-        </tr>
-        <tr>
-          <td style="padding:9px 12px;background:#f7f7f7;font-weight:700;color:#555;">Phone</td>
-          <td style="padding:9px 12px;color:#1a1a1a;border-bottom:1px solid #f0f0f0;">${phone}</td>
-        </tr>
-        <tr>
-          <td style="padding:9px 12px;background:#f7f7f7;font-weight:700;color:#555;">Subject</td>
-          <td style="padding:9px 12px;color:#1a1a1a;border-bottom:1px solid #f0f0f0;">${subject}</td>
-        </tr>
-      </table>
-
-      <div style="margin-top:16px;">
-        <p style="font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Message</p>
-        <div style="background:#f7f7f7;border-left:4px solid #c41230;border-radius:6px;padding:14px 16px;">
-          <p style="color:#333;font-size:0.9rem;line-height:1.7;margin:0;">${message ? message.replace(/\n/g, "<br/>") : '<em style="color:#999;">No message provided.</em>'}</p>
-        </div>
-      </div>
-
-      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
-        Log in to the <strong>Admin Panel → Enquiries</strong> to view and respond to this inquiry.
-      </p>
-    `),
-  });
-};
-
-const sendInquiryConfirmationToUser = async ({ toEmail, toName, subject }) => {
-  await transporter.sendMail({
-    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
-    to: toEmail,
-    subject: `Thank You for Contacting Cloud Graphics`,
-    html: wrap(`
-      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
-
-      <div style="background:#f1f8e9;border-left:4px solid #2e7d32;border-radius:6px;padding:14px 18px;margin:16px 0;">
-        <p style="color:#2e7d32;font-size:1rem;font-weight:700;margin:0 0 4px;">✅ Inquiry Received!</p>
-        <p style="color:#555;font-size:0.88rem;margin:0;">
-          Thank you for reaching out to us. We have received your inquiry and our team will get back to you as soon as possible.
-        </p>
-      </div>
-
-      <p style="color:#555;font-size:0.85rem;">
-        <strong>Your Subject:</strong> ${subject}
-      </p>
-
-      <p style="color:#888;font-size:0.85rem;line-height:1.7;margin-top:16px;">
-        We typically respond within <strong>24–48 hours</strong> on business days.
-        If your matter is urgent, feel free to visit our store or call us directly.
-      </p>
-
-      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
-        Thank you for choosing Cloud Graphics Amravati!<br/>
-        <strong style="color:#c41230;">— The Cloud Graphics Team</strong>
-      </p>
-    `),
-  });
-};
-
-const sendInquiryResponseToUser = async ({ toEmail, toName, subject, adminResponse }) => {
-  await transporter.sendMail({
-    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
-    to: toEmail,
-    subject: `Re: ${subject} — Cloud Graphics Amravati`,
-    html: wrap(`
-      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
-
-      <p style="color:#555;font-size:0.9rem;">
-        Thank you for your patience. Our team has responded to your inquiry regarding
-        <strong>"${subject}"</strong>.
-      </p>
-
-      <div style="margin:20px 0;">
-        <p style="font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Our Response</p>
-        <div style="background:#f7f7f7;border-left:4px solid #c41230;border-radius:6px;padding:16px 18px;">
-          <p style="color:#1a1a1a;font-size:0.9rem;line-height:1.75;margin:0;">${adminResponse.replace(/\n/g, "<br/>")}</p>
-        </div>
-      </div>
-
-      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
-        If you have further questions, feel free to reach out to us again.<br/>
-        <strong style="color:#c41230;">— The Cloud Graphics Team</strong>
-      </p>
-    `),
-  });
-};
-
-// ── Replacement request emails ────────────────────────────────
-
-const REPLACEMENT_STATUS_INFO = {
-  approved:   { emoji: "✅", color: "#2e7d32", bg: "#f1f8e9", text: "Your replacement request has been approved! We will process it shortly." },
-  rejected:   { emoji: "❌", color: "#b71c1c", bg: "#ffebee", text: "Unfortunately, your replacement request has been rejected." },
-  processing: { emoji: "⚙️", color: "#1565c0", bg: "#e3f2fd", text: "Your replacement is currently being processed by our team." },
-  completed:  { emoji: "🎉", color: "#1b5e20", bg: "#e8f5e9", text: "Your replacement has been completed and dispatched. Thank you for your patience!" },
-};
-
-const sendReplacementStatusUpdate = async ({ toEmail, toName, productName, status, adminResponse }) => {
-  const info = REPLACEMENT_STATUS_INFO[status] || {
-    emoji: "📋", color: "#333", bg: "#f7f7f7",
-    text: `Your replacement request status has been updated to: ${status}.`,
-  };
-
-  await transporter.sendMail({
-    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
-    to: toEmail,
-    subject: `Replacement Request Update — Cloud Graphics Amravati`,
-    html: wrap(`
-      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
-
-      <div style="background:${info.bg};border-left:4px solid ${info.color};border-radius:6px;padding:14px 18px;margin:16px 0;">
-        <p style="color:${info.color};font-size:1rem;font-weight:700;margin:0 0 4px;">
-          ${info.emoji} Replacement Status: ${status.charAt(0).toUpperCase() + status.slice(1)}
-        </p>
-        <p style="color:#555;font-size:0.88rem;margin:0;">${info.text}</p>
-      </div>
-
-      <p style="color:#555;font-size:0.85rem;">
-        <strong>Product:</strong> ${productName}
-      </p>
-
-      ${adminResponse ? `
-        <div style="margin-top:16px;">
-          <p style="font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Message from Our Team</p>
-          <div style="background:#f7f7f7;border-left:4px solid #c41230;border-radius:6px;padding:14px 16px;">
-            <p style="color:#333;font-size:0.9rem;line-height:1.7;margin:0;">${adminResponse.replace(/\n/g, "<br/>")}</p>
-          </div>
-        </div>
-      ` : ""}
-
-      <p style="color:#888;font-size:0.82rem;margin-top:20px;">
-        If you have any questions, feel free to contact us.<br/>
-        <strong style="color:#c41230;">— The Cloud Graphics Team</strong>
-      </p>
-    `),
-  });
-};
-
-// ── Shipment dispatched email (with tracking details) ───────
-
-const sendShipmentEmail = async ({ toEmail, toName, orderId, items, totalPrice, trackingId, courierName, shippingAddress }) => {
-  const shortId = orderId.slice(-8).toUpperCase();
-
-  // Shiprocket public tracking URL
-  const trackingUrl = trackingId
-    ? `https://shiprocket.co/tracking/${trackingId}`
-    : null;
-
-  const itemRows = items
-    .map(
-      (it) =>
-        `<tr>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#333;font-size:0.85rem;">${it.name}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#555;font-size:0.85rem;text-align:center;">${it.quantity}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#333;font-size:0.85rem;text-align:right;">₹${(it.price * it.quantity).toLocaleString("en-IN")}</td>
-        </tr>`
-    )
-    .join("");
-
-  await transporter.sendMail({
-    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
-    to: toEmail,
-    subject: `Your Order #${shortId} Has Been Shipped! 🚚`,
-    html: wrap(`
-      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
-
-      <div style="background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;padding:14px 18px;margin:16px 0;">
-        <p style="color:#2e7d32;font-size:1rem;font-weight:700;margin:0 0 4px;">🚚 Your order is on its way!</p>
-        <p style="color:#555;font-size:0.88rem;margin:0;">Your package has been handed over to the courier and is heading to you.</p>
-      </div>
-
-      <!-- Tracking Box -->
-      <div style="background:#f7f9ff;border:2px solid #c41230;border-radius:10px;padding:20px 24px;margin:20px 0;text-align:center;">
-        <p style="color:#888;font-size:0.72rem;margin:0 0 6px;letter-spacing:1px;text-transform:uppercase;">Tracking Number (AWB)</p>
-        <p style="color:#c41230;font-size:1.6rem;font-weight:900;letter-spacing:4px;margin:0 0 8px;">${trackingId || "Pending"}</p>
-        ${courierName ? `<p style="color:#555;font-size:0.85rem;margin:0 0 12px;">Courier: <strong>${courierName}</strong></p>` : ""}
-        ${trackingUrl ? `
-          <a href="${trackingUrl}"
-             style="display:inline-block;background:#c41230;color:#fff;padding:10px 28px;border-radius:6px;font-weight:700;font-size:0.88rem;text-decoration:none;">
-            Track Your Order →
-          </a>
-        ` : ""}
-      </div>
-
-      <!-- Delivery Address -->
-      <h3 style="color:#1a1a1a;font-size:0.9rem;margin:20px 0 8px;">📍 Delivering To</h3>
-      <p style="color:#555;font-size:0.85rem;line-height:1.7;margin:0 0 16px;background:#f7f7f7;padding:12px 14px;border-radius:8px;">
-        <strong>${shippingAddress.fullName}</strong><br/>
-        📞 ${shippingAddress.phone}<br/>
-        ${shippingAddress.address}${shippingAddress.addressLine2 ? ", " + shippingAddress.addressLine2 : ""}<br/>
-        ${shippingAddress.landmark ? "Near: " + shippingAddress.landmark + "<br/>" : ""}
-        ${shippingAddress.city}${shippingAddress.state ? ", " + shippingAddress.state : ""} – ${shippingAddress.pincode}
-      </p>
-
-      <!-- Items -->
-      <h3 style="color:#1a1a1a;font-size:0.9rem;margin:16px 0 8px;">📦 Items Shipped</h3>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-        <thead>
-          <tr style="background:#f7f7f7;">
-            <th style="padding:8px 10px;text-align:left;font-size:0.78rem;color:#888;text-transform:uppercase;">Item</th>
-            <th style="padding:8px 10px;text-align:center;font-size:0.78rem;color:#888;text-transform:uppercase;">Qty</th>
-            <th style="padding:8px 10px;text-align:right;font-size:0.78rem;color:#888;text-transform:uppercase;">Amount</th>
-          </tr>
-        </thead>
-        <tbody>${itemRows}</tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2" style="padding:10px;font-weight:700;color:#1a1a1a;font-size:0.9rem;">Total</td>
-            <td style="padding:10px;font-weight:700;color:#c41230;font-size:1rem;text-align:right;">₹${totalPrice.toLocaleString("en-IN")}</td>
-          </tr>
-        </tfoot>
-      </table>
-
-      <p style="color:#888;font-size:0.82rem;margin-top:8px;">
-        Expected delivery: <strong>3–7 business days</strong> depending on your location.
-      </p>
-
-      <p style="color:#888;font-size:0.82rem;margin-top:16px;">
-        If you have any questions about your delivery, reply to this email or contact us.<br/>
-        Thank you for shopping with <strong style="color:#c41230;">Cloud Graphics Amravati</strong>!
-      </p>
-    `),
+      ${panel({
+        tone: "#b45309", tint: "#fffbeb",
+        body: `Didn't request this? You can safely ignore this email &mdash; order <strong>${ref}</strong> stays active and nothing will be cancelled.`,
+      })}`,
   });
 };
 
 const sendPasswordResetOTP = async ({ toEmail, toName, otp }) => {
-  await transporter.sendMail({
-    from: `"Cloud Graphics Amravati" <${process.env.SMTP_USER}>`,
+  await send({
     to: toEmail,
-    subject: `Password Reset OTP — Cloud Graphics Amravati`,
-    html: wrap(`
-      <p style="color:#333;font-size:0.95rem;">Hi <strong>${toName}</strong>,</p>
-      <p style="color:#333;font-size:0.9rem;">
-        We received a request to reset your password. Use the OTP below to set a new password.
+    subject: `${otp} is your password reset code`,
+    preheader: `Use code ${otp} to reset your password. Expires in 10 minutes.`,
+    eyebrow: "Account security",
+    title: "Reset your password",
+    body: `
+      <p style="margin:0;font:400 15px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Hi <strong style="color:${T.ink};">${esc(toName)}</strong>, we received a request to reset the password on your account. Use the code below to set a new one.
       </p>
-      <div style="text-align:center;margin:28px 0;">
-        <div style="display:inline-block;background:#fff5f6;border:2px dashed #c41230;border-radius:10px;padding:18px 40px;">
-          <p style="color:#888;font-size:0.75rem;margin:0 0 6px;letter-spacing:1px;text-transform:uppercase;">Your OTP</p>
-          <p style="color:#c41230;font-size:2.4rem;font-weight:900;letter-spacing:10px;margin:0;">${otp}</p>
-        </div>
-      </div>
-      <p style="color:#888;font-size:0.82rem;">This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.</p>
-      <p style="color:#e53935;font-size:0.82rem;background:#fff5f6;padding:10px 14px;border-radius:6px;border-left:3px solid #c41230;">
-        ⚠️ If you did not request a password reset, please ignore this email — your account is safe.
+      ${otpBlock(otp)}
+      <p style="margin:0 0 6px;font:400 13px/1.6 Arial,Helvetica,sans-serif;color:${T.muted};">
+        Never share this code with anyone. Our team will never ask you for it.
       </p>
-    `),
+      ${panel({
+        tone: "#b45309", tint: "#fffbeb",
+        body: "Didn't request this? You can safely ignore this email &mdash; your password stays unchanged.",
+      })}`,
+  });
+};
+
+/* ══════════════════════════════════════════════════════════════
+   ORDER LIFECYCLE
+══════════════════════════════════════════════════════════════ */
+
+const sendOrderConfirmation = async ({ toEmail, toName, order, attachments = [] }) => {
+  const ref = orderRef(order);
+  const paid = order.paymentStatus === "paid";
+
+  await send({
+    to: toEmail,
+    subject: `Order ${ref} confirmed — ${COMPANY.name}`,
+    preheader: `We've received your order of ${money(order.totalPrice)}. We'll email you as it moves along.`,
+    eyebrow: "Order confirmed",
+    title: `Thanks, ${esc(toName.split(" ")[0])} — we're on it`,
+    attachments,
+    body: `
+      <p style="margin:0;font:400 15px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Your order is confirmed and heading into production. We'll email you each time its status changes.
+        ${attachments.length ? " Your tax invoice is attached to this email for your records." : ""}
+      </p>
+
+      ${panel({
+        tone: BRAND.primary,
+        title: `Order ${ref}`,
+        body: `Placed on ${new Date(order.createdAt || Date.now()).toLocaleDateString("en-IN", { dateStyle: "long" })}. Keep this reference handy when you contact us.`,
+      })}
+
+      ${heading("Items")}
+      ${itemsTable(order.items, order.totalPrice)}
+
+      ${heading("Payment")}
+      ${detailRows([
+        ["Method", order.paymentMethod === "razorpay" ? "Paid online" : "Cash on Delivery"],
+        ["Status", paid
+          ? `<span style="color:#047857;">Paid</span>`
+          : `<span style="color:#b45309;">Due on delivery</span>`],
+        ["Amount", money(order.totalPrice)],
+      ])}
+
+      ${heading("Delivery address")}
+      ${addressBlock(order.shippingAddress)}
+
+      ${order.customerNote ? `${heading("Your note")}
+        <p style="margin:0;font:400 14px/1.6 Arial,Helvetica,sans-serif;color:#475569;">${nl2br(order.customerNote)}</p>` : ""}
+
+      ${button("Track your order", `${SITE()}/orders`)}`,
+  });
+};
+
+/* How each status reads to a customer. Every stage carries its own
+   colour so the panel matches the news it is delivering. */
+const STATUS_INFO = {
+  Pending:    { eyebrow: "Order received", tone: "#b45309", tint: "#fffbeb", title: "We've got your order",         text: "It's in the queue and will move into production shortly." },
+  Processing: { eyebrow: "In progress",    tone: "#0369a1", tint: "#f0f9ff", title: "Your order is being processed", text: "Our team is preparing your items and checking your artwork." },
+  Printing:   { eyebrow: "On the press",   tone: "#7c3aed", tint: "#f5f3ff", title: "Your order is on the press",    text: "Printing has started. Once it's finished we'll pack it for dispatch." },
+  Shipped:    { eyebrow: "Dispatched",     tone: "#0369a1", tint: "#f0f9ff", title: "Your order is on its way",      text: "It's with our courier partner and moving towards you." },
+  Delivered:  { eyebrow: "Delivered",      tone: "#047857", tint: "#ecfdf5", title: "Your order has been delivered",  text: "We hope it's everything you wanted. Your tax invoice is attached to this email." },
+  Cancelled:  { eyebrow: "Cancelled",      tone: "#b91c1c", tint: "#fef2f2", title: "Your order has been cancelled",  text: "If you paid online, any refund is processed back to your original payment method." },
+};
+
+/* The pipeline drawn as a row of steps, so the customer sees where the
+   order sits rather than just being told a word. Cancelled orders skip
+   it — a progress bar makes no sense for a stopped order. */
+const STAGES = ["Pending", "Processing", "Printing", "Shipped", "Delivered"];
+
+const progressTrack = (status) => {
+  const at = STAGES.indexOf(status);
+  if (at === -1) return "";
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 6px;border-collapse:collapse;">
+    <tr>
+      ${STAGES.map((s, i) => {
+        const done = i <= at;
+        return `<td align="center" style="width:20%;padding:0 2px;">
+          <div style="height:4px;background:${done ? T.brand : "#e2e8f0"};font-size:0;line-height:0;">&nbsp;</div>
+          <p style="margin:8px 0 0;font:${done ? 700 : 400} 10px/1.3 Arial,Helvetica,sans-serif;color:${done ? T.dark : T.faint};">${s}</p>
+        </td>`;
+      }).join("")}
+    </tr>
+  </table>`;
+};
+
+/**
+ * Sent whenever an admin moves an order to a new status.
+ * `attachments` carries the tax invoice on delivery.
+ */
+const sendOrderStatusUpdate = async ({
+  toEmail, toName, orderId, orderNumber, status, totalPrice, items, attachments = [],
+}) => {
+  const ref = orderRef({ _id: orderId, orderNumber });
+  const info = STATUS_INFO[status] || {
+    eyebrow: "Order update", tone: BRAND.primary, tint: T.light,
+    title: `Order updated to ${status}`, text: `Your order status is now "${status}".`,
+  };
+
+  await send({
+    to: toEmail,
+    subject: `Order ${ref} — ${status}`,
+    preheader: info.text,
+    eyebrow: info.eyebrow,
+    title: info.title,
+    attachments,
+    body: `
+      <p style="margin:0;font:400 15px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Hi <strong style="color:${T.ink};">${esc(toName)}</strong>, here's the latest on order <strong style="color:${T.ink};">${ref}</strong>.
+      </p>
+
+      ${panel({ tone: info.tone, tint: info.tint, title: status, body: esc(info.text) })}
+      ${progressTrack(status)}
+
+      ${items?.length ? `${heading("Items")}${itemsTable(items, totalPrice)}` : ""}
+
+      ${status === "Delivered" ? `
+        ${heading("Your invoice")}
+        <p style="margin:0;font:400 14px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+          The tax invoice for this order is attached as a PDF. Please keep it for your records &mdash; you'll need it for any replacement request.
+        </p>` : ""}
+
+      ${button("View order details", `${SITE()}/orders`)}`,
+  });
+};
+
+const sendShipmentEmail = async ({
+  toEmail, toName, orderId, orderNumber, items, totalPrice, trackingId, courierName, shippingAddress,
+}) => {
+  const ref = orderRef({ _id: orderId, orderNumber });
+  const trackingUrl = trackingId ? `https://shiprocket.co/tracking/${trackingId}` : null;
+
+  await send({
+    to: toEmail,
+    subject: `Order ${ref} has been dispatched`,
+    preheader: trackingId
+      ? `Tracking number ${trackingId}${courierName ? ` via ${courierName}` : ""}.`
+      : "Your order is on its way.",
+    eyebrow: "Dispatched",
+    title: "Your order is on its way",
+    body: `
+      <p style="margin:0;font:400 15px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Hi <strong style="color:${T.ink};">${esc(toName)}</strong>, order <strong style="color:${T.ink};">${ref}</strong> has been handed to our courier partner.
+      </p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0;">
+        <tr><td align="center" style="background:${T.light};border:1px solid ${BRAND.border};padding:24px 20px;">
+          <p style="margin:0 0 8px;font:700 11px/1 Arial,Helvetica,sans-serif;color:${T.faint};letter-spacing:1.4px;text-transform:uppercase;">Tracking Number</p>
+          <p style="margin:0;font:700 24px/1.2 'Courier New',Courier,monospace;color:${T.dark};letter-spacing:3px;">${esc(trackingId || "Assigning…")}</p>
+          ${courierName ? `<p style="margin:10px 0 0;font:400 13px/1.4 Arial,Helvetica,sans-serif;color:${T.muted};">via ${esc(courierName)}</p>` : ""}
+        </td></tr>
+      </table>
+
+      ${trackingUrl ? button("Track this shipment", trackingUrl) : ""}
+
+      ${heading("Delivering to")}
+      ${addressBlock(shippingAddress)}
+
+      ${heading("Items in this shipment")}
+      ${itemsTable(items, totalPrice)}
+
+      <p style="margin:22px 0 0;font:400 13px/1.65 Arial,Helvetica,sans-serif;color:${T.muted};">
+        Most deliveries arrive within 3&ndash;7 business days. Tracking updates begin once the courier scans the parcel at pickup.
+      </p>`,
+  });
+};
+
+/* ══════════════════════════════════════════════════════════════
+   ENQUIRIES
+══════════════════════════════════════════════════════════════ */
+
+const sendInquiryToAdmin = async ({ name, email, phone, subject, message }) => {
+  await send({
+    to: process.env.SMTP_USER,
+    subject: `New enquiry: ${subject || "General"} — ${name}`,
+    preheader: `${name} (${email}) sent an enquiry.`,
+    eyebrow: "Admin notification",
+    title: "New enquiry received",
+    body: `
+      ${detailRows([
+        ["Name", esc(name)],
+        ["Email", `<a href="mailto:${esc(email)}" style="color:${T.brand};text-decoration:none;">${esc(email)}</a>`],
+        ["Phone", esc(phone || "—")],
+        ["Subject", esc(subject || "—")],
+      ])}
+
+      ${heading("Message")}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width:4px;background:${T.brand};"></td>
+          <td style="background:${T.light};padding:14px 18px;font:400 14px/1.7 Arial,Helvetica,sans-serif;color:#475569;">
+            ${message ? nl2br(message) : `<em style="color:${T.faint};">No message provided.</em>`}
+          </td>
+        </tr>
+      </table>
+
+      ${button("Open in admin panel", `${SITE()}/admin/inquiries`)}`,
+  });
+};
+
+const sendInquiryConfirmationToUser = async ({ toEmail, toName, subject }) => {
+  await send({
+    to: toEmail,
+    subject: `We've received your enquiry — ${COMPANY.name}`,
+    preheader: "Our team will get back to you within 24–48 business hours.",
+    eyebrow: "Enquiry received",
+    title: "Thanks for getting in touch",
+    body: `
+      <p style="margin:0;font:400 15px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Hi <strong style="color:${T.ink};">${esc(toName)}</strong>, we've received your enquiry and it's with our team now.
+      </p>
+
+      ${panel({
+        tone: "#047857", tint: "#ecfdf5",
+        title: "What happens next",
+        body: "We usually reply within <strong>24&ndash;48 hours</strong> on business days. If it's urgent, call us and we'll help straight away.",
+      })}
+
+      ${detailRows([["Your subject", esc(subject || "—")]])}
+
+      <p style="margin:22px 0 0;font:400 14px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Reach us on <strong style="color:${T.ink};">${esc(COMPANY.phone)}</strong> for anything time-sensitive.
+      </p>`,
+  });
+};
+
+const sendInquiryResponseToUser = async ({ toEmail, toName, subject, adminResponse }) => {
+  await send({
+    to: toEmail,
+    subject: `Re: ${subject} — ${COMPANY.name}`,
+    preheader: "Our team has replied to your enquiry.",
+    eyebrow: "Reply from our team",
+    title: "We've answered your enquiry",
+    body: `
+      <p style="margin:0;font:400 15px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Hi <strong style="color:${T.ink};">${esc(toName)}</strong>, thanks for your patience. Here's our reply about
+        <strong style="color:${T.ink};">"${esc(subject)}"</strong>.
+      </p>
+
+      ${heading("Our response")}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width:4px;background:${T.brand};"></td>
+          <td style="background:${T.light};padding:16px 18px;font:400 15px/1.75 Arial,Helvetica,sans-serif;color:${T.ink};">
+            ${nl2br(adminResponse)}
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:22px 0 0;font:400 14px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Still need help? Just reply to this email and it comes straight back to us.
+      </p>`,
+  });
+};
+
+/* ══════════════════════════════════════════════════════════════
+   REPLACEMENTS
+══════════════════════════════════════════════════════════════ */
+
+const REPLACEMENT_INFO = {
+  approved:   { tone: "#047857", tint: "#ecfdf5", title: "Replacement approved",  text: "We've approved your replacement request and will process it shortly." },
+  rejected:   { tone: "#b91c1c", tint: "#fef2f2", title: "Replacement declined",  text: "We weren't able to approve this replacement request. The reason is below." },
+  processing: { tone: "#0369a1", tint: "#f0f9ff", title: "Replacement in progress", text: "Your replacement is being prepared by our team right now." },
+  completed:  { tone: "#047857", tint: "#ecfdf5", title: "Replacement dispatched", text: "Your replacement has been completed and sent out. Thanks for your patience." },
+};
+
+const sendReplacementStatusUpdate = async ({ toEmail, toName, productName, status, adminResponse }) => {
+  const info = REPLACEMENT_INFO[status] || {
+    tone: BRAND.primary, tint: T.light,
+    title: `Replacement ${status}`, text: `Your replacement request is now "${status}".`,
+  };
+
+  await send({
+    to: toEmail,
+    subject: `Replacement request ${status} — ${COMPANY.name}`,
+    preheader: info.text,
+    eyebrow: "Replacement update",
+    title: info.title,
+    body: `
+      <p style="margin:0;font:400 15px/1.65 Arial,Helvetica,sans-serif;color:#475569;">
+        Hi <strong style="color:${T.ink};">${esc(toName)}</strong>, here's an update on your replacement request.
+      </p>
+
+      ${panel({ tone: info.tone, tint: info.tint, title: status.charAt(0).toUpperCase() + status.slice(1), body: esc(info.text) })}
+
+      ${detailRows([["Product", esc(productName)]])}
+
+      ${adminResponse ? `${heading("Message from our team")}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="width:4px;background:${T.brand};"></td>
+            <td style="background:${T.light};padding:14px 18px;font:400 14px/1.7 Arial,Helvetica,sans-serif;color:#475569;">${nl2br(adminResponse)}</td>
+          </tr>
+        </table>` : ""}
+
+      ${button("View my replacements", `${SITE()}/replacements`)}`,
   });
 };
 
@@ -445,4 +554,6 @@ module.exports = {
   sendInquiryResponseToUser,
   sendReplacementStatusUpdate,
   sendPasswordResetOTP,
+  // exported for the template preview harness
+  __templates: { wrap, panel, itemsTable, otpBlock, progressTrack },
 };

@@ -3,16 +3,19 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchAllUsers, toggleBlockUser, deleteUser } from "../../features/users/userSlice";
 import { toast } from "react-toastify";
 
-const AVATAR_GRADIENTS = [
-  "from-brand-500 to-blue-600",
-  "from-violet-500 to-purple-600",
-  "from-emerald-500 to-teal-600",
-  "from-amber-500 to-orange-500",
-  "from-rose-500 to-pink-600",
-  "from-cyan-500 to-sky-600",
-];
-
-const avatarGradient = (name) => AVATAR_GRADIENTS[name.charCodeAt(0) % AVATAR_GRADIENTS.length];
+/* Avatars are an initial on a tint of the panel's own brand colour —
+   one colour for every user. A random palette per name made the table
+   read like a chart, implying a difference between rows that doesn't
+   exist, and dragged six unrelated hues into a single-accent panel. */
+const Avatar = ({ name }) => (
+  <div
+    aria-hidden="true"
+    className="w-9 h-9 shrink-0 rounded-xl bg-brand-50 border border-brand-100
+               text-brand-700 flex items-center justify-center font-bold text-sm"
+  >
+    {name?.[0]?.toUpperCase() || "?"}
+  </div>
+);
 
 export default function ManageUsers() {
   const dispatch = useDispatch();
@@ -94,9 +97,7 @@ export default function ManageUsers() {
                     <td className="td text-slate-400 text-xs font-medium">{i + 1}</td>
                     <td className="td">
                       <div className="flex items-center gap-2.5">
-                        <div className={`w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br ${avatarGradient(user.name)} text-white flex items-center justify-center font-bold text-sm shadow-sm`}>
-                          {user.name[0]?.toUpperCase()}
-                        </div>
+                        <Avatar name={user.name} />
                         <span className="font-semibold text-slate-800">{user.name}</span>
                       </div>
                     </td>

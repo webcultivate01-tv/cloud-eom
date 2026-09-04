@@ -40,11 +40,25 @@ export const fetchAllOrders = createAsyncThunk(
   }
 );
 
+/* Counts for the Active / Delivered / Cancelled tabs. Kept separate from
+   the list itself so the badges stay correct while a tab is filtered. */
+export const fetchOrderGroupCounts = createAsyncThunk(
+  "orders/groupCounts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get("/orders/admin/group-counts");
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch order counts");
+    }
+  }
+);
+
 export const updateOrderStatus = createAsyncThunk(
   "orders/updateStatus",
-  async ({ id, status }, { rejectWithValue }) => {
+  async ({ id, status, paymentCollectedVia }, { rejectWithValue }) => {
     try {
-      const { data } = await api.put(`/orders/${id}/status`, { status });
+      const { data } = await api.put(`/orders/${id}/status`, { status, paymentCollectedVia });
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update status");
@@ -96,6 +110,7 @@ const orderSlice = createSlice({
     orders: [],
     createdOrder: null,
     stats: null,
+    groupCounts: { active: 0, delivered: 0, cancelled: 0 },
     loading: false,
     error: null,
     success: false,
@@ -120,6 +135,8 @@ const orderSlice = createSlice({
       .addCase(fetchAllOrders.pending, (state) => { state.loading = true; })
       .addCase(fetchAllOrders.fulfilled, (state, action) => { state.loading = false; state.orders = action.payload; })
       .addCase(fetchAllOrders.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+
+      .addCase(fetchOrderGroupCounts.fulfilled, (state, action) => { state.groupCounts = action.payload; })
 
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         const idx = state.orders.findIndex((o) => o._id === action.payload._id);

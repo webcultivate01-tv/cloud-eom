@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, ShieldCheck,
   CalendarDays, Tag, Mail, Star, RefreshCw, Download, Bell,
-  Home, LogOut, Menu, X, ChevronRight, CreditCard,
+  Home, LogOut, Menu, X, ChevronRight, CreditCard, BarChart3,
 } from "lucide-react";
 import logoMark from "../assets/logo-mark.png";
 import logoFull from "../assets/logo.png";
@@ -42,8 +42,9 @@ const NAV_SECTIONS = [
   {
     label: "System",
     items: [
-      { to: "/admin/admins", icon: ShieldCheck, label: "Admin Management" },
-      { to: "/admin/export", icon: Download,    label: "Data Export" },
+      { to: "/admin/reports", icon: BarChart3,  label: "Reports" },
+      { to: "/admin/admins",  icon: ShieldCheck, label: "Admin Management" },
+      { to: "/admin/export",  icon: Download,    label: "Data Export" },
     ],
   },
 ];
