@@ -22,6 +22,14 @@ const orderSchema = new mongoose.Schema(
     },
     items: [orderItemSchema],
 
+    // Customer-facing order number ("2026-0001", "2026-0002"...) — issued
+    // once at order placement and shown on the bill in place of the raw
+    // database ID. Distinct from the GST invoice number below. No default:
+    // orders placed before this field existed must leave it genuinely
+    // unset (not ""), or the sparse unique index below would treat every
+    // one of them as sharing the same "" value the next time one is saved.
+    orderNumber: { type: String, index: true, sparse: true, unique: true },
+
     shippingAddress: {
       fullName:    { type: String, required: true },
       phone:       { type: String, required: true },
@@ -67,8 +75,21 @@ const orderSchema = new mongoose.Schema(
     razorpaySignature: { type: String, default: "" },
     paidAt: { type: Date, default: null },
 
+    // How a COD payment was actually handed over on delivery — set by the
+    // admin at the moment they mark the order Delivered. Distinct from
+    // paymentMethod, which only says how the order was placed (cod/razorpay).
+    paymentCollectedVia: { type: String, enum: ["", "cash", "upi", "card"], default: "" },
+
     // Set when admin marks the order as Delivered — used for 7-day replacement window
     deliveredAt: { type: Date, default: null },
+
+    // Tax invoice. The number is issued once — on delivery, or the first time
+    // an admin downloads the bill — and never changes afterwards, because a
+    // GST invoice number that moves is worse than no number at all.
+    invoice: {
+      number:   { type: String, default: "" },
+      issuedAt: { type: Date,   default: null },
+    },
 
     // Set once the customer's print artwork has been compressed for long-term
     // storage, which happens automatically on delivery. The full-resolution file

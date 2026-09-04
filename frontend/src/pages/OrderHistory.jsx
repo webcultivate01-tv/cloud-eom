@@ -2,10 +2,11 @@ import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMyOrders, requestCancelOTP, cancelOrder } from "../features/orders/orderSlice";
 import { toast } from "react-toastify";
+import { downloadFile } from "../utils/download";
 import { Link } from "react-router-dom";
 import {
   Package, Lock, Mail, CreditCard, Banknote, Palette, MapPin, Truck, X,
-  ExternalLink, Check, ShoppingBag, ArrowRight, ChevronDown, Clock,
+  ExternalLink, Check, ShoppingBag, ArrowRight, ChevronDown, Clock, Download,
 } from "lucide-react";
 
 const STATUS_CLS = {
@@ -43,6 +44,7 @@ export default function OrderHistory() {
   const [otpSent, setOtpSent] = useState(false);
   const [filter, setFilter] = useState("all");
   const [expanded, setExpanded] = useState({});
+  const [billBusy, setBillBusy] = useState(null);
 
   const closeModal = () => { setOtpModal(null); setOtp(""); setOtpSent(false); };
   const toggle = (id) => setExpanded((e) => ({ ...e, [id]: !e[id] }));
@@ -63,6 +65,17 @@ export default function OrderHistory() {
     setVerifying(false);
     if (!result.error) { toast.success("Order cancelled successfully"); closeModal(); }
     else toast.error(result.payload || "Invalid OTP. Try again.");
+  };
+
+  const handleDownloadBill = async (order) => {
+    setBillBusy(order._id);
+    try {
+      await downloadFile(`/invoice/${order._id}`, `Invoice-${order._id.slice(-8).toUpperCase()}.pdf`);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBillBusy(null);
+    }
   };
 
   useEffect(() => { dispatch(fetchMyOrders()); }, [dispatch]);
@@ -151,7 +164,7 @@ export default function OrderHistory() {
 
               <h2 className="text-[18px] font-black text-slate-900 mb-1.5 m-0">Verify to Cancel</h2>
               <p className="text-slate-400 text-[12.5px] font-semibold mb-6 m-0 mt-1.5">
-                Order #{otpModal._id.slice(-8).toUpperCase()} · ₹{otpModal.totalPrice?.toLocaleString()}
+                Order {otpModal.orderNumber || otpModal._id.slice(-8).toUpperCase()} · ₹{otpModal.totalPrice?.toLocaleString()}
               </p>
 
               {sendingOtp ? (
@@ -229,7 +242,7 @@ export default function OrderHistory() {
               const cancellable = ["Pending", "Processing"].includes(order.status);
               const isOpen = expanded[order._id];
               const itemCount = order.items.reduce((n, i) => n + i.quantity, 0);
-              const shown = isOpen ? order.items : order.items.slice(0, 2);
+              const firstItem = order.items[0];
 
               return (
                 <article key={order._id} className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden transition-shadow hover:shadow-md">
@@ -238,7 +251,7 @@ export default function OrderHistory() {
                   <div className="flex flex-wrap justify-between items-center gap-3 px-5 md:px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                     <div className="min-w-0">
                       <p className="font-black text-slate-900 text-[13.5px] m-0 leading-tight tracking-tight">
-                        #{order._id.slice(-8).toUpperCase()}
+                        {order.orderNumber || order._id.slice(-8).toUpperCase()}
                       </p>
                       <p className="text-slate-400 text-[11.5px] font-semibold m-0 mt-1">
                         {fmtDate(order.createdAt)} · {itemCount} {itemCount === 1 ? "item" : "items"}
@@ -256,107 +269,130 @@ export default function OrderHistory() {
                     </div>
                   </div>
 
-                  {/* ── Progress rail ── */}
-                  {!cancelled && (
-                    <div className="px-5 md:px-6 pt-5 pb-1">
-                      <div className="relative flex items-start justify-between">
-                        <div className="absolute top-[13px] left-0 right-0 h-[3px] bg-slate-100 rounded-full">
-                          <div className="h-full bg-brand-600 rounded-full transition-all duration-500"
-                            style={{ width: `${Math.max(0, (currentIdx / (STATUS_ORDER.length - 1)) * 100)}%` }} />
-                        </div>
-                        {STATUS_ORDER.map((s2, i) => {
-                          const done = i <= currentIdx;
-                          const current = i === currentIdx;
-                          return (
-                            <div key={s2} className="relative z-10 flex flex-col items-center flex-1 first:items-start last:items-end">
-                              <span className={`w-[27px] h-[27px] rounded-full flex items-center justify-center shrink-0 transition-all duration-300 border-[3px] border-white ${
-                                done ? "bg-brand-600 text-white" : "bg-slate-200 text-slate-400"
-                              } ${current ? "ring-4 ring-brand-100" : ""}`}>
-                                {done ? <Check className="w-3.5 h-3.5" /> : <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                              </span>
-                              <span className={`text-[10px] md:text-[10.5px] font-bold mt-2 text-center leading-tight ${done ? "text-slate-700" : "text-slate-300"}`}>
-                                {s2}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  {/* ── Compact summary line (always visible) ── */}
+                  <button type="button" onClick={() => toggle(order._id)}
+                    className={`w-full flex items-center gap-3 px-5 md:px-6 py-3.5 bg-white hover:bg-slate-50/60 transition-colors text-left border-none cursor-pointer ${isOpen ? "border-b border-slate-100" : ""}`}>
+                    <img src={firstItem?.product?.image || "https://placehold.co/64x64/f5f5f5/999?text=Item"} alt=""
+                      className="w-10 h-10 object-cover rounded-lg border border-slate-100 bg-slate-50 shrink-0" />
+                    <p className="flex-1 min-w-0 font-bold text-slate-900 text-[13px] m-0 truncate">
+                      {firstItem?.name}
+                      {order.items.length > 1 && (
+                        <span className="text-slate-400 font-semibold"> +{order.items.length - 1} more</span>
+                      )}
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-[11.5px] font-bold text-brand-600 shrink-0">
+                      {isOpen ? "Hide Details" : "View Details"}
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </span>
+                  </button>
 
-                  {/* ── Items ── */}
-                  <div className="px-5 md:px-6 py-4 flex flex-col gap-3.5">
-                    {shown.map((item, i) => (
-                      <div key={i} className="flex items-center gap-3.5">
-                        <img src={item.product?.image || "https://placehold.co/64x64/f5f5f5/999?text=Item"} alt={item.name}
-                          className="w-14 h-14 md:w-16 md:h-16 object-cover rounded-xl border border-slate-100 bg-slate-50 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-slate-900 text-[13.5px] m-0 leading-tight truncate">{item.name}</p>
-                          <p className="text-slate-400 text-[11.5px] font-semibold m-0 mt-1 flex items-center gap-2 flex-wrap">
-                            Qty {item.quantity} × ₹{item.price.toLocaleString()}
-                            {item.size && (
-                              <span className="bg-brand-50 text-brand-700 border border-brand-100 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
-                                {item.size}
-                              </span>
-                            )}
+                  {isOpen && (
+                    <>
+                      {/* ── Progress rail ── */}
+                      {!cancelled && (
+                        <div className="px-5 md:px-6 pt-5 pb-1">
+                          <div className="relative flex items-start justify-between">
+                            <div className="absolute top-[13px] left-0 right-0 h-[3px] bg-slate-100 rounded-full">
+                              <div className="h-full bg-brand-600 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.max(0, (currentIdx / (STATUS_ORDER.length - 1)) * 100)}%` }} />
+                            </div>
+                            {STATUS_ORDER.map((s2, i) => {
+                              const done = i <= currentIdx;
+                              const current = i === currentIdx;
+                              return (
+                                <div key={s2} className="relative z-10 flex flex-col items-center flex-1 first:items-start last:items-end">
+                                  <span className={`w-[27px] h-[27px] rounded-full flex items-center justify-center shrink-0 transition-all duration-300 border-[3px] border-white ${
+                                    done ? "bg-brand-600 text-white" : "bg-slate-200 text-slate-400"
+                                  } ${current ? "ring-4 ring-brand-100" : ""}`}>
+                                    {done ? <Check className="w-3.5 h-3.5" /> : <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                  </span>
+                                  <span className={`text-[10px] md:text-[10.5px] font-bold mt-2 text-center leading-tight ${done ? "text-slate-700" : "text-slate-300"}`}>
+                                    {s2}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ── Items ── */}
+                      <div className="px-5 md:px-6 py-4 flex flex-col gap-3.5">
+                        {order.items.map((item, i) => (
+                          <div key={i} className="flex items-center gap-3.5">
+                            <img src={item.product?.image || "https://placehold.co/64x64/f5f5f5/999?text=Item"} alt={item.name}
+                              className="w-14 h-14 md:w-16 md:h-16 object-cover rounded-xl border border-slate-100 bg-slate-50 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-slate-900 text-[13.5px] m-0 leading-tight truncate">{item.name}</p>
+                              <p className="text-slate-400 text-[11.5px] font-semibold m-0 mt-1 flex items-center gap-2 flex-wrap">
+                                Qty {item.quantity} × ₹{item.price.toLocaleString()}
+                                {item.size && (
+                                  <span className="bg-brand-50 text-brand-700 border border-brand-100 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                    {item.size}
+                                  </span>
+                                )}
+                              </p>
+                              {item.uploadedImage && (
+                                <a href={item.uploadedImage} target="_blank" rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-brand-700 text-[11px] font-bold bg-brand-50 px-2 py-0.5 rounded mt-1.5 no-underline hover:bg-brand-100 transition-colors w-fit">
+                                  <Palette className="w-3 h-3" /> View Design <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="font-black text-slate-900 text-[14px] shrink-0 m-0">₹{(item.price * item.quantity).toLocaleString()}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* ── Footer: address, tracking, actions ── */}
+                      <div className="px-5 md:px-6 py-4 border-t border-slate-100 bg-slate-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex flex-col gap-2 min-w-0">
+                          <p className="flex items-start gap-2 text-slate-500 text-[12px] font-medium m-0 leading-relaxed">
+                            <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-300 mt-0.5" />
+                            {order.shippingAddress?.address}, {order.shippingAddress?.city} – {order.shippingAddress?.pincode}
                           </p>
-                          {item.uploadedImage && (
-                            <a href={item.uploadedImage} target="_blank" rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 text-brand-700 text-[11px] font-bold bg-brand-50 px-2 py-0.5 rounded mt-1.5 no-underline hover:bg-brand-100 transition-colors w-fit">
-                              <Palette className="w-3 h-3" /> View Design <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
+                          {order.shipment?.trackingId && (
+                            <p className="flex items-center gap-2 text-slate-600 text-[12px] font-semibold bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 w-fit m-0">
+                              <Truck className="w-3.5 h-3.5 shrink-0 text-brand-500" />
+                              {order.shipment.courierName} · AWB <strong className="text-brand-700">{order.shipment.trackingId}</strong>
+                            </p>
                           )}
                         </div>
-                        <p className="font-black text-slate-900 text-[14px] shrink-0 m-0">₹{(item.price * item.quantity).toLocaleString()}</p>
+
+                        <div className="shrink-0">
+                          {cancelled ? (
+                            <span className="inline-block bg-red-50 text-red-700 border border-red-200 font-bold px-3.5 py-2 rounded-lg text-[12px] uppercase tracking-wider">
+                              Cancelled
+                            </span>
+                          ) : cancellable ? (
+                            <button onClick={() => handleRequestOTP(order)}
+                              className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-[12px] cursor-pointer hover:border-red-200 hover:text-red-600 hover:bg-red-50/50 transition-all active:scale-95 w-full sm:w-auto justify-center">
+                              <X className="w-3.5 h-3.5" /> Cancel Order
+                            </button>
+                          ) : order.status === "Delivered" ? (
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              {/* The same tax invoice the shop holds — customers
+                                  ask for it far more often than they ask us. */}
+                              <button onClick={() => handleDownloadBill(order)}
+                                disabled={billBusy === order._id}
+                                className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-[12px] cursor-pointer hover:border-brand-200 hover:text-brand-700 transition-all active:scale-95 disabled:opacity-50 w-full sm:w-auto justify-center">
+                                <Download className="w-3.5 h-3.5" />
+                                {billBusy === order._id ? "Preparing…" : "Download Bill"}
+                              </button>
+                              <Link to="/replacements"
+                                className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-[12px] no-underline hover:border-brand-200 hover:text-brand-700 transition-all w-full sm:w-auto justify-center">
+                                Request Replacement <ArrowRight className="w-3.5 h-3.5" />
+                              </Link>
+                            </div>
+                          ) : (
+                            <span className="inline-block text-slate-400 text-[11.5px] font-semibold">
+                              Cannot be cancelled at this stage
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    ))}
-
-                    {order.items.length > 2 && (
-                      <button type="button" onClick={() => toggle(order._id)}
-                        className="inline-flex items-center justify-center gap-1.5 text-[12px] font-bold text-brand-600 hover:text-brand-700 bg-transparent border-none cursor-pointer py-1 transition-colors self-start">
-                        {isOpen ? "Show less" : `Show ${order.items.length - 2} more item${order.items.length - 2 === 1 ? "" : "s"}`}
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* ── Footer: address, tracking, actions ── */}
-                  <div className="px-5 md:px-6 py-4 border-t border-slate-100 bg-slate-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex flex-col gap-2 min-w-0">
-                      <p className="flex items-start gap-2 text-slate-500 text-[12px] font-medium m-0 leading-relaxed">
-                        <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-300 mt-0.5" />
-                        {order.shippingAddress?.address}, {order.shippingAddress?.city} – {order.shippingAddress?.pincode}
-                      </p>
-                      {order.shipment?.trackingId && (
-                        <p className="flex items-center gap-2 text-slate-600 text-[12px] font-semibold bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 w-fit m-0">
-                          <Truck className="w-3.5 h-3.5 shrink-0 text-brand-500" />
-                          {order.shipment.courierName} · AWB <strong className="text-brand-700">{order.shipment.trackingId}</strong>
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="shrink-0">
-                      {cancelled ? (
-                        <span className="inline-block bg-red-50 text-red-700 border border-red-200 font-bold px-3.5 py-2 rounded-lg text-[12px] uppercase tracking-wider">
-                          Cancelled
-                        </span>
-                      ) : cancellable ? (
-                        <button onClick={() => handleRequestOTP(order)}
-                          className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-[12px] cursor-pointer hover:border-red-200 hover:text-red-600 hover:bg-red-50/50 transition-all active:scale-95 w-full sm:w-auto justify-center">
-                          <X className="w-3.5 h-3.5" /> Cancel Order
-                        </button>
-                      ) : order.status === "Delivered" ? (
-                        <Link to="/replacements"
-                          className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-[12px] no-underline hover:border-brand-200 hover:text-brand-700 transition-all w-full sm:w-auto justify-center">
-                          Request Replacement <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      ) : (
-                        <span className="inline-block text-slate-400 text-[11.5px] font-semibold">
-                          Cannot be cancelled at this stage
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </article>
               );
             })}

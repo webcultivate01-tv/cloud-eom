@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllOrders, updateOrderStatus } from "../../features/orders/orderSlice";
+import { fetchAllOrders, fetchOrderGroupCounts, updateOrderStatus } from "../../features/orders/orderSlice";
 import { markOrderRefunded } from "../../features/payment/paymentSlice";
 import { toast } from "react-toastify";
 import api from "../../utils/api";
-import { ChevronDown, ChevronUp, Eye, MapPin, Phone, Mail, Package } from "lucide-react";
+import { downloadFile, openFile } from "../../utils/download";
+import {
+  ChevronDown, ChevronUp, Eye, MapPin, Phone, Mail, Package,
+  Inbox, CheckCircle2, XCircle, FileText, Download,
+} from "lucide-react";
 
 const STATUSES = ["Pending", "Processing", "Printing", "Shipped", "Delivered", "Cancelled"];
 
@@ -17,6 +21,12 @@ const STATUS_CFG = {
   Cancelled:  { cls: "bg-red-100 text-red-600",       dot: "bg-red-400" },
 };
 
+const COLLECTION_METHODS = [
+  { value: "cash", label: "Cash" },
+  { value: "upi",  label: "UPI" },
+  { value: "card", label: "Card" },
+];
+
 const DATE_FILTERS = [
   { label: "All",        value: "" },
   { label: "Today",      value: "today" },
@@ -26,10 +36,52 @@ const DATE_FILTERS = [
   { label: "Custom",     value: "custom" },
 ];
 
+/* The Orders screen is a work queue, so it opens on the orders that still
+   need something done to them. Delivered and cancelled orders are finished
+   business — they stay one click away in their own tabs rather than
+   burying today's work under months of completed orders. */
+const TABS = [
+  { value: "active",    label: "Active Orders", icon: Inbox,        hint: "New, processing, printing and shipped" },
+  { value: "delivered", label: "Delivered",     icon: CheckCircle2, hint: "Completed orders — download bills here" },
+  { value: "cancelled", label: "Cancelled",     icon: XCircle,      hint: "Cancelled by customer or admin" },
+];
+
+/* Which statuses the dropdown offers inside each tab. Delivered and
+   cancelled orders are terminal, so their tabs get no status control. */
+const TAB_STATUSES = {
+  active: ["Pending", "Processing", "Printing", "Shipped"],
+  delivered: [],
+  cancelled: [],
+};
+
+/* Admin can raise the bill for any live order — packing happens (and the
+   printed bill needs to go in the box) well before a COD payment is
+   collected on delivery, so payment settlement is not a precondition here. */
+const hasBill = (order) => order.status !== "Cancelled";
+
+/* Reads the payment state in the language of the shop rather than the
+   database. A delivered COD order has had its cash collected, so calling
+   it "PENDING" — as the raw status once did — was simply wrong. */
+const COLLECTION_LABELS = { cash: "Cash", upi: "UPI", card: "Card" };
+
+const paymentLabel = (order) => {
+  if (order.paymentStatus === "refunded") return "Refunded";
+  if (order.paymentStatus === "failed")   return "Failed";
+  if (order.paymentStatus === "paid") {
+    if (order.paymentMethod !== "cod") return "Paid";
+    const via = COLLECTION_LABELS[order.paymentCollectedVia];
+    return via ? `Collected (${via})` : "Collected";
+  }
+  if (order.status === "Cancelled")       return "Not charged";
+  return order.paymentMethod === "cod" ? "Due on delivery" : "Awaiting payment";
+};
+
 export default function ManageOrders() {
   const dispatch = useDispatch();
-  const { orders, loading } = useSelector((state) => state.orders);
+  const { orders, loading, groupCounts } = useSelector((state) => state.orders);
 
+  const [tab, setTab]                   = useState("active");
+  const [billBusy, setBillBusy]         = useState(null);
   const [dateFilter, setDateFilter]     = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [fromDate, setFromDate]         = useState("");
@@ -42,22 +94,85 @@ export default function ManageOrders() {
   const [trackingData, setTrackingData] = useState(null);
   const [loadingTracking, setLoadingTracking] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [collectingOrderId, setCollectingOrderId] = useState(null);
+  const [collectionMethod, setCollectionMethod] = useState("cash");
+  const [confirmingDelivery, setConfirmingDelivery] = useState(null);
 
   const loadOrders = () => {
-    const params = {};
+    const params = { group: tab };
     if (dateFilter && dateFilter !== "custom") params.filter = dateFilter;
     if (dateFilter === "custom" && fromDate)   params.from = fromDate;
     if (dateFilter === "custom" && toDate)     params.to   = toDate;
     if (statusFilter)                          params.status = statusFilter;
     dispatch(fetchAllOrders(params));
+    dispatch(fetchOrderGroupCounts());
   };
 
-  useEffect(() => { loadOrders(); }, [dateFilter, statusFilter, fromDate, toDate]);
+  useEffect(() => { loadOrders(); }, [tab, dateFilter, statusFilter, fromDate, toDate]);
 
-  const handleStatusChange = async (orderId, status) => {
-    const result = await dispatch(updateOrderStatus({ id: orderId, status }));
-    if (!result.error) toast.success(`Status updated to "${status}"`);
-    else toast.error("Failed to update status");
+  /* A status filter only makes sense within the tab that offers it, so
+     switching tabs clears it rather than silently returning nothing. */
+  const handleTabChange = (next) => {
+    if (next === tab) return;
+    setStatusFilter("");
+    setExpandedOrderId(null);
+    setTab(next);
+  };
+
+  const handleStatusChange = async (orderId, status, extra = {}) => {
+    const result = await dispatch(updateOrderStatus({ id: orderId, status, ...extra }));
+    if (result.error) { toast.error(result.payload || "Failed to update status"); return; }
+
+    if (status === "Delivered") {
+      toast.success("Marked as delivered — bill generated and emailed to the customer");
+    } else {
+      toast.success(`Status updated to "${status}"`);
+    }
+    // The order has just left this tab, so the list and badges must catch up
+    loadOrders();
+  };
+
+  /* A COD order isn't settled until the courier actually hands the cash (or a
+     UPI/card tap) back to the shop, so marking it Delivered pauses here for
+     the admin to say how that happened — rather than assuming cash, or
+     leaving the order to look permanently "awaiting payment". */
+  const handleStatusSelect = (order, nextStatus) => {
+    if (nextStatus === "Delivered" && order.paymentMethod === "cod" && order.paymentStatus === "pending") {
+      setCollectionMethod("cash");
+      setCollectingOrderId(order._id);
+      return;
+    }
+    handleStatusChange(order._id, nextStatus);
+  };
+
+  const handleConfirmPaymentAndDeliver = async (orderId) => {
+    setConfirmingDelivery(orderId);
+    await handleStatusChange(orderId, "Delivered", { paymentCollectedVia: collectionMethod });
+    setConfirmingDelivery(null);
+    setCollectingOrderId(null);
+  };
+
+  const handleDownloadBill = async (order) => {
+    setBillBusy(order._id);
+    try {
+      await downloadFile(`/invoice/${order._id}`, `Invoice-${order._id.slice(-8).toUpperCase()}.pdf`);
+      toast.success("Bill downloaded");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBillBusy(null);
+    }
+  };
+
+  const handleViewBill = async (order) => {
+    setBillBusy(order._id);
+    try {
+      await openFile(`/invoice/${order._id}/preview`);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBillBusy(null);
+    }
   };
 
   const handleRefund = async (orderId) => {
@@ -105,7 +220,7 @@ export default function ManageOrders() {
     try {
       const { data } = await api.get(`/shipment/${order._id}`);
       setTrackingData(data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch tracking info");
       setTrackingModal(null);
     } finally {
@@ -124,7 +239,7 @@ export default function ManageOrders() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div>
                 <h2 className="font-black text-slate-800 text-base">🚚 Live Shipment Tracking</h2>
-                <p className="text-slate-400 text-xs mt-0.5">Order #{trackingModal._id.slice(-8).toUpperCase()}</p>
+                <p className="text-slate-400 text-xs mt-0.5">Order {trackingModal.orderNumber || trackingModal._id.slice(-8).toUpperCase()}</p>
               </div>
               <button onClick={() => { setTrackingModal(null); setTrackingData(null); }}
                 className="text-slate-400 hover:text-slate-700 bg-transparent border-none text-xl font-bold cursor-pointer">
@@ -283,14 +398,45 @@ export default function ManageOrders() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight">All Orders</h1>
-          <p className="text-slate-400 text-sm mt-0.5">{orders.length} orders found</p>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+            {TABS.find((t) => t.value === tab)?.label}
+          </h1>
+          <p className="text-slate-400 text-sm mt-0.5">
+            {orders.length} {orders.length === 1 ? "order" : "orders"} · {TABS.find((t) => t.value === tab)?.hint}
+          </p>
         </div>
         <button onClick={loadOrders} className="admin-btn admin-btn-ghost text-xs">
           ↻ Refresh
         </button>
+      </div>
+
+      {/* Tabs — the working queue, then the two finished piles */}
+      <div className="flex flex-wrap gap-2 mb-5 border-b border-slate-200">
+        {TABS.map(({ value, label, icon: Icon }) => {
+          const active = tab === value;
+          const count = groupCounts?.[value] ?? 0;
+          return (
+            <button
+              key={value}
+              onClick={() => handleTabChange(value)}
+              className={`relative flex items-center gap-2 px-4 py-2.5 -mb-px text-[13px] font-bold border-b-2 transition-colors ${
+                active
+                  ? "border-brand-600 text-brand-700"
+                  : "border-transparent text-slate-400 hover:text-slate-700"
+              }`}
+            >
+              <Icon size={15} strokeWidth={active ? 2.4 : 1.9} />
+              {label}
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none min-w-[20px] ${
+                active ? "bg-brand-100 text-brand-700" : "bg-slate-100 text-slate-400"
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Filters */}
@@ -321,15 +467,17 @@ export default function ManageOrders() {
           </div>
         )}
 
-        {/* Status filter */}
-        <select
-          className="admin-input !w-auto"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+        {/* Status filter — only where the tab has more than one status */}
+        {TAB_STATUSES[tab].length > 0 && (
+          <select
+            className="admin-input !w-auto"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Active Statuses</option>
+            {TAB_STATUSES[tab].map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        )}
       </div>
 
       {/* Orders list */}
@@ -342,8 +490,17 @@ export default function ManageOrders() {
         </div>
       ) : orders.length === 0 ? (
         <div className="admin-card p-16 text-center">
-          <p className="text-4xl mb-3">📭</p>
-          <p className="text-slate-500 font-medium">No orders found for this filter.</p>
+          <p className="text-4xl mb-3">{tab === "active" ? "✅" : tab === "delivered" ? "📦" : "🎉"}</p>
+          <p className="text-slate-500 font-medium">
+            {tab === "active"    && "No orders waiting — the queue is clear."}
+            {tab === "delivered" && "No delivered orders in this period yet."}
+            {tab === "cancelled" && "No cancelled orders. Good news."}
+          </p>
+          <p className="text-slate-400 text-xs mt-1.5">
+            {tab === "active"
+              ? "New orders land here the moment a customer checks out."
+              : "Try widening the date filter above."}
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -365,7 +522,7 @@ export default function ManageOrders() {
                       <div className="min-w-0">
                         <p className="text-[10px] text-slate-400 font-medium leading-none mb-0.5">Order</p>
                         <p className="font-mono text-xs text-slate-700 font-bold truncate">
-                          #{order._id.slice(-8).toUpperCase()}
+                          {order.orderNumber || order._id.slice(-8).toUpperCase()}
                         </p>
                       </div>
                     </div>
@@ -398,7 +555,7 @@ export default function ManageOrders() {
                         order.paymentStatus === "refunded" ? "bg-red-100 text-red-600"         :
                                                              "bg-amber-100 text-amber-700"
                       }`}>
-                        {order.paymentMethod === "razorpay" ? "💳" : "💵"} {order.paymentStatus?.toUpperCase()}
+                        {order.paymentMethod === "razorpay" ? "💳" : "💵"} {paymentLabel(order)}
                       </span>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.cls}`}>
                         {order.status}
@@ -408,8 +565,22 @@ export default function ManageOrders() {
                       </span>
                     </div>
 
-                    {/* View Details button */}
-                    <div className="col-span-12 sm:col-span-1 flex justify-end">
+                    {/* Row actions */}
+                    <div className="col-span-12 sm:col-span-1 flex justify-end gap-1.5">
+                      {/* Straight to the bill — available from the moment
+                          the order is placed, so packing doesn't need a
+                          click into the details panel first to print it. */}
+                      {hasBill(order) && (
+                        <button
+                          title="Download tax invoice"
+                          disabled={billBusy === order._id}
+                          onClick={(e) => { e.stopPropagation(); handleDownloadBill(order); }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 transition-all disabled:opacity-50"
+                        >
+                          <Download size={12} />
+                          <span className="hidden xl:inline">Bill</span>
+                        </button>
+                      )}
                       <button
                         onClick={(e) => { e.stopPropagation(); setExpandedOrderId(isExpanded ? null : order._id); }}
                         className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
@@ -446,7 +617,7 @@ export default function ManageOrders() {
                   {/* Customer info */}
                   <div className="p-3 bg-slate-50 rounded-xl mb-4">
                     <div className="flex items-start gap-3 mb-2">
-                      <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                      <div className="w-9 h-9 shrink-0 rounded-xl bg-brand-50 border border-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm">
                         {order.user?.name?.[0]?.toUpperCase() ?? "?"}
                       </div>
                       <div className="min-w-0">
@@ -486,14 +657,52 @@ export default function ManageOrders() {
                                                            "bg-amber-100 text-amber-700"
                     }`}>
                       {order.paymentMethod === "razorpay" ? "💳 Razorpay" : "💵 COD"}
-                      {" · "}{order.paymentStatus?.toUpperCase()}
+                      {" · "}{paymentLabel(order)}
                     </span>
                     {order.razorpayPaymentId && (
                       <span className="text-xs text-slate-400 font-mono">
                         ID: <span className="text-brand-500">{order.razorpayPaymentId}</span>
                       </span>
                     )}
+                    {order.invoice?.number && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                        <FileText size={11} /> Bill {order.invoice.number}
+                      </span>
+                    )}
                   </div>
+
+                  {/* Bill — available on any order that hasn't been
+                      cancelled, so it can be printed and packed with the
+                      order before payment is settled (e.g. COD). */}
+                  {hasBill(order) && (
+                    <div className="flex items-center gap-3 flex-wrap bg-emerald-50/70 border border-emerald-100 rounded-xl px-4 py-3 mb-4">
+                      <FileText size={16} className="text-emerald-700 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-bold text-emerald-900 m-0">Tax invoice ready</p>
+                        <p className="text-[11.5px] text-emerald-700/80 m-0 mt-0.5">
+                          GST bill for ₹{order.totalPrice.toLocaleString("en-IN")}
+                          {order.invoice?.number ? ` · ${order.invoice.number}` : " · number assigned on first download"}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          disabled={billBusy === order._id}
+                          onClick={() => handleViewBill(order)}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-white border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors disabled:opacity-50"
+                        >
+                          <Eye size={12} /> View
+                        </button>
+                        <button
+                          disabled={billBusy === order._id}
+                          onClick={() => handleDownloadBill(order)}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 border-none px-3 py-1.5 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
+                        >
+                          <Download size={12} />
+                          {billBusy === order._id ? "Preparing…" : "Download Bill"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Items */}
                   <div className="border-t border-slate-100 pt-3 flex flex-col gap-2 mb-4">
@@ -587,18 +796,68 @@ export default function ManageOrders() {
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs font-semibold">
                           🔒 Cancelled by Admin
                         </span>
+                      ) : order.status === "Delivered" ? (
+                        /* Delivery raises a numbered GST invoice. Walking the
+                           status backwards would leave that bill describing a
+                           sale that no longer exists, so it stops here. */
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                          🔒 Delivered &amp; billed — final
+                        </span>
                       ) : (
                         <select
                           value={order.status}
-                          onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                          onChange={(e) => handleStatusSelect(order, e.target.value)}
                           className="admin-input !w-auto !py-1.5 !text-xs"
                         >
-                          {STATUSES.filter((s) => s !== "Cancelled" || order.status === "Cancelled").map((s) => (
+                          {STATUSES.filter((s) => s !== "Cancelled").map((s) => (
                             <option key={s} value={s}>{s}</option>
                           ))}
                         </select>
                       )}
                     </div>
+
+                    {/* Collect COD payment — shown only after the admin picks
+                        "Delivered" on a COD order that hasn't been paid yet. */}
+                    {collectingOrderId === order._id && (
+                      <div className="bg-white border-2 border-emerald-200 rounded-xl p-4 w-full mt-1 shadow-sm">
+                        <p className="text-sm font-black text-emerald-800 mb-3 flex items-center gap-1.5">
+                          💵 How was the ₹{order.totalPrice.toLocaleString()} payment collected?
+                        </p>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {COLLECTION_METHODS.map(({ value, label }) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => setCollectionMethod(value)}
+                              className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                collectionMethod === value
+                                  ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                                  : "bg-white text-slate-500 border-slate-200 hover:border-emerald-300 hover:text-emerald-700"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <button
+                            disabled={confirmingDelivery === order._id}
+                            onClick={() => handleConfirmPaymentAndDeliver(order._id)}
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-2.5 px-4 rounded-xl border-none cursor-pointer transition-all shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                          >
+                            {confirmingDelivery === order._id
+                              ? "Confirming…"
+                              : `✅ Cash Received — Mark Delivered`}
+                          </button>
+                          <button
+                            onClick={() => setCollectingOrderId(null)}
+                            className="bg-white border-2 border-slate-200 text-slate-600 font-bold text-sm py-2.5 px-5 rounded-xl cursor-pointer hover:bg-slate-50 hover:border-slate-300 transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Refund */}
                     {order.paymentMethod === "razorpay" && order.paymentStatus === "paid" && order.status !== "Cancelled" && (
@@ -612,7 +871,7 @@ export default function ManageOrders() {
                     )}
 
                     {/* Shiprocket */}
-                    {!order.shipment?.trackingId && order.status !== "Cancelled" && (
+                    {!order.shipment?.trackingId && !["Cancelled", "Delivered"].includes(order.status) && (
                       shippingOrderId === order._id ? (
                         <div className="bg-white border-2 border-brand-200 rounded-xl p-4 w-full mt-1 shadow-sm">
                           <p className="text-sm font-black text-brand-700 mb-3 flex items-center gap-1.5">

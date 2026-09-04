@@ -5,6 +5,7 @@ const {
   getMyOrders,
   getOrderById,
   getAllOrders,
+  getOrderGroupCounts,
   updateOrderStatus,
   getDashboardStats,
   requestCancelOTP,
@@ -15,6 +16,9 @@ const { adminOnly } = require("../middleware/adminMiddleware");
 
 // Admin dashboard stats — must be before /:id
 router.get("/admin/stats", protect, adminOnly, getDashboardStats);
+
+// Admin: order counts per tab (Active / Delivered / Cancelled)
+router.get("/admin/group-counts", protect, adminOnly, getOrderGroupCounts);
 
 // Admin: view all orders
 router.get("/", protect, adminOnly, getAllOrders);

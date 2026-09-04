@@ -4,6 +4,9 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const User = require("../models/User");
 const { sendOrderConfirmation } = require("../config/mailer");
+const { nextOrderNumber } = require("../models/Counter");
+const { ensureInvoiceNumber, isBillable } = require("./invoiceController");
+const { renderInvoiceBuffer, invoiceFileName } = require("../config/invoice");
 
 // Lazy-initialize so placeholder values in .env don't crash on startup
 const getRazorpay = () =>
@@ -96,6 +99,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     // 3. Create order in DB as paid
     const order = await Order.create({
       user: req.user._id,
+      orderNumber: await nextOrderNumber(),
       items: orderItems,
       shippingAddress,
       totalPrice,
@@ -109,6 +113,24 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       status: "Processing", // auto-advance from Pending since payment confirmed
     });
 
+    /* Paid online means the sale is already settled, so the tax invoice
+       goes out with the confirmation email right away — unlike a COD order,
+       which isn't paid until the courier collects it on delivery and only
+       gets its invoice then (see orderController.updateOrderStatus). */
+    let invoiceAttachment = [];
+    if (isBillable(order)) {
+      try {
+        await ensureInvoiceNumber(order);
+        invoiceAttachment = [{
+          filename: invoiceFileName(order),
+          content: await renderInvoiceBuffer(order),
+          contentType: "application/pdf",
+        }];
+      } catch (err) {
+        console.error("Invoice generation failed for order", order._id.toString(), err.message);
+      }
+    }
+
     // Send order confirmation email (non-blocking)
     try {
       const user = await User.findById(req.user._id).select("name email");
@@ -117,6 +139,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
           toEmail: user.email,
           toName: user.name,
           order: { ...order.toObject(), user: { name: user.name, email: user.email } },
+          attachments: invoiceAttachment,
         });
       }
     } catch (_) {}
@@ -160,7 +183,7 @@ const getAllPayments = async (req, res) => {
       .populate("user", "name email phone")
       .sort({ paidAt: -1, createdAt: -1 })
       .select(
-        "user totalPrice paymentMethod paymentStatus razorpayOrderId razorpayPaymentId razorpaySignature paidAt status createdAt shippingAddress"
+        "user orderNumber totalPrice paymentMethod paymentStatus razorpayOrderId razorpayPaymentId razorpaySignature paidAt status createdAt shippingAddress invoice"
       );
 
     res.json(orders);

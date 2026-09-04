@@ -7,7 +7,7 @@ import { toggleFavorite, selectFavoriteIds } from "../features/favorites/favorit
 import { toast } from "react-toastify";
 import { flyToCart } from "../utils/flyToCart";
 import { usePageTitle } from "../components/PageTitle";
-import { Heart, Palette, Edit3, CheckCircle2, XCircle, Check, Minus, Plus, ShoppingCart, ShoppingBag, Printer, Package, Truck, RotateCcw, Scale, ChevronLeft, ChevronRight, Share2, AlertCircle } from "lucide-react";
+import { Heart, Palette, Edit3, CheckCircle2, XCircle, Check, Minus, Plus, ShoppingCart, ShoppingBag, Printer, Package, Truck, RotateCcw, Scale, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 
 /* Bare arrow — no pill, no circle, just the glyph with a soft halo so it stays
    legible over both light and dark artwork. Always visible, never hover-gated. */
@@ -241,15 +241,10 @@ export default function ProductDetail() {
                   </div>
                 </div>
               )}
-              {product.allowCOD === false && (
-                <div className="flex gap-3 bg-white rounded-2xl ring-1 ring-amber-100 p-4">
-                  <AlertCircle className="w-[18px] h-[18px] text-amber-600 shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-[12.5px] font-bold text-slate-900 m-0">Online payment only</p>
-                    <p className="text-[12.5px] text-slate-500 leading-relaxed mt-0.5 mb-0">Cash on Delivery is not available for this product.</p>
-                  </div>
-                </div>
-              )}
+              {/* Nothing is said here about Cash on Delivery. Leading with what
+                  a product *can't* do talks a shopper out of it before they have
+                  decided to buy; the payment step already offers only the methods
+                  that apply to what is actually in the basket. */}
             </div>
 
             {/* Size */}

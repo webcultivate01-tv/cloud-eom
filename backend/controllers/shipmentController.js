@@ -259,6 +259,7 @@ const shipOrder = async (req, res) => {
         toEmail:         order.user.email,
         toName:          order.user.name,
         orderId:         order._id.toString(),
+        orderNumber:     order.orderNumber,
         items:           order.items,
         totalPrice:      order.totalPrice,
         trackingId,

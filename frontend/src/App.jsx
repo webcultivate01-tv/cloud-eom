@@ -44,6 +44,7 @@ import ManageInquiries from "./pages/admin/ManageInquiries";
 import ManageReviews from "./pages/admin/ManageReviews";
 import ManageReplacements from "./pages/admin/ManageReplacements";
 import DataExport from "./pages/admin/DataExport";
+import Reports from "./pages/admin/Reports";
 
 /* Toast motion — drops in from the top-centre and lifts back out.
    Paired with the .cg-toast-* rules in index.css. */
@@ -80,6 +81,7 @@ export default function App() {
         <Route path="/admin/inquiries"   element={<AdminPage><ManageInquiries /></AdminPage>} />
         <Route path="/admin/reviews"       element={<AdminPage><ManageReviews /></AdminPage>} />
         <Route path="/admin/replacements" element={<AdminPage><ManageReplacements /></AdminPage>} />
+        <Route path="/admin/reports"      element={<AdminPage><Reports /></AdminPage>} />
         <Route path="/admin/export"       element={<AdminPage><DataExport /></AdminPage>} />
 
         {/* ── Public + User routes — use Navbar/Footer ── */}
