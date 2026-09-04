@@ -98,7 +98,7 @@ export default function ManagePayments() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-            <CreditCard className="w-6 h-6 text-indigo-600" /> Payments
+            <CreditCard className="w-6 h-6 text-brand-600" /> Payments
           </h1>
           <p className="text-slate-400 text-sm mt-0.5">{filtered.length} {filtered.length === 1 ? "payment" : "payments"} found</p>
         </div>
@@ -112,7 +112,7 @@ export default function ManagePayments() {
         <div className="admin-card p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Online Revenue</p>
-            <CreditCard className="w-4 h-4 text-indigo-500" />
+            <CreditCard className="w-4 h-4 text-brand-500" />
           </div>
           <p className="text-xl font-black text-slate-900">₹{(stats?.razorpay?.total || 0).toLocaleString("en-IN")}</p>
           <p className="text-[11px] text-slate-400 mt-1 font-medium">{stats?.razorpay?.count || 0} paid orders</p>
@@ -155,8 +155,8 @@ export default function ManagePayments() {
               onClick={() => setMethod(value)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${
                 method === value
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                  : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                  ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                  : "bg-white text-slate-500 border-slate-200 hover:border-brand-300 hover:text-brand-600"
               }`}
             >
               {label}
@@ -190,8 +190,8 @@ export default function ManagePayments() {
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-4 border-brand-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-brand-600 animate-spin" />
           </div>
         </div>
       ) : filtered.length === 0 ? (
@@ -211,7 +211,7 @@ export default function ManagePayments() {
                   {/* Method + status */}
                   <div className="lg:col-span-2 flex lg:flex-col gap-3 lg:gap-2 items-center lg:items-start">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                      isOnline ? "bg-indigo-50 text-indigo-600" : "bg-emerald-50 text-emerald-600"
+                      isOnline ? "bg-brand-50 text-brand-600" : "bg-emerald-50 text-emerald-600"
                     }`}>
                       {isOnline ? <CreditCard size={20} /> : <Banknote size={20} />}
                     </div>
@@ -233,7 +233,7 @@ export default function ManagePayments() {
                       <User size={11} /> Customer
                     </p>
                     <div className="flex items-start gap-2.5">
-                      <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm">
+                      <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center font-bold text-sm">
                         {p.user?.name?.[0]?.toUpperCase() ?? "?"}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -259,12 +259,12 @@ export default function ManagePayments() {
                     </p>
                     {isOnline && p.razorpayPaymentId ? (
                       <div className="flex items-center gap-1.5">
-                        <code className="font-mono text-[11px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 truncate max-w-[170px]">
+                        <code className="font-mono text-[11px] bg-brand-50 text-brand-700 px-2 py-1 rounded border border-brand-100 truncate max-w-[170px]">
                           {p.razorpayPaymentId}
                         </code>
                         <button
                           onClick={() => handleCopy(p.razorpayPaymentId, "Payment ID")}
-                          className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0"
+                          className="text-slate-400 hover:text-brand-600 transition-colors shrink-0"
                           title="Copy Payment ID"
                         >
                           <Copy size={12} />
@@ -306,7 +306,7 @@ export default function ManagePayments() {
                       <button
                         disabled={refunding === p._id}
                         onClick={() => handleRefund(p._id)}
-                        className="mt-2 text-[11px] text-red-600 border border-red-200 hover:bg-red-50 px-2.5 py-1 rounded-lg font-semibold disabled:opacity-50 transition-colors"
+                        className="mt-2 text-[11px] text-brand-600 border border-brand-200 hover:bg-brand-50 px-2.5 py-1 rounded-lg font-semibold disabled:opacity-50 transition-colors"
                       >
                         {refunding === p._id ? "Processing…" : "↩ Mark Refunded"}
                       </button>

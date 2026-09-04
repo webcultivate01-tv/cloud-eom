@@ -2,8 +2,21 @@ import { useRef, useState } from "react";
 import { Upload, ImageIcon, X, Link2, Plus, Star } from "lucide-react";
 import { toast } from "react-toastify";
 import api from "../utils/api";
+import { MAX_UPLOAD_MB, validateImageFile } from "../utils/uploadLimits";
 
-export default function MultiImageInput({ value = [], onChange, max = 10, folder = "misc" }) {
+// `category` and `product` are only meaningful for folder="products": they put
+// every image of a product in its own folder on the server, under the category
+// it belongs to (uploads/products/<category>/<product>/). Files uploaded before
+// the name or category is filled in land in a holding folder and are moved into
+// place by the server when the product is saved.
+export default function MultiImageInput({
+  value = [],
+  onChange,
+  max = 10,
+  folder = "misc",
+  category = "",
+  product = "",
+}) {
   const [uploading, setUploading]   = useState(false);
   const [mode, setMode]             = useState("upload");
   const [urlInput, setUrlInput]     = useState("");
@@ -11,6 +24,10 @@ export default function MultiImageInput({ value = [], onChange, max = 10, folder
   const fileRef                     = useRef();
 
   const remaining = max - value.length;
+
+  const uploadUrl = `/upload?folder=${encodeURIComponent(folder)}` +
+    (category ? `&category=${encodeURIComponent(category)}` : "") +
+    (product ? `&product=${encodeURIComponent(product)}` : "");
 
   const addUrls = (urls) => {
     const next = [...value, ...urls].slice(0, max);
@@ -21,9 +38,13 @@ export default function MultiImageInput({ value = [], onChange, max = 10, folder
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+    // Anything the server would reject is reported now, by name, rather than
+    // after the upload has already been spent on it
+    const rejected = files.map((f) => validateImageFile(f)).filter(Boolean);
+    const imageFiles = files.filter((f) => !validateImageFile(f));
+    rejected.forEach((problem) => toast.error(problem));
     if (!imageFiles.length) {
-      toast.error("Please select image files only");
+      if (fileRef.current) fileRef.current.value = "";
       return;
     }
     if (imageFiles.length > remaining) {
@@ -37,7 +58,7 @@ export default function MultiImageInput({ value = [], onChange, max = 10, folder
       for (const file of toUpload) {
         const fd = new FormData();
         fd.append("image", file);
-        const { data } = await api.post(`/upload?folder=${folder}`, fd, {
+        const { data } = await api.post(uploadUrl, fd, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         if (data.imageUrl) uploadedUrls.push(data.imageUrl);
@@ -91,14 +112,14 @@ export default function MultiImageInput({ value = [], onChange, max = 10, folder
               onError={(e) => { e.currentTarget.classList.add("opacity-30"); }}
             />
             {i === 0 && (
-              <span className="absolute bottom-0 inset-x-0 bg-indigo-600/90 text-white text-[10px] font-bold text-center py-0.5 rounded-b-xl">
+              <span className="absolute bottom-0 inset-x-0 bg-brand-600/90 text-white text-[10px] font-bold text-center py-0.5 rounded-b-xl">
                 Main
               </span>
             )}
             <button
               type="button"
               onClick={() => removeAt(i)}
-              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
               title="Remove"
             >
               <X size={12} />
@@ -123,8 +144,8 @@ export default function MultiImageInput({ value = [], onChange, max = 10, folder
             onClick={() => setShowPicker((v) => !v)}
             className={`w-24 h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center text-xs font-semibold transition-all ${
               showPicker
-                ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                : "border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-500 hover:text-indigo-600"
+                ? "border-brand-500 bg-brand-50 text-brand-700"
+                : "border-slate-300 hover:border-brand-400 hover:bg-brand-50/30 text-slate-500 hover:text-brand-600"
             }`}
           >
             <Plus size={20} strokeWidth={1.8} />
@@ -142,7 +163,7 @@ export default function MultiImageInput({ value = [], onChange, max = 10, folder
               onClick={() => setMode("upload")}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-bold transition-all ${
                 mode === "upload"
-                  ? "bg-indigo-100 text-indigo-700 shadow-sm"
+                  ? "bg-brand-100 text-brand-700 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
               }`}
             >
@@ -153,7 +174,7 @@ export default function MultiImageInput({ value = [], onChange, max = 10, folder
               onClick={() => setMode("url")}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-bold transition-all ${
                 mode === "url"
-                  ? "bg-indigo-100 text-indigo-700 shadow-sm"
+                  ? "bg-brand-100 text-brand-700 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
               }`}
             >
@@ -178,7 +199,7 @@ export default function MultiImageInput({ value = [], onChange, max = 10, folder
                 className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold border-2 transition-all w-fit ${
                   uploading
                     ? "bg-slate-100 border-slate-200 text-slate-400 cursor-wait"
-                    : "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
+                    : "bg-brand-50 border-brand-200 text-brand-700 hover:bg-brand-100"
                 }`}
               >
                 {uploading ? (
@@ -189,6 +210,8 @@ export default function MultiImageInput({ value = [], onChange, max = 10, folder
               </button>
               <p className="text-[11px] text-slate-400 mt-2">
                 You can pick multiple files. {remaining} slot{remaining === 1 ? "" : "s"} remaining.
+                <br />
+                Images are stored at full quality for printing — max {MAX_UPLOAD_MB} MB each.
               </p>
             </>
           )}

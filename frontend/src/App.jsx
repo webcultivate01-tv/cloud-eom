@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, cssTransition } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import Navbar from "./components/Navbar";
@@ -8,6 +8,8 @@ import MobileBottomNav from "./components/MobileBottomNav";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import AdminLayout from "./components/AdminLayout";
+import PageTitle from "./components/PageTitle";
+import EventPopup from "./components/EventPopup";
 
 // ── User / Public Pages ──────────────────────────────────────
 import Home from "./pages/Home";
@@ -22,6 +24,7 @@ import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
+import Services from "./pages/Services";
 import Replacements from "./pages/Replacements";
 import ForgotPassword from "./pages/ForgotPassword";
 import OrderSuccess from "./pages/OrderSuccess";
@@ -42,6 +45,14 @@ import ManageReviews from "./pages/admin/ManageReviews";
 import ManageReplacements from "./pages/admin/ManageReplacements";
 import DataExport from "./pages/admin/DataExport";
 
+/* Toast motion — drops in from the top-centre and lifts back out.
+   Paired with the .cg-toast-* rules in index.css. */
+const CGToast = cssTransition({
+  enter: "cg-toast-in",
+  exit: "cg-toast-out",
+  collapseDuration: 200,
+});
+
 // Wraps any admin page with the sidebar layout + route guard
 const AdminPage = ({ children }) => (
   <AdminRoute>
@@ -52,6 +63,10 @@ const AdminPage = ({ children }) => (
 export default function App() {
   return (
     <BrowserRouter>
+      {/* Keeps the browser-tab title and meta description in step with the route */}
+      <PageTitle />
+      {/* Active offers/announcements, shown once per visitor on the public site */}
+      <EventPopup />
       <Routes>
         {/* ── Admin routes — no Navbar/Footer, use AdminLayout sidebar ── */}
         <Route path="/admin/dashboard"  element={<AdminPage><Dashboard /></AdminPage>} />
@@ -88,6 +103,7 @@ export default function App() {
                 <Route path="/replacements"  element={<PrivateRoute><Replacements /></PrivateRoute>} />
                 <Route path="/contact"       element={<Contact />} />
                 <Route path="/about"         element={<About />} />
+                <Route path="/services"      element={<Services />} />
                 <Route path="/terms"         element={<TermsConditions />} />
                 <Route path="/shipping-policy" element={<ShippingPolicy />} />
                 <Route path="/return-policy"   element={<ReturnPolicy />} />
@@ -106,7 +122,22 @@ export default function App() {
         } />
       </Routes>
 
-      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+      {/* Compact brand toast — top-centre, one line, auto-dismiss */}
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        limit={2}
+        newestOnTop
+        hideProgressBar
+        closeButton={false}
+        closeOnClick
+        pauseOnHover={false}
+        pauseOnFocusLoss={false}
+        draggable
+        transition={CGToast}
+        className="cg-toast-container"
+        toastClassName="cg-toast"
+      />
     </BrowserRouter>
   );
 }

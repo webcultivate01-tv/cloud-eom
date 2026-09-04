@@ -37,9 +37,18 @@ const TYPE_OPTIONS = [
   },
 ];
 
+/* Mirrors the server's slugify, so the folder shown in the form is the one the
+   image actually lands in (backend/config/localUpload.js). */
+const folderSlug = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+
 const typeBadge = (p) => {
   if (p.requiresCustomImage) return { label: "Custom Required", cls: "bg-purple-100 text-purple-700" };
-  if (p.allowCustomImage)    return { label: "Custom Optional",  cls: "bg-indigo-100 text-indigo-700" };
+  if (p.allowCustomImage)    return { label: "Custom Optional",  cls: "bg-brand-100 text-brand-700" };
   return { label: "Direct Sale", cls: "bg-emerald-100 text-emerald-700" };
 };
 
@@ -187,7 +196,7 @@ export default function ManageProducts() {
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Manage Products</h1>
           <p className="text-slate-500 text-sm mt-0.5">
             {filteredProducts.length} of {products.length} products
-            {categoryTab !== "all" && <span className="text-indigo-600 font-semibold"> · {categoryTab}</span>}
+            {categoryTab !== "all" && <span className="text-brand-600 font-semibold"> · {categoryTab}</span>}
           </p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
@@ -218,8 +227,8 @@ export default function ManageProducts() {
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
                        whitespace-nowrap transition-all duration-150 shrink-0 border
                        ${categoryTab === "all"
-                         ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200"
-                         : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                         ? "bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-200"
+                         : "bg-white text-slate-600 border-slate-200 hover:border-brand-300 hover:text-brand-600"
                        }`}
         >
           <Layers size={14} />
@@ -237,8 +246,8 @@ export default function ManageProducts() {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
                          whitespace-nowrap transition-all duration-150 shrink-0 border
                          ${categoryTab === cat
-                           ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200"
-                           : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                           ? "bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-200"
+                           : "bg-white text-slate-600 border-slate-200 hover:border-brand-300 hover:text-brand-600"
                          }`}
           >
             <Tag size={13} />
@@ -271,17 +280,17 @@ export default function ManageProducts() {
                     className={`flex flex-col gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all select-none ${
                       active
                         ? value === "required"
-                          ? "border-red-300 bg-red-50"
-                          : "border-indigo-300 bg-indigo-50"
+                          ? "border-brand-300 bg-brand-50"
+                          : "border-brand-300 bg-brand-50"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
                     <input type="radio" name="productType" checked={active} onChange={() => setProductType(value)} className="hidden" />
                     <Icon
                       size={20}
-                      className={active ? (value === "required" ? "text-red-600" : "text-indigo-600") : "text-slate-400"}
+                      className={active ? (value === "required" ? "text-brand-600" : "text-brand-600") : "text-slate-400"}
                     />
-                    <span className={`font-semibold text-sm ${active ? (value === "required" ? "text-red-800" : "text-indigo-800") : "text-slate-700"}`}>
+                    <span className={`font-semibold text-sm ${active ? (value === "required" ? "text-brand-800" : "text-brand-800") : "text-slate-700"}`}>
                       {name}
                     </span>
                     <span className="text-xs text-slate-500">{desc}</span>
@@ -361,7 +370,7 @@ export default function ManageProducts() {
                   <Check size={13} className="text-emerald-500 shrink-0" />
                   <span className="flex-1">{h}</span>
                   <button type="button" onClick={() => setHighlights((hl) => hl.filter((_, j) => j !== i))}
-                    className="text-red-400 hover:text-red-600 transition-colors">
+                    className="text-brand-400 hover:text-brand-600 transition-colors">
                     <X size={13} />
                   </button>
                 </li>
@@ -388,7 +397,7 @@ export default function ManageProducts() {
                   <span className="font-semibold text-slate-600 w-36 shrink-0">{sp.key}</span>
                   <span className="text-slate-700 flex-1">{sp.value}</span>
                   <button type="button" onClick={() => setSpecifications((s) => s.filter((_, j) => j !== i))}
-                    className="text-red-400 hover:text-red-600 transition-colors">
+                    className="text-brand-400 hover:text-brand-600 transition-colors">
                     <X size={13} />
                   </button>
                 </div>
@@ -409,7 +418,7 @@ export default function ManageProducts() {
           <div className="flex flex-col sm:flex-row gap-4 mb-5">
             <label className="flex items-center gap-2.5 text-sm text-slate-600 cursor-pointer select-none w-fit group">
               <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all
-                               ${form.isAvailable ? "bg-indigo-600 border-indigo-600" : "border-slate-300 bg-white"}`}>
+                               ${form.isAvailable ? "bg-brand-600 border-brand-600" : "border-slate-300 bg-white"}`}>
                 {form.isAvailable && <Check size={10} className="text-white" strokeWidth={3} />}
               </div>
               <input
@@ -449,8 +458,8 @@ export default function ManageProducts() {
                   onClick={() => active ? setSizes((p) => p.filter((x) => x !== s)) : addSizePreset(s)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
                     active
-                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"
+                      ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-brand-300"
                   }`}
                 >
                   {s}
@@ -472,11 +481,11 @@ export default function ManageProducts() {
           {sizes.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-5">
               {sizes.map((s) => (
-                <span key={s} className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-bold px-2.5 py-1 rounded-full">
+                <span key={s} className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 border border-brand-100 text-xs font-bold px-2.5 py-1 rounded-full">
                   {s}
                   <button type="button"
                     onClick={() => setSizes((p) => p.filter((x) => x !== s))}
-                    className="text-indigo-400 hover:text-red-600 transition-colors">
+                    className="text-brand-400 hover:text-brand-600 transition-colors">
                     <X size={11} />
                   </button>
                 </span>
@@ -489,7 +498,23 @@ export default function ManageProducts() {
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
               Product Images <span className="normal-case font-normal text-slate-400">(up to 10 — upload or paste URLs)</span>
             </p>
-            <MultiImageInput value={images} onChange={setImages} max={10} folder="products" />
+            {/* Uploads are filed under products/<category>/<product>/ on the
+                server, so filling in the name and category first files them
+                straight away — otherwise the server moves them there when the
+                product is saved. */}
+            <p className="text-[11px] text-slate-400 -mt-1 mb-3">
+              {form.name.trim()
+                ? <>Images are stored in <code className="text-slate-500">products/{folderSlug(form.category) || "uncategorized"}/{folderSlug(form.name)}/</code></>
+                : "Tip: fill in the product name and category first — each product keeps its images in a folder of its own."}
+            </p>
+            <MultiImageInput
+              value={images}
+              onChange={setImages}
+              max={10}
+              folder="products"
+              category={form.category}
+              product={form.name}
+            />
           </div>
 
           <div className="flex gap-3">
@@ -506,7 +531,7 @@ export default function ManageProducts() {
       {/* ── Product Table ─────────────────────────────── */}
       {loading && !showForm ? (
         <div className="flex items-center justify-center py-24">
-          <div className="w-10 h-10 rounded-full border-4 border-slate-200 border-t-indigo-600 animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-slate-200 border-t-brand-600 animate-spin" />
         </div>
       ) : (
         <div className="admin-card overflow-hidden">
@@ -577,7 +602,7 @@ export default function ManageProducts() {
                           <button
                             onClick={() => handleEdit(p)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                                       bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold
+                                       bg-brand-50 hover:bg-brand-100 text-brand-700 text-xs font-semibold
                                        transition-colors"
                           >
                             <Pencil size={12} />
@@ -586,7 +611,7 @@ export default function ManageProducts() {
                           <button
                             onClick={() => handleDelete(p._id, p.name)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                                       bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold
+                                       bg-brand-50 hover:bg-brand-100 text-brand-600 text-xs font-semibold
                                        transition-colors"
                           >
                             <Trash2 size={12} />

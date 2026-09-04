@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../features/products/productSlice";
 import { fetchActiveEvents } from "../features/events/eventSlice";
+import { resolveLink } from "../utils/links";
 import { fetchCategories } from "../features/categories/categorySlice";
 import { fetchApprovedReviews, submitReview } from "../features/review/reviewSlice";
 import ProductCard from "../components/ProductCard";
@@ -12,10 +13,10 @@ import { Truck, Palette, Star, IndianRupee, ChevronLeft, ChevronRight, ChevronDo
 
 const REVIEW_EMPTY = { name: "", email: "", rating: 0, message: "" };
 const FEATURES = [
-  { icon: <Truck size={28} className="text-red-700" />, title: "Fast Delivery", desc: "Quick delivery across Amravati & Maharashtra" },
-  { icon: <Palette size={28} className="text-red-700" />, title: "100% Custom Designs", desc: "Upload your photo or design — we print it" },
-  { icon: <Star size={28} className="text-red-700" />, title: "Premium Quality", desc: "Durable prints that last for years" },
-  { icon: <IndianRupee size={28} className="text-red-700" />, title: "Best Prices", desc: "Affordable prices with bulk discounts" },
+  { icon: <Truck size={28} className="text-brand-700" />, title: "Fast Delivery", desc: "Quick delivery across Amravati & Maharashtra" },
+  { icon: <Palette size={28} className="text-brand-700" />, title: "100% Custom Designs", desc: "Upload your photo or design — we print it" },
+  { icon: <Star size={28} className="text-brand-700" />, title: "Premium Quality", desc: "Durable prints that last for years" },
+  { icon: <IndianRupee size={28} className="text-brand-700" />, title: "Best Prices", desc: "Affordable prices with bulk discounts" },
 ];
 
 const STEPS = [
@@ -182,7 +183,7 @@ export default function Home() {
     } else { toast.error(result.payload || "Failed to submit. Please try again."); }
   };
 
-  const inputCls = (err) => `w-full border rounded-lg px-3.5 py-2.5 text-sm outline-none font-[inherit] transition-colors ${err ? "border-red-600 bg-red-50" : "border-gray-200 bg-white focus:border-red-600"}`;
+  const inputCls = (err) => `w-full border rounded-lg px-3.5 py-2.5 text-sm outline-none font-[inherit] transition-colors ${err ? "border-red-500 bg-red-50" : "border-gray-200 bg-white focus:border-brand-600"}`;
 
   return (
     <div className="bg-white">
@@ -190,15 +191,20 @@ export default function Home() {
 
       {/* Events ticker (compact) */}
       {events.length > 0 && (
-        <div className="bg-red-50 border-b border-pink-100">
+        <div className="bg-brand-50 border-b border-pink-100">
           <div className="max-w-7xl mx-auto flex overflow-x-auto">
-            {events.slice(0, 3).map((ev) => (
-              <div key={ev._id} className="flex items-center gap-2 px-6 py-2.5 border-r border-pink-100 whitespace-nowrap">
-                <span className="bg-red-700 text-white text-[10px] font-bold px-2 py-0.5 rounded">{ev.badge}</span>
-                <span className="text-gray-800 text-xs font-medium">{ev.title}</span>
-                {ev.link && <Link to={ev.link} className="text-red-700 text-xs font-semibold">View →</Link>}
-              </div>
-            ))}
+            {events.slice(0, 3).map((ev) => {
+              const link = resolveLink(ev.link);
+              return (
+                <div key={ev._id} className="flex items-center gap-2 px-6 py-2.5 border-r border-pink-100 whitespace-nowrap">
+                  <span className="bg-brand-700 text-white text-[10px] font-bold px-2 py-0.5 rounded">{ev.badge}</span>
+                  <span className="text-gray-800 text-xs font-medium">{ev.title}</span>
+                  {link && (link.external
+                    ? <a href={link.to} target="_blank" rel="noopener noreferrer" className="text-brand-700 text-xs font-semibold">View →</a>
+                    : <Link to={link.to} className="text-brand-700 text-xs font-semibold">View →</Link>)}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -211,7 +217,7 @@ export default function Home() {
               Shop by Category
             </h2>
             <div className="flex items-center gap-2 shrink-0">
-              <Link to="/products" className="text-gray-500 hover:text-red-700 font-medium text-sm mr-1 transition-colors">
+              <Link to="/products" className="text-gray-500 hover:text-brand-700 font-medium text-sm mr-1 transition-colors">
                 View all
               </Link>
               <button
@@ -219,7 +225,7 @@ export default function Home() {
                 aria-label="Previous categories"
                 onClick={() => scrollCatRail(-1)}
                 disabled={!catArrows.left}
-                className="w-9 h-9 rounded-full bg-gray-900 text-white hidden md:flex items-center justify-center transition-all duration-300 hover:bg-red-700 disabled:opacity-0 disabled:pointer-events-none cursor-pointer"
+                className="w-9 h-9 rounded-full bg-gray-900 text-white hidden md:flex items-center justify-center transition-all duration-300 hover:bg-brand-700 disabled:opacity-0 disabled:pointer-events-none cursor-pointer"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -228,7 +234,7 @@ export default function Home() {
                 aria-label="Next categories"
                 onClick={() => scrollCatRail(1)}
                 disabled={!catArrows.right}
-                className="w-9 h-9 rounded-full bg-gray-900 text-white hidden md:flex items-center justify-center transition-all duration-300 hover:bg-red-700 disabled:opacity-0 disabled:pointer-events-none cursor-pointer"
+                className="w-9 h-9 rounded-full bg-gray-900 text-white hidden md:flex items-center justify-center transition-all duration-300 hover:bg-brand-700 disabled:opacity-0 disabled:pointer-events-none cursor-pointer"
               >
                 <ChevronRight size={18} />
               </button>
@@ -268,7 +274,7 @@ export default function Home() {
                     <span className="text-4xl opacity-30">{cat.icon || "🏷️"}</span>
                   )}
                 </div>
-                <p className="mt-3 text-center text-[13px] md:text-sm font-medium text-gray-800 group-hover:text-red-700 transition-colors duration-300 truncate">
+                <p className="mt-3 text-center text-[13px] md:text-sm font-medium text-gray-800 group-hover:text-brand-700 transition-colors duration-300 truncate">
                   {cat.name}
                 </p>
               </Link>
@@ -280,7 +286,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setShowAllCats((v) => !v)}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-gray-300 text-sm font-semibold text-gray-800 bg-white hover:border-red-700 hover:text-red-700 transition-colors duration-300 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-gray-300 text-sm font-semibold text-gray-800 bg-white hover:border-brand-700 hover:text-brand-700 transition-colors duration-300 cursor-pointer"
               >
                 {showAllCats ? "Show Less" : "View More Categories"}
                 <ChevronDown
@@ -295,10 +301,10 @@ export default function Home() {
 
       {/* Events Showcase — visible on website */}
       {events.length > 0 && (
-        <section className="bg-gradient-to-b from-red-50/40 to-white px-4 md:px-12 py-12 md:py-16 border-y border-red-100/60">
+        <section className="bg-gradient-to-b from-brand-50/40 to-white px-4 md:px-12 py-12 md:py-16 border-y border-brand-100/60">
           <div className="max-w-7xl mx-auto">
             <div className="text-center max-w-2xl mx-auto mb-10">
-              <span className="inline-block text-xs font-bold uppercase tracking-[0.3em] text-red-700 mb-3">
+              <span className="inline-block text-xs font-bold uppercase tracking-[0.3em] text-brand-700 mb-3">
                 Latest Updates
               </span>
               <h2 className="text-2xl md:text-4xl font-black text-gray-900 -tracking-wide mb-3"
@@ -312,13 +318,18 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {events.slice(0, 6).map((ev) => {
-                const Card = ev.link ? Link : "div";
-                const cardProps = ev.link ? { to: ev.link } : {};
+                const link = resolveLink(ev.link);
+                const Card = link ? (link.external ? "a" : Link) : "div";
+                const cardProps = !link
+                  ? {}
+                  : link.external
+                    ? { href: link.to, target: "_blank", rel: "noopener noreferrer" }
+                    : { to: link.to };
                 return (
                   <Card
                     key={ev._id}
                     {...cardProps}
-                    className="group bg-white rounded-2xl overflow-hidden border border-red-100/60 hover:border-red-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col no-underline"
+                    className="group bg-white rounded-2xl overflow-hidden border border-brand-100/60 hover:border-brand-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col no-underline"
                   >
                     {ev.image ? (
                       <div className="aspect-[16/9] overflow-hidden bg-gray-100">
@@ -329,15 +340,15 @@ export default function Home() {
                         />
                       </div>
                     ) : (
-                      <div className="aspect-[16/9] bg-gradient-to-br from-red-50 via-pink-50 to-amber-50 flex items-center justify-center">
+                      <div className="aspect-[16/9] bg-gradient-to-br from-brand-50 via-pink-50 to-amber-50 flex items-center justify-center">
                         <span className="text-5xl opacity-30">📣</span>
                       </div>
                     )}
                     <div className="p-5 flex flex-col flex-1">
-                      <span className="inline-flex items-center w-fit bg-red-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-3">
+                      <span className="inline-flex items-center w-fit bg-brand-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-3">
                         {ev.badge || "Announcement"}
                       </span>
-                      <h3 className="font-black text-gray-900 text-lg leading-snug mb-2 group-hover:text-red-700 transition-colors">
+                      <h3 className="font-black text-gray-900 text-lg leading-snug mb-2 group-hover:text-brand-700 transition-colors">
                         {ev.title}
                       </h3>
                       <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 flex-1">
@@ -349,7 +360,7 @@ export default function Home() {
                         </p>
                       )}
                       {ev.link && (
-                        <p className="text-red-700 font-bold text-sm mt-3 flex items-center gap-1">
+                        <p className="text-brand-700 font-bold text-sm mt-3 flex items-center gap-1">
                           Learn more <span className="group-hover:translate-x-1 transition-transform">→</span>
                         </p>
                       )}
@@ -368,9 +379,9 @@ export default function Home() {
           <div className="flex justify-between items-start mb-8">
             <div>
               <h2 className="font-display text-3xl md:text-[40px] font-bold text-gray-900 tracking-tight leading-none">Featured Products</h2>
-              <span className="block w-12 h-[3px] bg-red-700 rounded-full mt-3" />
+              <span className="block w-12 h-[3px] bg-brand-700 rounded-full mt-3" />
             </div>
-            <Link to="/products" className="text-red-700 font-semibold text-sm whitespace-nowrap pt-2">View All →</Link>
+            <Link to="/products" className="text-brand-700 font-semibold text-sm whitespace-nowrap pt-2">View All →</Link>
           </div>
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-5">
@@ -392,9 +403,9 @@ export default function Home() {
           <div className="flex justify-between items-start mb-3">
             <div>
               <h2 className="font-display text-3xl md:text-[40px] font-bold text-gray-900 tracking-tight leading-none">Design Your Own</h2>
-              <span className="block w-12 h-[3px] bg-red-700 rounded-full mt-3" />
+              <span className="block w-12 h-[3px] bg-brand-700 rounded-full mt-3" />
             </div>
-            <Link to="/products?type=customize" className="text-red-700 font-semibold text-sm whitespace-nowrap pt-2">View All →</Link>
+            <Link to="/products?type=customize" className="text-brand-700 font-semibold text-sm whitespace-nowrap pt-2">View All →</Link>
           </div>
           <p className="text-gray-500 text-sm mb-7 mt-4">Upload your photo and get it printed on premium products</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-5">
@@ -404,20 +415,20 @@ export default function Home() {
       )}
 
       {/* How It Works */}
-      <section className="py-14 lg:py-16" style={{ background: "#fdfbfa" }}>
+      <section className="py-14 lg:py-16" style={{ background: "#f7fafc" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
 
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="w-8 h-[1px]" style={{ background: "#d7b6af" }} />
+              <div className="w-8 h-[1px]" style={{ background: "#9cc9de" }} />
               <span
                 className="text-[11px] font-semibold uppercase tracking-[0.3em]"
-                style={{ color: "#B51D0F" }}
+                style={{ color: "#0672a7" }}
               >
                 How It Works
               </span>
-              <div className="w-8 h-[1px]" style={{ background: "#d7b6af" }} />
+              <div className="w-8 h-[1px]" style={{ background: "#9cc9de" }} />
             </div>
 
             <h2
@@ -431,7 +442,7 @@ export default function Home() {
               }}
             >
               Your Design, Delivered
-              <span style={{ color: "#B51D0F" }}> In 4 Simple Steps</span>
+              <span style={{ color: "#0672a7" }}> In 4 Simple Steps</span>
             </h2>
 
             <p className="mt-4 text-[15px] leading-[1.85] text-gray-500">
@@ -446,7 +457,7 @@ export default function Home() {
             {/* Connector line (desktop) */}
             <div
               className="hidden lg:block absolute left-[12.5%] right-[12.5%] top-7 h-[1px]"
-              style={{ background: "linear-gradient(90deg,#f0dcd6,#e0bdb4,#f0dcd6)" }}
+              style={{ background: "linear-gradient(90deg,#daeffa,#b0def4,#daeffa)" }}
             />
 
             <ol className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
@@ -457,7 +468,7 @@ export default function Home() {
                   {i !== STEPS.length - 1 && (
                     <span
                       className="sm:hidden absolute left-7 top-14 bottom-[-2rem] w-[1px]"
-                      style={{ background: "#efdcd6" }}
+                      style={{ background: "#dbe8f0" }}
                       aria-hidden="true"
                     />
                   )}
@@ -467,8 +478,8 @@ export default function Home() {
                     <div
                       className="w-14 h-14 rounded-2xl flex items-center justify-center text-white"
                       style={{
-                        background: "linear-gradient(135deg,#B51D0F 0%,#d55444 100%)",
-                        boxShadow: "0 10px 24px rgba(181,29,15,0.22)",
+                        background: "linear-gradient(135deg,#0672a7 0%,#2fa3db 100%)",
+                        boxShadow: "0 10px 24px rgba(6, 114, 167,0.22)",
                       }}
                     >
                       {item.icon}
@@ -477,8 +488,8 @@ export default function Home() {
                       className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold"
                       style={{
                         background: "#fff",
-                        color: "#B51D0F",
-                        border: "1px solid #f1ddd7",
+                        color: "#0672a7",
+                        border: "1px solid #dce9f1",
                       }}
                     >
                       {item.step}
@@ -506,9 +517,9 @@ export default function Home() {
               to="/products?type=customize"
               className="group inline-flex items-center gap-3 pl-6 pr-2 py-2 rounded-full text-[14px] font-semibold transition-all duration-300 hover:-translate-y-[2px]"
               style={{
-                background: "#B51D0F",
+                background: "#0672a7",
                 color: "#fff",
-                boxShadow: "0 12px 30px rgba(181,29,15,0.20)",
+                boxShadow: "0 12px 30px rgba(6, 114, 167,0.20)",
               }}
             >
               Start customizing
@@ -531,17 +542,17 @@ export default function Home() {
       {/* Customer Reviews */}
       <section
         className="relative overflow-hidden py-14 lg:py-16"
-        style={{ background: "#f8f5f2" }}
+        style={{ background: "#f3f7fa" }}
       >
 
         {/* Ambient Glow */}
         <div
           className="absolute -top-24 -right-24 w-[420px] h-[420px] rounded-full blur-3xl opacity-40 pointer-events-none"
-          style={{ background: "#f1d9d3" }}
+          style={{ background: "#d8e7f1" }}
         />
         <div
           className="absolute -bottom-32 -left-28 w-[360px] h-[360px] rounded-full blur-3xl opacity-30 pointer-events-none"
-          style={{ background: "#e9ded6" }}
+          style={{ background: "#dde8ef" }}
         />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
@@ -553,10 +564,10 @@ export default function Home() {
 
               {/* Label */}
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-8 h-[1px]" style={{ background: "#d7b6af" }} />
+                <div className="w-8 h-[1px]" style={{ background: "#9cc9de" }} />
                 <span
                   className="text-[11px] font-semibold uppercase tracking-[0.3em]"
-                  style={{ color: "#B51D0F" }}
+                  style={{ color: "#0672a7" }}
                 >
                   Customer Reviews
                 </span>
@@ -575,7 +586,7 @@ export default function Home() {
               >
                 Loved By Customers
                 <br />
-                <span style={{ color: "#B51D0F" }}>
+                <span style={{ color: "#0672a7" }}>
                   Across Amravati
                 </span>
               </h2>
@@ -610,7 +621,7 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="w-[1px] h-12" style={{ background: "#e2d5ce" }} />
+                <div className="w-[1px] h-12" style={{ background: "#d4e2ea" }} />
 
                 <div>
                   <span
@@ -639,9 +650,9 @@ export default function Home() {
                 }}
                 className="group mt-9 inline-flex items-center gap-3 pl-6 pr-2 py-2 rounded-full text-[14px] font-semibold transition-all duration-300 hover:-translate-y-[2px]"
                 style={{
-                  background: "#B51D0F",
+                  background: "#0672a7",
                   color: "#fff",
-                  boxShadow: "0 12px 30px rgba(181,29,15,0.20)",
+                  boxShadow: "0 12px 30px rgba(6, 114, 167,0.20)",
                 }}
               >
                 {showReviewForm ? "Close review form" : "Write a review"}
@@ -667,8 +678,8 @@ export default function Home() {
                       key={i}
                       className="h-[250px] rounded-[22px] animate-pulse"
                       style={{
-                        background: "#fffdfc",
-                        border: "1px solid #ebe1db",
+                        background: "#fbfdff",
+                        border: "1px solid #e1eaf0",
                       }}
                     />
                   ))}
@@ -680,13 +691,13 @@ export default function Home() {
                 <div
                   className="rounded-[22px] px-8 py-14 text-center"
                   style={{
-                    background: "#fffdfc",
-                    border: "1px dashed #e6d8d1",
+                    background: "#fbfdff",
+                    border: "1px dashed #d6e4ec",
                   }}
                 >
                   <div
                     className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl"
-                    style={{ background: "#fff0ed" }}
+                    style={{ background: "#f2f9fd" }}
                   >
                     ⭐
                   </div>
@@ -721,8 +732,8 @@ export default function Home() {
                         key={review._id}
                         className="group relative snap-start shrink-0 w-full sm:w-[calc(50%-10px)] rounded-[22px] p-6 flex flex-col transition-all duration-300 hover:-translate-y-1"
                         style={{
-                          background: "#fffdfc",
-                          border: "1px solid #ebe1db",
+                          background: "#fbfdff",
+                          border: "1px solid #e1eaf0",
                           boxShadow: "0 8px 26px rgba(0,0,0,0.035)",
                         }}
                       >
@@ -731,7 +742,7 @@ export default function Home() {
                         <span
                           className="absolute top-3 right-6 text-[64px] leading-none pointer-events-none select-none"
                           style={{
-                            color: "#f5e3de",
+                            color: "#e2eef5",
                             fontFamily: "'Playfair Display', serif",
                           }}
                         >
@@ -754,13 +765,13 @@ export default function Home() {
                         {/* Author */}
                         <div
                           className="mt-5 pt-4 flex items-center gap-3"
-                          style={{ borderTop: "1px solid #f2e8e3" }}
+                          style={{ borderTop: "1px solid #e6eff5" }}
                         >
                           <div
                             className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-[15px] shrink-0"
                             style={{
                               background:
-                                "linear-gradient(135deg,#B51D0F 0%, #cf4c3d 100%)",
+                                "linear-gradient(135deg,#0672a7 0%, #0f7fb8 100%)",
                             }}
                           >
                             {review.name[0].toUpperCase()}
@@ -791,7 +802,7 @@ export default function Home() {
                           className="h-[3px] rounded-full transition-all duration-300"
                           style={{
                             width: i === reviewIdx ? 26 : 10,
-                            background: i === reviewIdx ? "#B51D0F" : "#e0d2cb",
+                            background: i === reviewIdx ? "#0672a7" : "#d1e0e9",
                           }}
                         />
                       ))}
@@ -805,17 +816,17 @@ export default function Home() {
                         onClick={() => scrollReviews(-1)}
                         className="w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300"
                         style={{
-                          background: "#fffdfc",
-                          border: "1px solid #e6d8d1",
-                          color: "#B51D0F",
+                          background: "#fbfdff",
+                          border: "1px solid #d6e4ec",
+                          color: "#0672a7",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#B51D0F";
+                          e.currentTarget.style.background = "#0672a7";
                           e.currentTarget.style.color = "#fff";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "#fffdfc";
-                          e.currentTarget.style.color = "#B51D0F";
+                          e.currentTarget.style.background = "#fbfdff";
+                          e.currentTarget.style.color = "#0672a7";
                         }}
                       >
                         <ChevronLeft size={18} />
@@ -827,17 +838,17 @@ export default function Home() {
                         onClick={() => scrollReviews(1)}
                         className="w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300"
                         style={{
-                          background: "#fffdfc",
-                          border: "1px solid #e6d8d1",
-                          color: "#B51D0F",
+                          background: "#fbfdff",
+                          border: "1px solid #d6e4ec",
+                          color: "#0672a7",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#B51D0F";
+                          e.currentTarget.style.background = "#0672a7";
                           e.currentTarget.style.color = "#fff";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "#fffdfc";
-                          e.currentTarget.style.color = "#B51D0F";
+                          e.currentTarget.style.background = "#fbfdff";
+                          e.currentTarget.style.color = "#0672a7";
                         }}
                       >
                         <ChevronRight size={18} />
@@ -861,8 +872,8 @@ export default function Home() {
               <div
                 className="relative overflow-hidden w-full max-w-4xl rounded-[28px]"
                 style={{
-                  background: "linear-gradient(180deg,#fffdfc 0%, #fff7f4 100%)",
-                  border: "1px solid #efe2db",
+                  background: "linear-gradient(180deg,#fbfdff 0%, #f7fbfe 100%)",
+                  border: "1px solid #dfebf2",
                   boxShadow: "0 20px 60px rgba(0,0,0,0.06)",
                 }}
               >
@@ -872,14 +883,14 @@ export default function Home() {
                   className="h-[6px] w-full"
                   style={{
                     background:
-                      "linear-gradient(90deg,#B51D0F 0%, #d55a4b 50%, #B51D0F 100%)",
+                      "linear-gradient(90deg,#0672a7 0%, #2fa3db 50%, #0672a7 100%)",
                   }}
                 />
 
                 {/* Background Glow */}
                 <div
                   className="absolute top-0 right-0 w-60 h-60 rounded-full blur-3xl opacity-40 pointer-events-none"
-                  style={{ background: "#f5d7d0" }}
+                  style={{ background: "#d6e9f4" }}
                 />
 
                 <div className="relative p-7 md:p-10">
@@ -889,7 +900,7 @@ export default function Home() {
 
                     <span
                       className="inline-block text-[11px] font-semibold uppercase tracking-[0.3em] mb-3"
-                      style={{ color: "#B51D0F" }}
+                      style={{ color: "#0672a7" }}
                     >
                       Share Feedback
                     </span>
@@ -972,13 +983,13 @@ export default function Home() {
                             }}
                             className="w-full h-14 px-5 rounded-2xl border text-[15px] transition-all duration-300 outline-none"
                             style={{
-                              borderColor: "#eaded8",
+                              borderColor: "#dce7ee",
                               background: "#ffffff",
                             }}
                           />
 
                           {reviewErrors.name && (
-                            <span className="text-xs text-red-600 mt-2 block">
+                            <span className="text-xs text-brand-600 mt-2 block">
                               {reviewErrors.name}
                             </span>
                           )}
@@ -1012,13 +1023,13 @@ export default function Home() {
                             }}
                             className="w-full h-14 px-5 rounded-2xl border text-[15px] transition-all duration-300 outline-none"
                             style={{
-                              borderColor: "#eaded8",
+                              borderColor: "#dce7ee",
                               background: "#ffffff",
                             }}
                           />
 
                           {reviewErrors.email && (
-                            <span className="text-xs text-red-600 mt-2 block">
+                            <span className="text-xs text-brand-600 mt-2 block">
                               {reviewErrors.email}
                             </span>
                           )}
@@ -1040,7 +1051,7 @@ export default function Home() {
                         <div
                           className="rounded-2xl px-5 py-3.5 border"
                           style={{
-                            borderColor: "#eaded8",
+                            borderColor: "#dce7ee",
                             background: "#fff",
                           }}
                         >
@@ -1061,7 +1072,7 @@ export default function Home() {
                         </div>
 
                         {reviewErrors.rating && (
-                          <span className="text-xs text-red-600 mt-2 block">
+                          <span className="text-xs text-brand-600 mt-2 block">
                             {reviewErrors.rating}
                           </span>
                         )}
@@ -1095,13 +1106,13 @@ export default function Home() {
                           }}
                           className="w-full rounded-2xl border p-5 text-[15px] leading-[1.85] resize-none transition-all duration-300 outline-none"
                           style={{
-                            borderColor: "#eaded8",
+                            borderColor: "#dce7ee",
                             background: "#ffffff",
                           }}
                         />
 
                         {reviewErrors.message && (
-                          <span className="text-xs text-red-600 mt-2 block">
+                          <span className="text-xs text-brand-600 mt-2 block">
                             {reviewErrors.message}
                           </span>
                         )}
@@ -1117,10 +1128,10 @@ export default function Home() {
                           className="group relative overflow-hidden px-10 py-4 rounded-2xl text-sm font-semibold transition-all duration-300 hover:-translate-y-1"
                           style={{
                             background: reviewLoading
-                              ? "#d7c7c2"
-                              : "linear-gradient(135deg,#B51D0F 0%, #d55444 100%)",
+                              ? "#c6d8e2"
+                              : "linear-gradient(135deg,#0672a7 0%, #2fa3db 100%)",
                             color: "#fff",
-                            boxShadow: "0 15px 35px rgba(181,29,15,0.22)",
+                            boxShadow: "0 15px 35px rgba(6, 114, 167,0.22)",
                           }}
                         >
 
@@ -1151,7 +1162,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="w-full relative overflow-hidden" style={{ background: "#1a0a08" }}>
+      <section className="w-full relative overflow-hidden" style={{ background: "#082c3e" }}>
 
         {/* Background collage */}
         <div className="absolute inset-0 grid grid-cols-3 opacity-75">
@@ -1179,12 +1190,12 @@ export default function Home() {
               );
             })}
           </div>
-          <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#B51D0F", fontFamily: "'Montserrat', sans-serif" }}>
+          <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#0672a7", fontFamily: "'Montserrat', sans-serif" }}>
             500+ Happy Customers in Amravati
           </p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4" style={{ fontFamily: "'Playfair Display', serif", textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
             Print Your Memories,<br />
-            <span style={{ color: "#B51D0F" }}>Gift Something Special</span>
+            <span style={{ color: "#0672a7" }}>Gift Something Special</span>
           </h2>
           <p className="text-white text-base max-w-xl mx-auto mb-8" style={{ opacity: 0.85, fontFamily: "'Montserrat', sans-serif" }}>
             Custom mugs, t-shirts, diaries & more — personalized with your photos and designs. Order today, delivered fast.
@@ -1192,8 +1203,8 @@ export default function Home() {
           <div className="flex flex-row gap-2.5 sm:gap-3 items-center justify-center">
             <Link to="/products"
               className="flex-1 sm:flex-none text-center whitespace-nowrap px-5 sm:px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-200 no-underline"
-              style={{ background: "#fff", color: "#B51D0F", fontFamily: "'Montserrat', sans-serif", boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}
-              onMouseOver={e => e.currentTarget.style.background = "#fef2f2"}
+              style={{ background: "#fff", color: "#0672a7", fontFamily: "'Montserrat', sans-serif", boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}
+              onMouseOver={e => e.currentTarget.style.background = "#eff8fd"}
               onMouseOut={e => e.currentTarget.style.background = "#fff"}
             >
               Shop Now →
@@ -1211,9 +1222,9 @@ export default function Home() {
       </section>
 
       {/* Features Strip */}
-      <div className="bg-red-50 grid grid-cols-2 md:grid-cols-4 border-t border-red-100">
+      <div className="bg-brand-50 grid grid-cols-2 md:grid-cols-4 border-t border-brand-100">
         {FEATURES.map((f, i) => (
-          <div key={f.title} className={`flex items-start gap-3 px-6 py-6 ${i < 3 ? "md:border-r border-red-200" : ""}`}>
+          <div key={f.title} className={`flex items-start gap-3 px-6 py-6 ${i < 3 ? "md:border-r border-brand-200" : ""}`}>
             <div className="shrink-0 mt-1">{f.icon}</div>
             <div>
               <p className="text-gray-900 font-bold text-sm mb-1">{f.title}</p>

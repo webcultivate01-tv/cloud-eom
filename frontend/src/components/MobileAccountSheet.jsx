@@ -5,14 +5,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import {
   X, Mail, Phone, ShieldCheck, LayoutDashboard, Package, Heart, RefreshCcw,
-  ShoppingCart, Headphones, LogOut, ChevronRight, UserCog, Boxes, Users,
+  ShoppingCart, Headphones, LogOut, ChevronRight, UserCog, Boxes, Users, Info, Sparkles,
 } from "lucide-react";
 import api from "../utils/api";
 import { logout } from "../features/auth/authSlice";
 import { clearCart, selectCartCount } from "../features/cart/cartSlice";
 import { selectFavoriteCount } from "../features/favorites/favoritesSlice";
 
-const BRAND = "#B51D0F";
+const BRAND = "#0672a7";
 
 /* Kept in step with .cg-sheet-out / .cg-overlay-out in index.css */
 const EXIT_MS = 300;
@@ -22,20 +22,20 @@ function Row({ to, icon: Icon, label, hint, onClose, danger }) {
     <Link
       to={to}
       onClick={onClose}
-      className="flex items-center gap-3 px-4 py-3.5 no-underline border-b border-stone-100 last:border-b-0 active:bg-stone-50"
+      className="flex items-center gap-3 px-4 py-3.5 no-underline border-b border-slate-100 last:border-b-0 active:bg-slate-50"
       style={{ color: danger ? BRAND : "#1F2937", WebkitTapHighlightColor: "transparent" }}
     >
       <span
         className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: danger ? "rgba(181,29,15,0.08)" : "#F5F5F4", color: danger ? BRAND : "#57534E" }}
+        style={{ background: danger ? "rgba(6, 114, 167,0.08)" : "#F5F5F4", color: danger ? BRAND : "#475569" }}
       >
         <Icon size={17} strokeWidth={2} />
       </span>
       <span className="flex-1 min-w-0">
         <span className="block text-[13.5px] font-semibold leading-tight">{label}</span>
-        {hint && <span className="block text-[11px] text-stone-400 mt-0.5 leading-tight">{hint}</span>}
+        {hint && <span className="block text-[11px] text-slate-400 mt-0.5 leading-tight">{hint}</span>}
       </span>
-      <ChevronRight size={16} className="text-stone-300 shrink-0" />
+      <ChevronRight size={16} className="text-slate-300 shrink-0" />
     </Link>
   );
 }
@@ -43,8 +43,8 @@ function Row({ to, icon: Icon, label, hint, onClose, danger }) {
 function Stat({ value, label }) {
   return (
     <div className="flex-1 text-center py-2.5">
-      <div className="text-[17px] font-black text-stone-900 leading-none">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mt-1">{label}</div>
+      <div className="text-[17px] font-black text-slate-900 leading-none">{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mt-1">{label}</div>
     </div>
   );
 }
@@ -137,14 +137,14 @@ export default function MobileAccountSheet({ open, onClose }) {
 
         {/* Grab handle */}
         <div className="pt-2.5 pb-1 flex justify-center shrink-0">
-          <span className="w-10 h-1 rounded-full bg-stone-300" />
+          <span className="w-10 h-1 rounded-full bg-slate-300" />
         </div>
 
         <button
           type="button"
           onClick={onClose}
           aria-label="Close account"
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-stone-100 text-stone-500 border-none flex items-center justify-center cursor-pointer active:scale-95 z-10"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 text-slate-500 border-none flex items-center justify-center cursor-pointer active:scale-95 z-10"
         >
           <X size={16} />
         </button>
@@ -154,26 +154,26 @@ export default function MobileAccountSheet({ open, onClose }) {
           <div className="px-4 pt-3 pb-4 flex items-center gap-3.5">
             <div
               className="w-14 h-14 rounded-full text-white flex items-center justify-center shrink-0 text-xl font-black"
-              style={{ background: "linear-gradient(135deg,#B51D0F,#7f1208)", boxShadow: "0 6px 18px rgba(181,29,15,0.28)" }}
+              style={{ background: "linear-gradient(135deg,#0672a7,#0c4a69)", boxShadow: "0 6px 18px rgba(6, 114, 167,0.28)" }}
             >
               {profile.name?.[0]?.toUpperCase() || "U"}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-[16px] font-black text-stone-900 m-0 truncate">{profile.name}</h2>
+                <h2 className="text-[16px] font-black text-slate-900 m-0 truncate">{profile.name}</h2>
                 {isAdmin && (
                   <span
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
-                    style={{ background: "rgba(181,29,15,0.09)", color: BRAND }}
+                    style={{ background: "rgba(6, 114, 167,0.09)", color: BRAND }}
                   >
                     <ShieldCheck size={10} /> {profile.adminRole || "Admin"}
                   </span>
                 )}
               </div>
-              <p className="text-[12px] text-stone-500 m-0 mt-1 flex items-center gap-1.5 truncate">
+              <p className="text-[12px] text-slate-500 m-0 mt-1 flex items-center gap-1.5 truncate">
                 <Mail size={12} className="shrink-0" /> {profile.email}
               </p>
-              <p className="text-[12px] text-stone-500 m-0 mt-0.5 flex items-center gap-1.5">
+              <p className="text-[12px] text-slate-500 m-0 mt-0.5 flex items-center gap-1.5">
                 <Phone size={12} className="shrink-0" />
                 {profile.phone ? (
                   profile.phone
@@ -187,7 +187,7 @@ export default function MobileAccountSheet({ open, onClose }) {
           </div>
 
           {/* Snapshot */}
-          <div className="mx-4 mb-4 flex items-stretch rounded-2xl bg-stone-50 border border-stone-100 divide-x divide-stone-200">
+          <div className="mx-4 mb-4 flex items-stretch rounded-2xl bg-slate-50 border border-slate-100 divide-x divide-slate-200">
             <Stat value={orderCount ?? "—"} label="Orders" />
             <Stat value={favCount} label="Wishlist" />
             <Stat value={cartCount} label="Cart" />
@@ -196,8 +196,8 @@ export default function MobileAccountSheet({ open, onClose }) {
           {/* Admin shortcuts — already signed in, so these go straight through */}
           {isAdmin && (
             <>
-              <p className="px-4 pb-1.5 m-0 text-[10px] font-black uppercase tracking-widest text-stone-400">Admin</p>
-              <div className="mx-4 mb-4 rounded-2xl border border-stone-100 overflow-hidden">
+              <p className="px-4 pb-1.5 m-0 text-[10px] font-black uppercase tracking-widest text-slate-400">Admin</p>
+              <div className="mx-4 mb-4 rounded-2xl border border-slate-100 overflow-hidden">
                 <Row to="/admin/dashboard" icon={LayoutDashboard} label="Admin Panel" hint="Dashboard & store overview" onClose={onClose} danger />
                 <Row to="/admin/orders" icon={Package} label="Manage Orders" onClose={onClose} />
                 <Row to="/admin/products" icon={Boxes} label="Manage Products" onClose={onClose} />
@@ -207,8 +207,8 @@ export default function MobileAccountSheet({ open, onClose }) {
           )}
 
           {/* Personal account */}
-          <p className="px-4 pb-1.5 m-0 text-[10px] font-black uppercase tracking-widest text-stone-400">My Account</p>
-          <div className="mx-4 mb-4 rounded-2xl border border-stone-100 overflow-hidden">
+          <p className="px-4 pb-1.5 m-0 text-[10px] font-black uppercase tracking-widest text-slate-400">My Account</p>
+          <div className="mx-4 mb-4 rounded-2xl border border-slate-100 overflow-hidden">
             <Row to="/profile" icon={UserCog} label="Profile & Password" hint="Name, phone, change password" onClose={onClose} />
             <Row to="/orders" icon={Package} label="My Orders" onClose={onClose} />
             <Row to="/replacements" icon={RefreshCcw} label="My Replacements" onClose={onClose} />
@@ -217,11 +217,18 @@ export default function MobileAccountSheet({ open, onClose }) {
             <Row to="/contact" icon={Headphones} label="Help & Support" onClose={onClose} />
           </div>
 
+          {/* Browse — the public pages, reachable without closing the sheet first */}
+          <p className="px-4 pb-1.5 m-0 text-[10px] font-black uppercase tracking-widest text-slate-400">Browse</p>
+          <div className="mx-4 mb-4 rounded-2xl border border-slate-100 overflow-hidden">
+            <Row to="/about" icon={Info} label="About Us" hint="Who we are & what we do" onClose={onClose} />
+            <Row to="/services" icon={Sparkles} label="Our Services" hint="Graphic design & branding" onClose={onClose} />
+          </div>
+
           <div className="px-4">
             <button
               type="button"
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-stone-200 bg-white text-[13.5px] font-bold cursor-pointer active:scale-[0.98] transition-transform"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-slate-200 bg-white text-[13.5px] font-bold cursor-pointer active:scale-[0.98] transition-transform"
               style={{ color: BRAND }}
             >
               <LogOut size={16} /> Log Out

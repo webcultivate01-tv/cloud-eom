@@ -1,5 +1,6 @@
 const Product = require("../models/Product");
 const { cleanupUnusedImages } = require("../config/imageCleanup");
+const { organizeProductImages } = require("../config/productImages");
 
 // Accept either a real array, or a JSON-stringified array (legacy multipart callers).
 const toArray = (val, fallback = []) => {
@@ -60,7 +61,14 @@ const createProduct = async (req, res) => {
       weight, returnPolicy,
     } = req.body;
 
-    const images         = toArray(req.body.images, []);
+    // Admin uploads the files before (or while) filling the form in, so they
+    // may have landed in the holding folder or under a category that has since
+    // been changed in the dropdown. Settle them under the product's own folder
+    // — uploads/products/<category>/<product>/ — before the URLs are stored.
+    const images         = await organizeProductImages(
+      toArray(req.body.images, []),
+      { category, name }
+    );
     const sizes          = toArray(req.body.sizes, []);
     const highlights     = toArray(req.body.highlights, []);
     const specifications = toArray(req.body.specifications, []);
@@ -146,6 +154,17 @@ const updateProduct = async (req, res) => {
       product.specifications = toArray(req.body.specifications, product.specifications);
     if (req.body.tags !== undefined)
       product.tags = toArray(req.body.tags, product.tags);
+
+    // Re-home the gallery against the product's *final* name and category, so a
+    // rename or a move to another category takes the files with it and the
+    // folder on disk keeps matching what the admin sees in the panel.
+    const organized = await organizeProductImages(product.images, {
+      category: product.category,
+      name: product.name,
+      productId: product._id,
+    });
+    product.images = organized;
+    product.image  = organized[0] || "";
 
     const updated = await product.save();
 

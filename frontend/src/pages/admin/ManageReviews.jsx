@@ -91,8 +91,8 @@ export default function ManageReviews() {
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-4 border-brand-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-brand-600 animate-spin" />
           </div>
         </div>
       ) : allReviews.length === 0 ? (
@@ -153,7 +153,7 @@ export default function ManageReviews() {
                           )}
                           <button
                             onClick={() => handleDelete(review._id, review.name)}
-                            className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !py-1 !px-2.5 !text-xs"
+                            className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-600 !py-1 !px-2.5 !text-xs"
                           >
                             🗑 Delete
                           </button>

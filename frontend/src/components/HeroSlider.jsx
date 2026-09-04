@@ -42,7 +42,7 @@ export default function HeroSlider() {
               <span key={i} className="block">{line}</span>
             ))}
           </h1>
-          <p className="text-white mt-2 md:mt-6 text-xs md:text-2xl font-bold uppercase tracking-widest bg-red-700/80 inline-block px-2 py-0.5 md:px-4 md:py-1" style={{ textShadow: '1px 2px 4px rgba(0,0,0,0.3)' }}>
+          <p className="text-white mt-2 md:mt-6 text-xs md:text-2xl font-bold uppercase tracking-widest bg-brand-700/80 inline-block px-2 py-0.5 md:px-4 md:py-1" style={{ textShadow: '1px 2px 4px rgba(0,0,0,0.3)' }}>
             {slide.tag}
           </p>
           <div className="mt-4 md:mt-8 flex justify-end">

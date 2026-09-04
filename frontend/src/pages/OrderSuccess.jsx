@@ -35,9 +35,9 @@ export default function OrderSuccess() {
         </div>
 
         {/* Order ID card */}
-        <div className="bg-white border-2 border-dashed border-red-200 rounded-2xl p-6 text-center mb-6 shadow-sm">
+        <div className="bg-white border-2 border-dashed border-brand-200 rounded-2xl p-6 text-center mb-6 shadow-sm">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Your Order ID</p>
-          <p className="text-3xl font-black text-red-700 tracking-widest mb-1">#{shortId}</p>
+          <p className="text-3xl font-black text-brand-700 tracking-widest mb-1">#{shortId}</p>
           <p className="text-xs text-gray-400 font-medium">Save this ID to track your order</p>
           {totalPrice && (
             <div className="mt-4 pt-4 border-t border-gray-100">
@@ -48,12 +48,12 @@ export default function OrderSuccess() {
         </div>
 
         {/* Info box */}
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-6">
+        <div className="bg-brand-50 border border-brand-100 rounded-2xl p-4 mb-6">
           <div className="flex gap-3 items-start">
-            <Package className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+            <Package className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" />
             <div>
-              <p className="text-blue-800 font-bold text-sm mb-1">What happens next?</p>
-              <ul className="text-blue-700 text-xs space-y-1 leading-relaxed">
+              <p className="text-brand-800 font-bold text-sm mb-1">What happens next?</p>
+              <ul className="text-brand-700 text-xs space-y-1 leading-relaxed">
                 <li>✉️ Order confirmation sent to your email</li>
                 <li>⚙️ Our team will start processing your order</li>
                 <li>🖨️ Your custom print will be prepared</li>
@@ -67,7 +67,7 @@ export default function OrderSuccess() {
         <div className="flex flex-col gap-3">
           <Link
             to="/orders"
-            className="flex items-center justify-center gap-2 bg-red-700 hover:bg-red-800 text-white px-6 py-4 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+            className="flex items-center justify-center gap-2 bg-brand-700 hover:bg-brand-800 text-white px-6 py-4 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
           >
             <Package className="w-5 h-5" />
             View My Orders

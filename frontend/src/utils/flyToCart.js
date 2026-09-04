@@ -63,7 +63,7 @@ export function flyToCart(sourceEl) {
     width:${size}px; height:${size}px;
     border-radius:16px; overflow:hidden; z-index:2000;
     pointer-events:none; will-change:transform,opacity;
-    background:#F4F3F0 ${src ? `center/cover url("${src.replace(/"/g, '\\"')}")` : ""};
+    background:#f1f5f8 ${src ? `center/cover url("${src.replace(/"/g, '\\"')}")` : ""};
     box-shadow:0 12px 30px -12px rgba(0,0,0,0.45);
   `;
   document.body.appendChild(flyer);

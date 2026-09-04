@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { registerUser, clearError } from "../features/auth/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import logoImg from "../assets/Cloud Graphics Logo New White.png";
+import logoImg from "../assets/logo.png";
 
 const EyeBtn = ({ show, onToggle }) => (
   <button type="button" onClick={onToggle}
@@ -43,23 +43,15 @@ export default function Register() {
   };
 
   const inp = (extra = "") =>
-    `w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:border-red-600 focus:bg-white focus:ring-2 focus:ring-red-100 transition-all ${extra}`;
+    `w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-100 transition-all ${extra}`;
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 px-5 py-10 sm:px-8">
       <div className="w-full max-w-[400px] bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
 
-        {/* Logo — same lockup as the navbar (PNG has white wordmark baked in, so we crop to the mark) */}
-        <Link to="/" className="flex items-center justify-center gap-2.5 mb-7">
-          <div className="w-16 h-[46px] overflow-hidden flex-shrink-0">
-            <img src={logoImg} alt="Cloud Graphics" className="w-16 h-auto block" />
-          </div>
-          <div className="text-left">
-            <span className="block font-black text-[17px] tracking-[0.12em] text-[#B51D0F] leading-none"
-              style={{ fontFamily: "'Playfair Display', serif" }}>CLOUD GRAPHICS</span>
-            <span className="block font-bold text-[8px] tracking-[0.5em] text-[#555] leading-[1.6]"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}>AMRAVATI</span>
-          </div>
+        {/* Logo — the full stacked lockup, wordmark and all */}
+        <Link to="/" className="flex justify-center mb-7">
+          <img src={logoImg} alt="Cloud Graphics — Visual Solution For Your Business" className="h-[84px] w-auto block" />
         </Link>
 
         {/* Heading */}
@@ -133,12 +125,12 @@ export default function Register() {
                 type={showConfirm ? "text" : "password"}
                 placeholder="Re-enter password" required
                 value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)}
-                className={inp(`pr-11 ${confirmPass && form.password !== confirmPass ? "!border-red-400 !bg-red-50" : ""}`)}
+                className={inp(`pr-11 ${confirmPass && form.password !== confirmPass ? "!border-brand-400 !bg-brand-50" : ""}`)}
               />
               <EyeBtn show={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />
             </div>
             {confirmPass && form.password !== confirmPass && (
-              <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+              <p className="text-brand-500 text-xs mt-1.5 flex items-center gap-1">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
                 Passwords do not match
               </p>
@@ -148,7 +140,7 @@ export default function Register() {
           {/* Submit */}
           <button
             type="submit" disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-red-800 hover:bg-red-900 active:scale-[0.98] text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-200 !mt-5"
+            className="w-full py-3.5 rounded-xl bg-brand-800 hover:bg-brand-900 active:scale-[0.98] text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-brand-200 !mt-5"
           >
             {loading
               ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Creating account...</>
@@ -160,13 +152,13 @@ export default function Register() {
         {/* Terms */}
         <p className="text-gray-400 text-xs text-center mt-3 leading-relaxed">
           By registering you agree to our{" "}
-          <Link to="/terms" className="text-red-700 hover:underline">Terms</Link> &{" "}
-          <Link to="/privacy" className="text-red-700 hover:underline">Privacy Policy</Link>
+          <Link to="/terms" className="text-brand-700 hover:underline">Terms</Link> &{" "}
+          <Link to="/privacy" className="text-brand-700 hover:underline">Privacy Policy</Link>
         </p>
 
         <p className="text-center text-gray-500 text-sm mt-4">
           Already have an account?{" "}
-          <Link to="/login" className="text-red-800 font-bold hover:underline">Sign in</Link>
+          <Link to="/login" className="text-brand-800 font-bold hover:underline">Sign in</Link>
         </p>
       </div>
     </div>

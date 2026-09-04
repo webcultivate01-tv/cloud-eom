@@ -95,21 +95,21 @@ const FORMATS = [
   { key: "pdf",   label: "PDF",   ext: ".pdf",  desc: "Print-ready A4",        Icon: FileText },
 ];
 
-/* Shared selection styling — one indigo accent, everything else slate. */
+/* Shared selection styling — one brand-blue accent, everything else slate. */
 const cardBase =
   "relative flex rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer";
-const cardOn  = "border-indigo-500 bg-indigo-50/60";
+const cardOn  = "border-brand-500 bg-brand-50/60";
 const cardOff = "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50";
 
 const pillBase =
   "px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all duration-200 cursor-pointer";
-const pillOn  = "bg-indigo-600 text-white border-indigo-600";
-const pillOff = "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600";
+const pillOn  = "bg-brand-600 text-white border-brand-600";
+const pillOff = "bg-white text-slate-600 border-slate-200 hover:border-brand-300 hover:text-brand-600";
 
 function SectionLabel({ step, label, sub }) {
   return (
     <div className="flex items-center gap-3 mb-5">
-      <div className="w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-black
+      <div className="w-7 h-7 rounded-full bg-brand-600 text-white text-xs font-black
                       flex items-center justify-center shrink-0">
         {step}
       </div>
@@ -125,7 +125,7 @@ function SectionLabel({ step, label, sub }) {
 function Tick({ show }) {
   return (
     <span
-      className={`absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-600 flex items-center
+      className={`absolute top-3 right-3 w-5 h-5 rounded-full bg-brand-600 flex items-center
                   justify-center transition-opacity duration-200 ${show ? "opacity-100" : "opacity-0"}`}
     >
       <Check className="w-3 h-3 text-white" strokeWidth={3.5} />
@@ -287,11 +287,11 @@ export default function DataExport() {
                     className={`${cardBase} items-start gap-3 ${active ? cardOn : cardOff}`}
                   >
                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0
-                      ${active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"}`}>
+                      ${active ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500"}`}>
                       <Icon className="w-4 h-4" strokeWidth={2.2} />
                     </div>
                     <div className="min-w-0 pr-5">
-                      <p className={`font-bold text-sm ${active ? "text-indigo-700" : "text-slate-700"}`}>{label}</p>
+                      <p className={`font-bold text-sm ${active ? "text-brand-700" : "text-slate-700"}`}>{label}</p>
                       <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{desc}</p>
                       {counts?.[key] !== undefined && (
                         <p className="text-[11px] font-semibold text-slate-400 mt-1.5">
@@ -319,11 +319,11 @@ export default function DataExport() {
                     className={`${cardBase} items-center gap-3.5 ${active ? cardOn : cardOff}`}
                   >
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0
-                      ${active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"}`}>
+                      ${active ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500"}`}>
                       <Icon className="w-4 h-4" strokeWidth={2.2} />
                     </div>
                     <div className="min-w-0">
-                      <p className={`font-bold text-sm ${active ? "text-indigo-700" : "text-slate-700"}`}>
+                      <p className={`font-bold text-sm ${active ? "text-brand-700" : "text-slate-700"}`}>
                         {label} <span className="font-normal text-xs text-slate-400">{ext}</span>
                       </p>
                       <p className="text-slate-400 text-xs truncate mt-0.5">{desc}</p>
@@ -486,7 +486,7 @@ export default function DataExport() {
                 format === "excel" ? "Two sheets: Summary + Data" : "Print-ready A4 layout",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
-                  <Check className="w-3 h-3 text-indigo-500 mt-0.5 shrink-0" strokeWidth={3} />
+                  <Check className="w-3 h-3 text-brand-500 mt-0.5 shrink-0" strokeWidth={3} />
                   {item}
                 </li>
               ))}

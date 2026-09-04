@@ -29,10 +29,10 @@ const KPI_DEFS = [
     key: "totalOrders",
     label: "Total Orders",
     icon: ShoppingCart,
-    iconBg: "bg-indigo-50",
-    iconColor: "text-indigo-600",
-    numColor: "text-indigo-700",
-    accent: "border-l-indigo-500",
+    iconBg: "bg-brand-50",
+    iconColor: "text-brand-600",
+    numColor: "text-brand-700",
+    accent: "border-l-brand-500",
   },
   {
     key: "totalUsers",
@@ -66,7 +66,7 @@ const KPI_DEFS = [
 
 /* ── Quick actions ──────────────────────────────────── */
 const QUICK_ACTIONS = [
-  { to: "/admin/products",   label: "Manage Products",  icon: Package,      desc: "Add, edit, delete",   iconBg: "bg-indigo-50",  iconColor: "text-indigo-600" },
+  { to: "/admin/products",   label: "Manage Products",  icon: Package,      desc: "Add, edit, delete",   iconBg: "bg-brand-50",  iconColor: "text-brand-600" },
   { to: "/admin/orders",     label: "Manage Orders",    icon: ShoppingCart, desc: "Update & ship orders", iconBg: "bg-violet-50",  iconColor: "text-violet-600" },
   { to: "/admin/categories", label: "Categories",       icon: Tag,          desc: "Organise catalog",     iconBg: "bg-emerald-50", iconColor: "text-emerald-600" },
   { to: "/admin/users",      label: "Manage Users",     icon: Users,        desc: "Block & manage",       iconBg: "bg-amber-50",   iconColor: "text-amber-600" },
@@ -103,7 +103,7 @@ const renderPctLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent })
 
 const Spinner = () => (
   <div className="flex items-center justify-center py-40">
-    <div className="w-9 h-9 rounded-full border-4 border-slate-200 border-t-indigo-600 animate-spin" />
+    <div className="w-9 h-9 rounded-full border-4 border-slate-200 border-t-brand-600 animate-spin" />
   </div>
 );
 
@@ -168,14 +168,14 @@ export default function Dashboard() {
 
   const revenuePieData = payStats
     ? [
-        { name: "Online (Razorpay)", value: payStats.razorpay.total ?? 0, color: "#4f46e5" },
+        { name: "Online (Razorpay)", value: payStats.razorpay.total ?? 0, color: "#0672a7" },
         { name: "Cash on Delivery",  value: payStats.cod.total ?? 0,      color: "#f59e0b" },
       ].filter((d) => d.value > 0)
     : [];
 
   const paymentBarData = payStats
     ? [
-        { name: "Online",   Orders: payStats.razorpay.count, fill: "#4f46e5" },
+        { name: "Online",   Orders: payStats.razorpay.count, fill: "#0672a7" },
         { name: "COD",      Orders: payStats.cod.count,      fill: "#f59e0b" },
         { name: "Refunded", Orders: payStats.refunded.count, fill: "#ef4444" },
       ]
@@ -382,7 +382,7 @@ export default function Dashboard() {
                     {payStats && (
                       <div className="mt-4 pt-4 border-t border-slate-100">
                         <p className="text-[11px] text-slate-400 font-medium mb-2">Refunds</p>
-                        <p className="text-base font-bold text-red-600">
+                        <p className="text-base font-bold text-brand-600">
                           ₹{(payStats.refunded.total ?? 0).toLocaleString("en-IN")}
                         </p>
                         <p className="text-[11px] text-slate-400">{payStats.refunded.count} orders refunded</p>
@@ -424,7 +424,7 @@ export default function Dashboard() {
                   {payStats && (
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { label: "Online",  amount: payStats.razorpay.total, count: payStats.razorpay.count,  bg: "bg-indigo-50",  val: "text-indigo-700" },
+                        { label: "Online",  amount: payStats.razorpay.total, count: payStats.razorpay.count,  bg: "bg-brand-50",  val: "text-brand-700" },
                         { label: "COD",     amount: payStats.cod.total,      count: payStats.cod.count,       bg: "bg-amber-50",   val: "text-amber-700" },
                         { label: "Refund",  amount: payStats.refunded.total, count: payStats.refunded.count,  bg: "bg-red-50",     val: "text-red-600" },
                       ].map((p) => (
@@ -447,7 +447,7 @@ export default function Dashboard() {
               <CardHeader icon={Activity} title="Order Performance" badge="All time" />
               <div className="space-y-4 mb-6">
                 <ProgressBar label="Delivered"   rate={deliveryRate}   count={delivered}   colorClass="bg-emerald-500" />
-                <ProgressBar label="In Progress" rate={inProgressRate} count={inProgress}  colorClass="bg-indigo-500" />
+                <ProgressBar label="In Progress" rate={inProgressRate} count={inProgress}  colorClass="bg-brand-500" />
                 <ProgressBar label="Cancelled"   rate={cancelRate}     count={cancelled}   colorClass="bg-red-400" />
               </div>
               <div className="border-t border-slate-100 pt-5">
@@ -455,8 +455,8 @@ export default function Dashboard() {
                   Average Order Value
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-indigo-50 rounded-lg p-3.5 text-center">
-                    <p className="text-indigo-700 font-bold text-lg leading-none">
+                  <div className="bg-brand-50 rounded-lg p-3.5 text-center">
+                    <p className="text-brand-700 font-bold text-lg leading-none">
                       ₹{razorpayAvg.toLocaleString("en-IN")}
                     </p>
                     <p className="text-slate-500 text-[11px] mt-1.5">Avg Online Order</p>

@@ -9,7 +9,7 @@ import MobileAccountSheet from "./MobileAccountSheet";
 /* Products.jsx listens for this to open its mobile filter drawer */
 export const OPEN_FILTERS_EVENT = "cg:open-mobile-filters";
 
-const BRAND = "#B51D0F";
+const BRAND = "#0672a7";
 
 /* Auth screens — the Account tab stays lit while the user is sitting on one */
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
@@ -90,7 +90,7 @@ export default function MobileBottomNav() {
   return (
     <>
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-[120] flex items-stretch min-h-[64px] bg-white/95 backdrop-blur-xl border-t border-stone-200"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-[120] flex items-stretch min-h-[64px] bg-white/95 backdrop-blur-xl border-t border-slate-200"
       style={{ paddingBottom: "env(safe-area-inset-bottom)", boxShadow: "0 -2px 18px rgba(0,0,0,0.06)" }}
       aria-label="Primary"
     >

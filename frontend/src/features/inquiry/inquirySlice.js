@@ -51,6 +51,18 @@ export const deleteInquiry = createAsyncThunk(
   }
 );
 
+export const updateInquiryStatus = createAsyncThunk(
+  "inquiry/updateStatus",
+  async ({ id, status, notes }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.patch(`/inquiry/${id}/status`, { status, notes });
+      return data.inquiry;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to update inquiry");
+    }
+  }
+);
+
 export const respondToInquiry = createAsyncThunk(
   "inquiry/respond",
   async ({ id, adminResponse }, { rejectWithValue }) => {
@@ -62,6 +74,19 @@ export const respondToInquiry = createAsyncThunk(
     }
   }
 );
+
+// The sidebar badge counts enquiries nobody has picked up yet. Derived from the
+// list on every change rather than nudged up and down, so a reply, a status
+// change and a delete can happen in any order without it drifting.
+const countPending = (inquiries) =>
+  inquiries.filter((inq) => inq.status === "pending").length;
+
+const replaceInquiry = (state, updated) => {
+  if (!updated?._id) return;
+  const idx = state.inquiries.findIndex((inq) => inq._id === updated._id);
+  if (idx !== -1) state.inquiries[idx] = updated;
+  state.pendingCount = countPending(state.inquiries);
+};
 
 // ── Slice ────────────────────────────────────────────────────
 
@@ -84,7 +109,11 @@ const inquirySlice = createSlice({
     // fetchAll
     builder
       .addCase(fetchAllInquiries.pending,  (s) => { s.loading = true;  s.error = null; })
-      .addCase(fetchAllInquiries.fulfilled,(s, a) => { s.loading = false; s.inquiries = a.payload; })
+      .addCase(fetchAllInquiries.fulfilled,(s, a) => {
+        s.loading = false;
+        s.inquiries = a.payload;
+        s.pendingCount = countPending(a.payload);
+      })
       .addCase(fetchAllInquiries.rejected, (s, a) => { s.loading = false; s.error = a.payload; });
 
     // pendingCount
@@ -95,15 +124,16 @@ const inquirySlice = createSlice({
     builder
       .addCase(deleteInquiry.fulfilled, (s, a) => {
         s.inquiries = s.inquiries.filter((inq) => inq._id !== a.payload);
-        if (s.pendingCount > 0) s.pendingCount -= 1;
+        s.pendingCount = countPending(s.inquiries);
       });
 
-    // respond
+    // respond / status change — both replace the row and re-derive the badge
     builder
       .addCase(respondToInquiry.fulfilled, (s, a) => {
-        const idx = s.inquiries.findIndex((inq) => inq._id === a.payload._id);
-        if (idx !== -1) s.inquiries[idx] = a.payload;
-        if (s.pendingCount > 0) s.pendingCount -= 1;
+        replaceInquiry(s, a.payload);
+      })
+      .addCase(updateInquiryStatus.fulfilled, (s, a) => {
+        replaceInquiry(s, a.payload);
       });
   },
 });

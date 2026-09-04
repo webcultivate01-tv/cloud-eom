@@ -1,12 +1,16 @@
+import Reveal, { RevealGroup } from "../components/Reveal";
+
 export default function TermsConditions() {
   return (
     <div className="bg-white min-h-screen py-12 px-6 md:px-16 lg:px-24">
       <div className="max-w-6xl mx-auto">
 
-        <h1 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">Terms & Conditions</h1>
-        <p className="text-sm text-gray-400 mb-8">Last updated: June 2025</p>
+        <Reveal>
+          <h1 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">Terms & Conditions</h1>
+          <p className="text-sm text-gray-400 mb-8">Last updated: June 2025</p>
+        </Reveal>
 
-        <div className="space-y-8 text-gray-600 text-sm leading-relaxed">
+        <RevealGroup stagger={70} className="space-y-8 text-gray-600 text-sm leading-relaxed">
 
           <section>
             <h2 className="text-base font-bold text-gray-800 mb-2">1. Acceptance of Terms</h2>
@@ -45,10 +49,10 @@ export default function TermsConditions() {
 
           <section>
             <h2 className="text-base font-bold text-gray-800 mb-2">8. Contact Us</h2>
-            <p>For any queries regarding these terms, reach us at <span className="text-[#B51D0F] font-semibold">info@cloudgraphics.in</span> or call <span className="font-semibold">+91 93076 41746</span>.</p>
+            <p>For any queries regarding these terms, reach us at <span className="text-[#0672a7] font-semibold">info@cloudgraphics.in</span> or call <span className="font-semibold">+91 93076 41746</span>.</p>
           </section>
 
-        </div>
+        </RevealGroup>
       </div>
     </div>
   );

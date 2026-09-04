@@ -21,7 +21,7 @@ router.get("/admin/all", protect, adminOnly, getAllProductsAdmin);
 router.get("/:id", getProductById);
 
 // Admin routes — JSON body with images as URL array.
-// Image URLs come either from /api/upload (stored in backend/uploads/products) or from external URLs pasted by admin.
+// Image URLs come either from /api/upload (stored in backend/uploads/products/<category>/<product>) or from external URLs pasted by admin.
 router.post("/",    protect, adminOnly, createProduct);
 router.put("/:id",  protect, adminOnly, updateProduct);
 router.delete("/:id", protect, adminOnly, deleteProduct);

@@ -1,17 +1,49 @@
 const express = require("express");
 const router = express.Router();
-const { upload, saveImage, deleteLocalImage } = require("../config/localUpload");
+const {
+  upload,
+  saveImage,
+  deleteLocalImage,
+  MAX_UPLOAD_MB,
+  MAX_UPLOAD_BYTES,
+  ALLOWED_EXTENSIONS,
+} = require("../config/localUpload");
 const { protect } = require("../middleware/authMiddleware");
 
-// Multer errors (bad type, too large) should be JSON, not an HTML stack page
+// Multer errors (bad type, too large) should be JSON, not an HTML stack page.
+// "File too large" is the one an admin will actually hit, so it is rewritten
+// into a message that says what the limit is.
 const handleUpload = (mw) => (req, res, next) =>
   mw(req, res, (err) => {
-    if (err) return res.status(400).json({ message: err.message });
+    if (err) {
+      const message =
+        err.code === "LIMIT_FILE_SIZE"
+          ? `Image is too large. Maximum size is ${MAX_UPLOAD_MB} MB.`
+          : err.message;
+      return res.status(400).json({ message });
+    }
     next();
   });
 
+// @desc    What the client is allowed to upload. Served so the file picker can
+//          reject an oversized file before spending the upload on it, and so the
+//          limit is never written down in two places that can drift apart.
+// @route   GET /api/upload/limits
+// @access  Public
+router.get("/limits", (req, res) => {
+  res.json({
+    maxUploadMB: MAX_UPLOAD_MB,
+    maxUploadBytes: MAX_UPLOAD_BYTES,
+    allowedExtensions: ALLOWED_EXTENSIONS,
+  });
+});
+
 // @desc    Upload a single image into backend/uploads/<folder>
 // @route   POST /api/upload?folder=products|categories|events|orders|replacements|reviews
+//          folder=products also takes &category=&product=, which nest the file
+//          as uploads/products/<category>/<product>/<file>. Both are optional:
+//          without them the image lands in a holding folder and is moved into
+//          place when the product it belongs to is saved.
 // @access  Private
 router.post("/", protect, handleUpload(upload.single("image")), async (req, res) => {
   try {

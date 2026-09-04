@@ -91,7 +91,7 @@ export default function ManageEvents() {
       {showForm && (
         <div className="admin-card p-6 mb-6 animate-fade-in-up">
           <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
-            <span className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">{editId ? "✏️" : "📣"}</span>
+            <span className="w-7 h-7 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center text-sm">{editId ? "✏️" : "📣"}</span>
             {editId ? "Edit Event" : "Create New Event / Announcement"}
           </h2>
 
@@ -171,7 +171,7 @@ export default function ManageEvents() {
               <label className="flex items-center gap-2.5 text-sm text-slate-600 cursor-pointer select-none">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded accent-indigo-600"
+                  className="w-4 h-4 rounded accent-brand-600"
                   checked={form.isActive}
                   onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
                 />
@@ -200,8 +200,8 @@ export default function ManageEvents() {
       {loading && !showForm ? (
         <div className="flex items-center justify-center py-24">
           <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
+            <div className="absolute inset-0 rounded-full border-4 border-brand-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-brand-600 animate-spin" />
           </div>
         </div>
       ) : events.length === 0 ? (
@@ -256,7 +256,7 @@ export default function ManageEvents() {
 
                   {/* Link */}
                   {event.link && (
-                    <div className="flex items-center gap-1.5 text-xs text-indigo-500 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-1.5 mb-3 w-fit">
+                    <div className="flex items-center gap-1.5 text-xs text-brand-500 bg-brand-50 border border-brand-100 rounded-lg px-3 py-1.5 mb-3 w-fit">
                       <span>🔗</span>
                       <span className="truncate max-w-[180px]">{event.link}</span>
                     </div>
@@ -281,11 +281,11 @@ export default function ManageEvents() {
                   <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
                     <button
                       onClick={() => handleEdit(event)}
-                      className="admin-btn bg-indigo-50 hover:bg-indigo-100 text-indigo-700 !py-1.5 !px-3 !text-xs flex-1"
+                      className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-700 !py-1.5 !px-3 !text-xs flex-1"
                     >✏️ Edit</button>
                     <button
                       onClick={() => handleDelete(event._id, event.title)}
-                      className="admin-btn bg-red-50 hover:bg-red-100 text-red-600 !py-1.5 !px-3 !text-xs flex-1"
+                      className="admin-btn bg-brand-50 hover:bg-brand-100 text-brand-600 !py-1.5 !px-3 !text-xs flex-1"
                     >🗑 Delete</button>
                   </div>
                 </div>

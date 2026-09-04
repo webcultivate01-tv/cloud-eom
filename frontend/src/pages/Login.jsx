@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser, clearError } from "../features/auth/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import logoImg from "../assets/Cloud Graphics Logo New White.png";
+import logoImg from "../assets/logo.png";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -26,17 +26,9 @@ export default function Login() {
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 px-5 py-10 sm:px-8">
       <div className="w-full max-w-[400px] bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
 
-        {/* Logo — same lockup as the navbar (PNG has white wordmark baked in, so we crop to the mark) */}
-        <Link to="/" className="flex items-center justify-center gap-2.5 mb-7">
-          <div className="w-16 h-[46px] overflow-hidden flex-shrink-0">
-            <img src={logoImg} alt="Cloud Graphics" className="w-16 h-auto block" />
-          </div>
-          <div className="text-left">
-            <span className="block font-black text-[17px] tracking-[0.12em] text-[#B51D0F] leading-none"
-              style={{ fontFamily: "'Playfair Display', serif" }}>CLOUD GRAPHICS</span>
-            <span className="block font-bold text-[8px] tracking-[0.5em] text-[#555] leading-[1.6]"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}>AMRAVATI</span>
-          </div>
+        {/* Logo — the full stacked lockup, wordmark and all */}
+        <Link to="/" className="flex justify-center mb-7">
+          <img src={logoImg} alt="Cloud Graphics — Visual Solution For Your Business" className="h-[84px] w-auto block" />
         </Link>
 
         {/* Heading */}
@@ -59,7 +51,7 @@ export default function Login() {
               <input
                 type="email" name="email" placeholder="you@example.com" required
                 value={form.email} onChange={handleChange}
-                className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:border-red-600 focus:bg-white focus:ring-2 focus:ring-red-100 transition-all"
+                className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-100 transition-all"
               />
             </div>
           </div>
@@ -70,7 +62,7 @@ export default function Login() {
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest">
                 Password
               </label>
-              <Link to="/forgot-password" className="text-[11px] text-red-700 font-semibold hover:underline">
+              <Link to="/forgot-password" className="text-[11px] text-brand-700 font-semibold hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -82,7 +74,7 @@ export default function Login() {
                 type={showPass ? "text" : "password"} name="password"
                 placeholder="Enter your password" required
                 value={form.password} onChange={handleChange}
-                className="w-full pl-10 pr-11 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:border-red-600 focus:bg-white focus:ring-2 focus:ring-red-100 transition-all"
+                className="w-full pl-10 pr-11 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-100 transition-all"
               />
               <button type="button" onClick={() => setShowPass(!showPass)}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
@@ -97,7 +89,7 @@ export default function Login() {
           {/* Submit */}
           <button
             type="submit" disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-red-800 hover:bg-red-900 active:scale-[0.98] text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-200 mt-2"
+            className="w-full py-3.5 rounded-xl bg-brand-800 hover:bg-brand-900 active:scale-[0.98] text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-brand-200 mt-2"
           >
             {loading
               ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Signing in...</>
@@ -115,13 +107,13 @@ export default function Login() {
 
         {/* Guest CTA */}
         <Link to="/products"
-          className="w-full py-3 rounded-xl border border-gray-200 text-sm text-gray-600 font-semibold hover:border-red-200 hover:text-red-700 hover:bg-red-50 transition-all flex items-center justify-center gap-2">
+          className="w-full py-3 rounded-xl border border-gray-200 text-sm text-gray-600 font-semibold hover:border-brand-200 hover:text-brand-700 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
           🛍️ Browse as Guest
         </Link>
 
         <p className="text-center text-gray-500 text-sm mt-5">
           New here?{" "}
-          <Link to="/register" className="text-red-800 font-bold hover:underline">Create free account</Link>
+          <Link to="/register" className="text-brand-800 font-bold hover:underline">Create free account</Link>
         </p>
       </div>
     </div>

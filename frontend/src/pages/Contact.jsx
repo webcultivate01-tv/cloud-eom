@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { submitInquiry } from "../features/inquiry/inquirySlice";
 import { toast } from "react-toastify";
+import Reveal, { RevealGroup } from "../components/Reveal";
 
 const EMPTY = { name: "", email: "", phone: "", subject: "", message: "" };
 const SUBJECTS = [
@@ -61,49 +62,11 @@ const IconChevron = () => (
   </svg>
 );
 
-const IconHeadset = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-  </svg>
-);
-
-const IconPrint = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="6 9 6 2 18 2 18 9"/>
-    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-    <rect x="6" y="14" width="12" height="8"/>
-  </svg>
-);
-
-const IconPackage = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
-    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-    <line x1="12" y1="22.08" x2="12" y2="12"/>
-  </svg>
-);
-
-const IconRefund = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="1 4 1 10 7 10"/>
-    <path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
-  </svg>
-);
-
 const CONTACT_INFO = [
   { Icon: IconLocation, label: "Address", value: "Shivaji Chowk, Akoli Rd, Amravati, Maharashtra 444607" },
   { Icon: IconPhone, label: "Phone", value: "+91 93076 41746" },
   { Icon: IconMail, label: "Email", value: "info@cloudgraphics.in" },
   { Icon: IconClock, label: "Business Hours", value: "Mon – Sat: 10 AM – 7 PM" },
-];
-
-const FEATURES = [
-  { Icon: IconPrint, label: "Custom Printing", desc: "Premium quality prints for all needs" },
-  { Icon: IconPackage, label: "Bulk Orders", desc: "Special rates for large quantities" },
-  { Icon: IconRefund, label: "Easy Returns", desc: "Hassle-free return & refund policy" },
-  { Icon: IconHeadset, label: "24/48hr Support", desc: "Quick response guaranteed" },
 ];
 
 export default function Contact() {
@@ -147,14 +110,14 @@ export default function Contact() {
   const inputCls = (err) =>
     `w-full border rounded-lg px-4 py-3 text-sm outline-none font-[inherit] transition-all duration-200 box-border appearance-none ${
       err
-        ? "border-[#B51D0F] bg-[#fef2f2] focus:border-[#B51D0F] focus:ring-2 focus:ring-[#fde8e6]"
-        : "border-gray-200 bg-white focus:border-[#B51D0F] focus:ring-2 focus:ring-[#fde8e6] hover:border-gray-300"
+        ? "border-[#0672a7] bg-[#eff8fd] focus:border-[#0672a7] focus:ring-2 focus:ring-[#daeffa]"
+        : "border-gray-200 bg-white focus:border-[#0672a7] focus:ring-2 focus:ring-[#daeffa] hover:border-gray-300"
     }`;
 
   /* ── Success Screen ── */
   if (submitted) return (
     <div style={{ background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }} className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-12 max-w-md w-full text-center">
+      <Reveal variant="zoom" className="bg-white rounded-3xl border border-gray-100 shadow-xl p-12 max-w-md w-full text-center">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-50 text-green-600 mb-6 mx-auto">
           <IconCheck />
         </div>
@@ -165,46 +128,27 @@ export default function Contact() {
         </p>
         <button
           onClick={() => setSubmitted(false)}
-          className="bg-[#B51D0F] hover:bg-[#9a1709] text-white px-8 py-3.5 rounded-xl font-bold text-sm border-none cursor-pointer transition-colors duration-200 inline-flex items-center gap-2"
+          className="bg-[#0672a7] hover:bg-[#0a5b82] text-white px-8 py-3.5 rounded-xl font-bold text-sm border-none cursor-pointer transition-colors duration-200 inline-flex items-center gap-2"
         >
           <IconSend /> Send Another Inquiry
         </button>
-      </div>
+      </Reveal>
     </div>
   );
 
   return (
     <div className="bg-gray-50 min-h-screen" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
 
-      {/* ── Feature Strips ── */}
-      <div className="bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-evenly gap-y-0 sm:gap-y-4">
-            {FEATURES.map(({ Icon, label, desc }) => (
-              <div key={label} className="flex items-center gap-3 py-3 px-4 border-b border-gray-100 last:border-b-0 sm:border-b-0">
-                <div className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-[#B51D0F]" style={{ background: "#fde8e6" }}>
-                  <Icon />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-800 leading-tight">{label}</p>
-                  <p className="text-xs text-gray-400 leading-tight mt-0.5">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* ── Main Content ── */}
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-[380px_1fr] gap-10 items-start">
 
           {/* ── Info Panel ── */}
-          <div className="space-y-5 order-2 md:order-1 mt-0">
+          <RevealGroup variant="left" stagger={140} className="space-y-5 order-2 md:order-1 mt-0">
             {/* Contact card */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden order-1 md:order-2">
               {/* Card header */}
-              <div className="px-7 py-5 border-b border-gray-50" style={{ background: "#fef2f2" }}>
+              <div className="px-7 py-5 border-b border-gray-50" style={{ background: "#eff8fd" }}>
                 <h2 className="text-base font-black text-gray-900 tracking-tight">Get in Touch</h2>
                 <p className="text-gray-500 text-xs leading-relaxed mt-1">
                   Questions about products, printing, or orders? We've got you covered.
@@ -215,7 +159,7 @@ export default function Contact() {
               <div className="px-7 py-5 space-y-5">
                 {CONTACT_INFO.map(({ Icon, label, value }) => (
                   <div key={label} className="flex items-start gap-4">
-                    <div className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-[#B51D0F] mt-0.5" style={{ background: "#fde8e6" }}>
+                    <div className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-[#0672a7] mt-0.5" style={{ background: "#daeffa" }}>
                       <Icon />
                     </div>
                     <div>
@@ -247,11 +191,11 @@ export default function Contact() {
                 allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
-          </div>
+          </RevealGroup>
 
           {/* ── Contact Form ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden order-1 md:order-2">
-            <div className="px-7 md:px-9 py-6 border-b border-gray-50" style={{ background: "#fef2f2" }}>
+          <Reveal variant="right" delay={120} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden order-1 md:order-2">
+            <div className="px-7 md:px-9 py-6 border-b border-gray-50" style={{ background: "#eff8fd" }}>
               <h2 className="text-base font-black text-gray-900 tracking-tight">Send Us a Message</h2>
               <p className="text-gray-500 text-xs mt-1">Fill in your details and we'll get back to you as soon as possible.</p>
             </div>
@@ -262,38 +206,38 @@ export default function Contact() {
                 {/* Row 1 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-gray-600 tracking-wide">Full Name <span className="text-[#B51D0F]">*</span></label>
+                    <label className="text-xs font-bold text-gray-600 tracking-wide">Full Name <span className="text-[#0672a7]">*</span></label>
                     <input
                       type="text" name="name" placeholder="Your full name"
                       value={form.name} onChange={handleChange}
                       className={inputCls(errors.name)}
                     />
-                    {errors.name && <span className="text-[#B51D0F] text-xs font-semibold flex items-center gap-1">{errors.name}</span>}
+                    {errors.name && <span className="text-[#0672a7] text-xs font-semibold flex items-center gap-1">{errors.name}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-gray-600 tracking-wide">Email Address <span className="text-[#B51D0F]">*</span></label>
+                    <label className="text-xs font-bold text-gray-600 tracking-wide">Email Address <span className="text-[#0672a7]">*</span></label>
                     <input
                       type="email" name="email" placeholder="you@example.com"
                       value={form.email} onChange={handleChange}
                       className={inputCls(errors.email)}
                     />
-                    {errors.email && <span className="text-[#B51D0F] text-xs font-semibold">{errors.email}</span>}
+                    {errors.email && <span className="text-[#0672a7] text-xs font-semibold">{errors.email}</span>}
                   </div>
                 </div>
 
                 {/* Row 2 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-gray-600 tracking-wide">Phone Number <span className="text-[#B51D0F]">*</span></label>
+                    <label className="text-xs font-bold text-gray-600 tracking-wide">Phone Number <span className="text-[#0672a7]">*</span></label>
                     <input
                       type="tel" name="phone" placeholder="+91 98765 43210"
                       value={form.phone} onChange={handleChange}
                       className={inputCls(errors.phone)}
                     />
-                    {errors.phone && <span className="text-[#B51D0F] text-xs font-semibold">{errors.phone}</span>}
+                    {errors.phone && <span className="text-[#0672a7] text-xs font-semibold">{errors.phone}</span>}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-gray-600 tracking-wide">Subject <span className="text-[#B51D0F]">*</span></label>
+                    <label className="text-xs font-bold text-gray-600 tracking-wide">Subject <span className="text-[#0672a7]">*</span></label>
                     <div className="relative">
                       <select
                         name="subject" value={form.subject} onChange={handleChange}
@@ -307,7 +251,7 @@ export default function Contact() {
                         <IconChevron />
                       </div>
                     </div>
-                    {errors.subject && <span className="text-[#B51D0F] text-xs font-semibold">{errors.subject}</span>}
+                    {errors.subject && <span className="text-[#0672a7] text-xs font-semibold">{errors.subject}</span>}
                   </div>
                 </div>
 
@@ -321,7 +265,7 @@ export default function Contact() {
                     className={`${inputCls(errors.message)} resize-y min-h-28`}
                   />
                   {errors.message
-                    ? <span className="text-[#B51D0F] text-xs font-semibold">{errors.message}</span>
+                    ? <span className="text-[#0672a7] text-xs font-semibold">{errors.message}</span>
                     : <span className="text-gray-300 text-xs text-right">{form.message.length} / 1000 characters</span>
                   }
                 </div>
@@ -332,10 +276,10 @@ export default function Contact() {
                   disabled={loading}
                   className={`w-full flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl font-bold text-sm text-white border-none cursor-pointer transition-all duration-200 ${
                     loading
-                      ? "bg-[#e8837a] cursor-not-allowed"
-                      : "bg-[#B51D0F] hover:bg-[#9a1709] hover:shadow-lg hover:-translate-y-0.5"
+                      ? "bg-[#5cb8e4] cursor-not-allowed"
+                      : "bg-[#0672a7] hover:bg-[#0a5b82] hover:shadow-lg hover:-translate-y-0.5"
                   }`}
-                  style={!loading ? { boxShadow: "0 4px 14px rgba(185,28,28,0.3)" } : {}}
+                  style={!loading ? { boxShadow: "0 4px 14px rgba(10, 91, 130,0.3)" } : {}}
                 >
                   {loading ? (
                     <>
@@ -354,13 +298,13 @@ export default function Contact() {
 
                 <p className="text-center text-gray-400 text-xs">
                   By submitting, you agree to our{" "}
-                  <a href="#" className="text-[#B51D0F] hover:underline font-medium">Privacy Policy</a>
+                  <a href="#" className="text-[#0672a7] hover:underline font-medium">Privacy Policy</a>
                   {" "}and{" "}
-                  <a href="#" className="text-[#B51D0F] hover:underline font-medium">Terms of Service</a>.
+                  <a href="#" className="text-[#0672a7] hover:underline font-medium">Terms of Service</a>.
                 </p>
               </form>
             </div>
-          </div>
+          </Reveal>
 
         </div>
       </div>

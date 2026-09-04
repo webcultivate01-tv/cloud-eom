@@ -1,7 +1,6 @@
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
-const sharp = require("sharp");
 
 // Root of the local image store: backend/uploads
 const UPLOADS_ROOT = path.join(__dirname, "..", "uploads");
@@ -29,11 +28,25 @@ ensureFolders();
 // all collect in the same place: uploads/orders/<customer>/<file>
 const USER_SCOPED_FOLDERS = ["orders"];
 
-// Artwork a customer uploads for a custom order gets printed on the physical
-// product, so it is stored byte-for-byte exactly as they sent it — no re-encode,
-// no downscale. Every other folder is catalog/evidence imagery that is only ever
-// looked at on screen, so it is converted to WebP to keep uploads/ small.
-const ORIGINAL_QUALITY_FOLDERS = ["orders"];
+// Folders laid out as <folder>/<category>/<product>/<file>, so every image of a
+// product sits in its own folder, grouped under the category it belongs to:
+//   uploads/products/mugs/magic-color-changing-mug/front-123.webp
+const CATALOG_SCOPED_FOLDERS = ["products"];
+
+// Used when an image is uploaded before its category/product name is known
+// (admin picks the files before filling the form in). The product controller
+// moves these into the right folder as soon as the product itself is saved.
+const UNSORTED_CATEGORY = "uncategorized";
+const UNSORTED_PRODUCT = "unassigned";
+
+// Everything on this site ends up on a physical product — a mug, a t-shirt, a
+// banner — and print needs the full original file. So no upload is ever
+// re-encoded or downscaled: every image is written byte-for-byte as it was sent,
+// and the size cap below is what keeps uploads/ under control instead.
+//
+// Folders the automatic cleanup must never touch. Customer print artwork is an
+// order's record of what was bought, so it stays even if nothing links to it.
+const PROTECTED_FOLDERS = ["orders"];
 
 const slugify = (str) =>
   String(str || "")
@@ -51,6 +64,16 @@ const userFolderName = (user) => {
   return `${slugify(user.name) || "customer"}-${id.slice(-8)}`;
 };
 
+// Folder one product's images live in, relative to uploads/. Both parts are
+// slugified so whatever the admin typed ("Magic Color-Changing Mug!") becomes a
+// safe single path segment, and a missing part falls back to a holding folder
+// rather than collapsing the product into the category folder itself.
+const productFolderName = (category, productName) => {
+  const cat = slugify(category) || UNSORTED_CATEGORY;
+  const product = slugify(productName) || UNSORTED_PRODUCT;
+  return `products/${cat}/${product}`;
+};
+
 // Pick the destination folder from ?folder=... (query) or the form field,
 // sanitised. Returns a path relative to uploads/, which may be nested.
 const resolveFolder = (req) => {
@@ -61,13 +84,15 @@ const resolveFolder = (req) => {
   if (USER_SCOPED_FOLDERS.includes(folder)) {
     return `${folder}/${userFolderName(req.user)}`;
   }
+  if (CATALOG_SCOPED_FOLDERS.includes(folder)) {
+    // Category + product name are sent by the admin form alongside the file
+    return productFolderName(
+      req.query.category || req.body?.category,
+      req.query.product || req.body?.product
+    );
+  }
   return folder;
 };
-
-// resolveFolder can return a nested path ("orders/tejas-c33d9c19"), so compare
-// on the top-level folder only.
-const isOriginalQuality = (folder) =>
-  ORIGINAL_QUALITY_FOLDERS.includes(String(folder).split("/")[0]);
 
 const ALLOWED_EXTENSIONS = [
   ".jpg",
@@ -81,19 +106,12 @@ const ALLOWED_EXTENSIONS = [
   ".tif",
 ];
 
-// SVG is a vector — rasterising it to WebP would throw away the whole point of
-// the format, so it is always written through untouched.
-const PASSTHROUGH_MIMES = ["image/svg+xml"];
-
-// WebP knobs. Quality 82 is visually indistinguishable from the JPEG original
-// at roughly a third of the bytes; the dimension cap stops a 6000px phone photo
-// being stored at full resolution when no page on the site renders it that big.
-const WEBP_QUALITY = Number(process.env.WEBP_QUALITY || 82);
-const MAX_IMAGE_DIMENSION = Number(process.env.MAX_IMAGE_DIMENSION || 2000);
-
-// Print-ready artwork is genuinely large, so the cap has to clear a full
-// resolution design file, not just a web-sized product photo.
-const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_MB || 25) * 1024 * 1024;
+// Because nothing is compressed on the way in, the upload cap is the only thing
+// keeping file sizes sane — 5 MB clears a print-quality photo or design file
+// comfortably while stopping a raw camera dump. Exposed to the frontend by
+// GET /api/upload/limits so the two never disagree.
+const MAX_UPLOAD_MB = Number(process.env.MAX_UPLOAD_MB || 5);
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 
 // Files are buffered in memory so sharp can re-encode them before anything
 // reaches the disk — a failed conversion then leaves no half-written file behind.
@@ -125,44 +143,30 @@ const buildFileName = (originalname, ext) => {
   return `${base}-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
 };
 
-// Extension to store an untouched file under, falling back to .jpg for anything
-// unrecognised so the served file still has a sane content type.
-const safeExtension = (originalname) => {
-  const ext = path.extname(String(originalname || "")).toLowerCase();
-  return ALLOWED_EXTENSIONS.includes(ext) ? ext : ".jpg";
+// Browsers send an extensionless or oddly-named file often enough that the
+// mime type is the more reliable of the two. Prefer the uploaded extension when
+// it is one we serve, fall back to the one the mime type implies, and only then
+// to .jpg — the file itself is never converted, so this is purely about giving
+// the stored file a name the browser will content-type correctly.
+const MIME_EXTENSIONS = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+  "image/svg+xml": ".svg",
+  "image/avif": ".avif",
+  "image/tiff": ".tiff",
+  "image/bmp": ".bmp",
 };
 
-// Convert a raster upload (JPG/PNG/TIFF/AVIF/…) to WebP, downscaling anything
-// larger than MAX_IMAGE_DIMENSION. Animated GIFs keep their frames. Returns
-// { buffer, ext }; if sharp cannot decode the file the original bytes are kept
-// so a slightly odd image still uploads instead of failing the whole request.
-const toWebp = async (file) => {
-  if (PASSTHROUGH_MIMES.includes(file.mimetype)) {
-    return { buffer: file.buffer, ext: safeExtension(file.originalname) };
-  }
-
-  const animated = file.mimetype === "image/gif";
-  try {
-    const buffer = await sharp(file.buffer, { animated })
-      // Apply the EXIF orientation phone cameras set, then drop the metadata
-      .rotate()
-      .resize({
-        width: MAX_IMAGE_DIMENSION,
-        height: MAX_IMAGE_DIMENSION,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .webp({ quality: WEBP_QUALITY })
-      .toBuffer();
-    return { buffer, ext: ".webp" };
-  } catch (error) {
-    console.error(`WebP conversion failed for ${file.originalname}: ${error.message}`);
-    return { buffer: file.buffer, ext: safeExtension(file.originalname) };
-  }
+const safeExtension = (originalname, mimetype) => {
+  const ext = path.extname(String(originalname || "")).toLowerCase();
+  if (ALLOWED_EXTENSIONS.includes(ext)) return ext;
+  return MIME_EXTENSIONS[String(mimetype || "").toLowerCase()] || ".jpg";
 };
 
 // Absolute URL that gets saved in MongoDB, e.g.
-//   http://localhost:5000/uploads/products/mug-123.webp
+//   http://localhost:5000/uploads/products/mug/photo-mug/front-123.png
 //   http://localhost:5000/uploads/orders/tejas-mehar-c33d9c19/artwork-123.png
 const buildImageUrl = (req, file) => {
   const base = (process.env.BASE_URL || `${req.protocol}://${req.get("host")}`)
@@ -173,39 +177,124 @@ const buildImageUrl = (req, file) => {
 };
 
 // Write one buffered upload into uploads/<folder>/ and hand back the absolute
-// URL to store in MongoDB. Catalog imagery is converted to WebP on the way in;
-// customer print artwork is written exactly as uploaded. Sets file.path so
-// deleteLocalImage and anything else inspecting the multer file keeps working.
+// URL to store in MongoDB. The bytes are stored exactly as uploaded — resizing
+// or re-encoding here would soften the very detail the print needs. Sets
+// file.path so deleteLocalImage and anything else inspecting the multer file
+// keeps working.
 const saveImage = async (req, file) => {
   const folder = resolveFolder(req);
   const dir = path.join(UPLOADS_ROOT, folder);
   await fs.promises.mkdir(dir, { recursive: true });
 
-  const { buffer, ext } = isOriginalQuality(folder)
-    ? { buffer: file.buffer, ext: safeExtension(file.originalname) }
-    : await toWebp(file);
-
+  const ext = safeExtension(file.originalname, file.mimetype);
   const target = path.join(dir, buildFileName(file.originalname, ext));
-  await fs.promises.writeFile(target, buffer);
+  await fs.promises.writeFile(target, file.buffer);
 
   file.path = target;
-  file.size = buffer.length;
+  file.size = file.buffer.length;
   return buildImageUrl(req, file);
 };
 
-// Delete a stored file given the URL previously saved in MongoDB. No-ops for
-// external URLs (Cloudinary leftovers, pasted links) and missing files.
-const deleteLocalImage = (imageUrl = "") => {
+// Path inside uploads/ for a stored URL, or null when the URL does not point
+// at our own upload store. The host is deliberately ignored — BASE_URL and the
+// deploy hostname change over a project's life, and URLs saved under an older
+// host still have to resolve.
+const uploadsPathFromUrl = (imageUrl = "") => {
+  const marker = "/uploads/";
+  const raw = String(imageUrl || "").trim();
+  const idx = raw.indexOf(marker);
+  if (idx === -1) return null;
+  const relative = raw.slice(idx + marker.length).split("?")[0].split("#")[0];
+  if (!relative) return null;
+  // Never escape the uploads root
+  const target = path.resolve(UPLOADS_ROOT, relative);
+  if (!target.startsWith(UPLOADS_ROOT + path.sep)) return null;
+  return relative;
+};
+
+// Remove now-empty folders left behind after a file was moved or deleted,
+// walking up until something non-empty or the uploads root is reached. A
+// product folder should not linger once its last image is gone.
+const pruneEmptyDirs = (startDir) => {
+  let dir = path.resolve(startDir);
+  while (dir.startsWith(UPLOADS_ROOT + path.sep)) {
+    try {
+      if (fs.readdirSync(dir).length > 0) return;
+      fs.rmdirSync(dir);
+    } catch {
+      return;
+    }
+    dir = path.dirname(dir);
+  }
+};
+
+// Move an already-stored image into a different folder under uploads/ and hand
+// back the URL it should now be saved as. Used when a product is created or
+// renamed, so its files follow it into products/<category>/<product>/.
+//
+// Returns the URL unchanged for anything it cannot or should not move: an
+// external/pasted URL, a file that is already in the right place, or one that
+// is missing from disk. The host and any prefix of the original URL are kept,
+// so a URL stored under an older BASE_URL stays reachable exactly as before.
+const moveLocalImage = (imageUrl = "", targetFolder = "") => {
   try {
+    const relative = uploadsPathFromUrl(imageUrl);
+    if (!relative) return imageUrl;
+
+    const folder = String(targetFolder).replace(/^[/]+|[/]+$/g, "");
+    if (!folder) return imageUrl;
+
+    const currentFolder = path.posix.dirname(relative.split(path.sep).join("/"));
+    if (currentFolder === folder) return imageUrl;
+
+    const source = path.resolve(UPLOADS_ROOT, relative);
+    const destDir = path.resolve(UPLOADS_ROOT, folder);
+    if (!destDir.startsWith(UPLOADS_ROOT + path.sep)) return imageUrl;
+    if (!fs.existsSync(source)) return imageUrl;
+
+    fs.mkdirSync(destDir, { recursive: true });
+
+    // Filenames already carry a timestamp and random suffix, so a clash here is
+    // effectively impossible — but never overwrite another product's image.
+    let fileName = path.basename(relative);
+    let target = path.join(destDir, fileName);
+    if (fs.existsSync(target)) {
+      const ext = path.extname(fileName);
+      fileName = `${path.basename(fileName, ext)}-${Date.now()}${ext}`;
+      target = path.join(destDir, fileName);
+    }
+
+    try {
+      fs.renameSync(source, target);
+    } catch {
+      // rename fails across devices/volumes — fall back to copy + unlink
+      fs.copyFileSync(source, target);
+      fs.unlinkSync(source);
+    }
+
+    pruneEmptyDirs(path.dirname(source));
+
+    // Swap only the path after /uploads/, keeping scheme, host and any prefix
     const marker = "/uploads/";
     const idx = String(imageUrl).indexOf(marker);
-    if (idx === -1) return false;
-    const relative = imageUrl.slice(idx + marker.length).split("?")[0];
+    return `${imageUrl.slice(0, idx + marker.length)}${folder}/${fileName}`;
+  } catch (error) {
+    console.error(`Could not move ${imageUrl}: ${error.message}`);
+    return imageUrl;
+  }
+};
+
+// Delete a stored file given the URL previously saved in MongoDB. No-ops for
+// external URLs (Cloudinary leftovers, pasted links) and missing files. The
+// folder that held it is pruned when nothing else is left in it.
+const deleteLocalImage = (imageUrl = "") => {
+  try {
+    const relative = uploadsPathFromUrl(imageUrl);
+    if (!relative) return false;
     const target = path.resolve(UPLOADS_ROOT, relative);
-    // Never escape the uploads root
-    if (!target.startsWith(UPLOADS_ROOT + path.sep)) return false;
     if (!fs.existsSync(target)) return false;
     fs.unlinkSync(target);
+    pruneEmptyDirs(path.dirname(target));
     return true;
   } catch {
     return false;
@@ -217,12 +306,20 @@ module.exports = {
   saveImage,
   buildImageUrl,
   deleteLocalImage,
+  moveLocalImage,
+  pruneEmptyDirs,
+  uploadsPathFromUrl,
+  productFolderName,
   resolveFolder,
-  isOriginalQuality,
+
   userFolderName,
   slugify,
   UPLOADS_ROOT,
   ALLOWED_FOLDERS,
   USER_SCOPED_FOLDERS,
-  ORIGINAL_QUALITY_FOLDERS,
+  CATALOG_SCOPED_FOLDERS,
+  PROTECTED_FOLDERS,
+  MAX_UPLOAD_MB,
+  MAX_UPLOAD_BYTES,
+  ALLOWED_EXTENSIONS,
 };
